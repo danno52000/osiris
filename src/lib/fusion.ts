@@ -15,6 +15,13 @@ export interface FusionCorrelation {
   recommended_action: string;
   details: string;
   detected_at: string;
+  /** Multi-factor enrichments (optional for backward compatibility). */
+  bottleneck_detected?: boolean;
+  bottleneck_port?: string | null;
+  bottleneck_wait_minutes?: number | null;
+  conflict_zone_proximity?: boolean;
+  conflict_zone_name?: string | null;
+  conflict_zone_summary?: string | null;
 }
 
 export interface FusionEntityBrief {
@@ -31,6 +38,12 @@ export interface FusionEntityBrief {
   risk_score: number;
   threat_classification: string;
   sanctions_hit: boolean;
+  bottleneck_detected?: boolean;
+  bottleneck_port?: string | null;
+  bottleneck_wait_minutes?: number | null;
+  conflict_zone_proximity?: boolean;
+  conflict_zone_name?: string | null;
+  conflict_zone_summary?: string | null;
   rationale: string;
   recommended_action: string;
   generated_at: string;
