@@ -26,6 +26,7 @@ import LiveAlerts from '@/components/LiveAlerts';
 import WorldRemote from '@/components/WorldRemote';
 import ArcGISPanel from '@/components/ArcGISPanel';
 const OsirisMap = dynamic(() => import('@/components/OsirisMap'), { ssr: false });
+const EntityBriefDrawer = dynamic(() => import('@/components/EntityBriefDrawer'));
 const LayerPanel = dynamic(() => import('@/components/LayerPanel'));
 const SpaceCam = dynamic(() => import('@/components/SpaceCam'), { ssr: false });
 const CameraViewer = dynamic(() => import('@/components/CameraViewer'));
@@ -147,6 +148,8 @@ export default function Dashboard() {
   const [locationLabel, setLocationLabel] = useState('');
   const [regionDossier, setRegionDossier] = useState<any>(null);
   const [dossierLoading, setDossierLoading] = useState(false);
+  const [entityBrief, setEntityBrief] = useState<any>(null);
+  const [briefLoading, setBriefLoading] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
   const autoLocateCancelled = useRef(false);
 
@@ -493,6 +496,14 @@ export default function Dashboard() {
       setLiveFeedName(entity.name);
       setLiveFeedEmbedAllowed(entity.embed_allowed !== false);
     }
+    if (entity?.type === 'fusion_correlation' && entity.track_id) {
+      setBriefLoading(true); setEntityBrief(null);
+      fetch(`/api/fusion/brief?track_id=${encodeURIComponent(entity.track_id)}`, { cache: 'no-store' })
+        .then(res => (res.ok ? res.json() : null))
+        .then(brief => { if (brief) setEntityBrief(brief); })
+        .catch(() => {})
+        .finally(() => setBriefLoading(false));
+    }
   }, []);
 
   // ── Drawing / AOI ──
@@ -626,7 +637,10 @@ export default function Dashboard() {
       setInterval(() => fetchEndpoint(eqUrl, eqTransform, undefined, { skipWhenHidden: true }), 900000),  // 15 min (was 5)
       setInterval(() => fetchEndpoint('/api/news', undefined, undefined, { skipWhenHidden: true }), 1800000),        // 30 min (was 10)
       setInterval(() => fetchEndpoint('/api/markets', d => ({ markets: d }), undefined, { skipWhenHidden: true }), 900000), // 15 min (was 5)
+      // 3BAI fusion sidecar — active tactical correlations for the map layer
+      setInterval(() => fetchEndpoint('/api/fusion/correlations', d => ({ fusion_correlations: d.correlations || [] }), undefined, { skipWhenHidden: true }), 15000),
     ];
+    fetchEndpoint('/api/fusion/correlations', d => ({ fusion_correlations: d.correlations || [] }));
     return () => {
       clearTimeout(marketTimer);
       marketRetries.forEach(clearTimeout);
@@ -1822,6 +1836,15 @@ export default function Dashboard() {
           </div>
         </motion.div>
       )}
+
+      {/* ── Fusion Entity Brief Drawer ── */}
+      <AnimatePresence>
+        <EntityBriefDrawer
+          brief={entityBrief}
+          loading={briefLoading}
+          onClose={() => { setEntityBrief(null); setBriefLoading(false); }}
+        />
+      </AnimatePresence>
 
       {/* ── Camera Viewer ── */}
       <CameraViewer

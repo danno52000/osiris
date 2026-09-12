@@ -321,7 +321,7 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
       createDot(map, 'dot-fire', isGhost ? phantomPurple : '#E65100', 10);
       createDot(map, 'dot-cctv', cameraColor, 10);
 
-      const sources = ['flights','military','jets','private-fl','satellites','earthquakes','gdelt','day-night','cctv','fires','weather','infrastructure','maritime','maritime-choke','maritime-ships','live-news','conflict-zones', 'war-alerts-targets', 'war-alerts-lines', 'balloons', 'radiation', 'ip-sweep-devices', 'ip-sweep-pulse', 'ip-sweep-connections', 'scan-targets', 'sdk-entities', 'sdk-links', 'malware-nodes', 'malware-new', 'network-mesh', 'cyber-arcs', 'cyber-heads', 'cyber-impacts', 'gdelt-events', 'cf-outages', 'cf-attacks'];
+      const sources = ['flights','military','jets','private-fl','satellites','earthquakes','gdelt','day-night','cctv','fires','weather','infrastructure','maritime','maritime-choke','maritime-ships','live-news','conflict-zones', 'war-alerts-targets', 'war-alerts-lines', 'balloons', 'radiation', 'ip-sweep-devices', 'ip-sweep-pulse', 'ip-sweep-connections', 'scan-targets', 'sdk-entities', 'sdk-links', 'malware-nodes', 'malware-new', 'network-mesh', 'cyber-arcs', 'cyber-heads', 'cyber-impacts', 'gdelt-events', 'cf-outages', 'cf-attacks', 'fusion-correlations'];
       sources.forEach(s => map.addSource(s, { type: 'geojson', data: EMPTY_FC }));
 
       // ── FLIGHT ROUTE VISUALIZATION SOURCES & LAYERS ──
@@ -689,6 +689,26 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
         'text-offset': [0, 2], 'text-max-width': 14, 'text-allow-overlap': false,
       }, paint: { 'text-color': '#D32F2F', 'text-halo-color': '#000', 'text-halo-width': 1.5, 'text-opacity': 0.9 }});
 
+      // ══ 3BAI FUSION — high-risk track correlations from the sidecar ══
+      map.addLayer({ id: 'fusion-pulse-ring', type: 'circle', source: 'fusion-correlations', filter: ['get', 'high_risk'], paint: {
+        'circle-radius': ['interpolate',['linear'],['zoom'], 1,18, 5,34, 10,60],
+        'circle-color': 'transparent', 'circle-opacity': 0.7,
+        'circle-stroke-width': 2, 'circle-stroke-color': '#FF1744', 'circle-stroke-opacity': 0.5,
+      }});
+      map.addLayer({ id: 'fusion-glow', type: 'circle', source: 'fusion-correlations', paint: {
+        'circle-radius': ['interpolate',['linear'],['zoom'], 1,10, 5,20, 10,34],
+        'circle-color': ['case', ['get','high_risk'], '#FF1744', '#FF9500'], 'circle-opacity': 0.18, 'circle-blur': 1,
+      }});
+      map.addLayer({ id: 'fusion-dots', type: 'circle', source: 'fusion-correlations', paint: {
+        'circle-radius': ['interpolate',['linear'],['zoom'], 1,5, 5,8, 10,11],
+        'circle-color': ['case', ['get','high_risk'], '#FF1744', '#FF9500'], 'circle-opacity': 0.95,
+        'circle-stroke-width': 1.5, 'circle-stroke-color': '#FFFFFF', 'circle-stroke-opacity': 0.7,
+      }});
+      map.addLayer({ id: 'fusion-label', type: 'symbol', source: 'fusion-correlations', minzoom: 3, layout: {
+        'text-field': ['get', 'callsign'], 'text-size': 9, 'text-font': ['Open Sans Bold'],
+        'text-offset': [0, 1.9], 'text-max-width': 14, 'text-allow-overlap': false,
+      }, paint: { 'text-color': '#FF1744', 'text-halo-color': '#000', 'text-halo-width': 1.5, 'text-opacity': 0.95 }});
+
       // Flight layers (WebGL symbol — GPU rendered, handles 50K+ smooth)
       const flightLayers = [
         { id: 'fl-commercial', src: 'flights', icon: 'plane-cyan' },
@@ -996,7 +1016,8 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
       'gdelt-dots','weather-dots','infra-dots','maritime-dots','choke-dots','news-dots',
       'balloon-dots','rad-dots','ship-dots','sweep-device-dots','scan-targets-dots',
       'sdk-sea','sdk-air','sdk-intel','malware-dots','cyber-heads','gdelt-events-dots',
-      'cf-outage-dots','cf-attack-dots','flight-dots','military-dots','jet-dots','private-dots']);
+      'cf-outage-dots','cf-attack-dots','flight-dots','military-dots','jet-dots','private-dots',
+      'fusion-dots']);
 
     // Satellites are picked on the GPU: the pick pass runs the same vertex
     // shader as the visible one, so the target is always exactly where the
@@ -1321,7 +1342,7 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
     });
 
     // ── Generic hover for clickables ──
-    ['conflict-icons','cctv-dots','eq-circles','fires-heat','gdelt-dots','weather-dots','infra-dots','maritime-dots','choke-dots','news-dots','balloon-dots','rad-dots','ship-dots','sweep-device-dots','scan-targets-dots','sdk-sea','sdk-sea-glow','sdk-sea-atmo','sdk-air','sdk-air-glow','sdk-air-atmo','sdk-intel','sdk-intel-glow','sdk-intel-atmo','malware-dots','cyber-heads','gdelt-events-dots','cf-outage-dots','cf-attack-dots'].forEach(layer => {
+    ['conflict-icons','cctv-dots','eq-circles','fires-heat','gdelt-dots','weather-dots','infra-dots','maritime-dots','choke-dots','news-dots','balloon-dots','rad-dots','ship-dots','sweep-device-dots','scan-targets-dots','sdk-sea','sdk-sea-glow','sdk-sea-atmo','sdk-air','sdk-air-glow','sdk-air-atmo','sdk-intel','sdk-intel-glow','sdk-intel-atmo','malware-dots','cyber-heads','gdelt-events-dots','cf-outage-dots','cf-attack-dots','fusion-dots'].forEach(layer => {
       map.on('mouseenter', layer, () => { map.getCanvas().style.cursor = 'pointer'; });
       map.on('mouseleave', layer, () => { map.getCanvas().style.cursor = ''; });
     });
@@ -1339,6 +1360,20 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
           <div><span style="color:#5C5A54;">COORDS</span><br/><span style="color:#E8E6E0;">${coords[1].toFixed(3)}°, ${coords[0].toFixed(3)}°</span></div>
         </div>
       </div>`);
+    });
+
+    // ── 3BAI Fusion correlations — opens the entity brief drawer ──
+    map.on('click', 'fusion-dots', e => {
+      const p = e.features?.[0]?.properties;
+      if (!p) return;
+      onEntityClick?.({
+        type: 'fusion_correlation',
+        track_id: p.track_id,
+        callsign: p.callsign,
+        track_type: p.track_type,
+        risk_score: p.risk_score,
+        threat_classification: p.threat_classification,
+      });
     });
 
     // ── SCM Suppliers ──
@@ -2004,6 +2039,43 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
     setGeo('maritime-choke', activeLayers.maritime && data.maritime_chokepoints ? data.maritime_chokepoints.map((c: any) => ({ type: 'Feature', geometry: { type: 'Point', coordinates: [c.lng, c.lat] }, properties: { name: c.name, traffic: c.traffic, risk: c.risk } })) : []);
     setGeo('maritime-ships', activeLayers.maritime && data.maritime_ships ? data.maritime_ships.map((s: any) => ({ type: 'Feature', geometry: { type: 'Point', coordinates: [s.lng, s.lat] }, properties: { name: s.name || s.mmsi?.toString(), type: s.type || 'cargo', speed: s.speed, heading: s.heading, destination: s.destination, flag: s.flag } })) : []);
   }, [mapReady, data.maritime_ports, data.maritime_chokepoints, data.maritime_ships, activeLayers.maritime, setGeo]);
+
+  // Fusion correlations — the sidecar's scored tracks. `high_risk` drives the
+  // red pulse badge; lower-risk hits render amber.
+  useEffect(() => {
+    if (!mapReady) return;
+    const rows: any[] = Array.isArray(data.fusion_correlations) ? data.fusion_correlations : [];
+    setGeo('fusion-correlations', rows.map((c: any) => ({
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [c.longitude, c.latitude] },
+      properties: {
+        track_id: c.track_id,
+        callsign: c.callsign_or_mmsi,
+        track_type: c.track_type,
+        risk_score: c.risk_score,
+        threat_classification: c.threat_classification,
+        high_risk: Boolean(c.sanctions_hit || (c.risk_score ?? 0) >= 0.7),
+      },
+    })));
+  }, [mapReady, data.fusion_correlations, setGeo]);
+
+  // Pulse the high-risk ring — same rAF pattern as the user-location halo.
+  useEffect(() => {
+    if (!mapReady || !mapRef.current) return;
+    const map = mapRef.current;
+    let raf = 0;
+    const started = performance.now();
+    const tick = (now: number) => {
+      if (map.getLayer('fusion-pulse-ring')) {
+        const t = ((now - started) % 2000) / 2000;
+        map.setPaintProperty('fusion-pulse-ring', 'circle-stroke-opacity', 0.55 * (1 - t));
+        map.setPaintProperty('fusion-pulse-ring', 'circle-radius', 14 + t * 30);
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [mapReady]);
 
   useEffect(() => {
     if (!mapReady) return;
