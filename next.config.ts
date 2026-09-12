@@ -1,6 +1,16 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  /* The dev server blocks cross-origin access to internal resources (HMR
+     socket, __nextjs_font) unless the request origin is allowlisted. Serving
+     the COP off a bare IP (droplets, LAN boxes) is a normal deployment here,
+     so allow IPv4-literal origins plus any extras in OSIRIS_DEV_ORIGINS.
+     Dev-only — `next start` has no such guard. */
+  allowedDevOrigins: [
+    '*.*.*.*',
+    '157.230.228.37',
+    ...(process.env.OSIRIS_DEV_ORIGINS?.split(',').map((o) => o.trim()).filter(Boolean) ?? []),
+  ],
   turbopack: {
     rules: {
       'maplibre-gl.mjs': {
