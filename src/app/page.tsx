@@ -1316,7 +1316,7 @@ export default function Dashboard() {
 
 
       {/* ── TOP-RIGHT STATUS (desktop) ── */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 3 }} className="status-bar-desktop absolute top-4 right-6 z-[200] pointer-events-none flex items-center gap-3 text-[10px] font-mono tracking-widest text-[var(--text-muted)]">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 3 }} className="status-bar-desktop absolute top-4 max-[1400px]:top-24 right-6 z-[200] pointer-events-none flex items-center gap-3 text-[10px] font-mono tracking-widest text-[var(--text-muted)]">
 
         <span className="hidden lg:inline-flex items-center gap-1.5">
           <ZuluClock />
@@ -1351,7 +1351,7 @@ export default function Dashboard() {
           place would put the classification chip underneath the destination field. */}
       {isMobile && !showDirections && !navSession && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.5 }} className="absolute top-3 right-3 z-[200] pointer-events-auto flex items-center gap-2">
-          <span className="glass-panel px-2 py-1 text-[9px] font-mono tracking-widest border-[#00E676]/30 text-[#00E676]/90">
+          <span className="glass-panel px-2 py-1 text-[9px] font-mono tracking-widest border-[#00E676]/30 text-[#00E676]/90 max-[400px]:text-[7px] max-[400px]:tracking-wider max-[400px]:px-1.5">
             UNCLASSIFIED // REL TO USA
           </span>
         </motion.div>
