@@ -70,6 +70,22 @@ export default function EntityBriefDrawer({ brief, loading, onClose }: EntityBri
                     SANCTIONS HIT
                   </span>
                 )}
+                {brief.bottleneck_detected && (
+                  <span
+                    className="text-[9px] font-mono px-1.5 py-0.5 rounded border border-[#FF9500]/60 text-[#FF9500] bg-[#FF9500]/15"
+                    title={brief.bottleneck_port ?? undefined}
+                  >
+                    BOTTLENECK ALERT{brief.bottleneck_wait_minutes != null ? ` ${brief.bottleneck_wait_minutes}m` : ''}
+                  </span>
+                )}
+                {brief.conflict_zone_proximity && (
+                  <span
+                    className="text-[9px] font-mono px-1.5 py-0.5 rounded border border-[#B388FF]/60 text-[#B388FF] bg-[#B388FF]/15"
+                    title={brief.conflict_zone_summary ?? undefined}
+                  >
+                    CONTESTED PLAZA{brief.conflict_zone_name ? `: ${brief.conflict_zone_name}` : ''}
+                  </span>
+                )}
               </div>
             </div>
 
