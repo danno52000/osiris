@@ -321,7 +321,7 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
       createDot(map, 'dot-fire', isGhost ? phantomPurple : '#E65100', 10);
       createDot(map, 'dot-cctv', cameraColor, 10);
 
-      const sources = ['flights','military','jets','private-fl','satellites','earthquakes','gdelt','day-night','cctv','fires','weather','infrastructure','maritime','maritime-choke','maritime-ships','live-news','conflict-zones', 'war-alerts-targets', 'war-alerts-lines', 'balloons', 'radiation', 'ip-sweep-devices', 'ip-sweep-pulse', 'ip-sweep-connections', 'scan-targets', 'sdk-entities', 'sdk-links', 'malware-nodes', 'malware-new', 'network-mesh', 'cyber-arcs', 'cyber-heads', 'cyber-impacts', 'gdelt-events', 'cf-outages', 'cf-attacks', 'fusion-correlations'];
+      const sources = ['flights','military','jets','private-fl','satellites','earthquakes','gdelt','day-night','cctv','fires','weather','infrastructure','maritime','maritime-choke','maritime-ships','live-news','conflict-zones', 'war-alerts-targets', 'war-alerts-lines', 'balloons', 'radiation', 'ip-sweep-devices', 'ip-sweep-pulse', 'ip-sweep-connections', 'scan-targets', 'sdk-entities', 'sdk-links', 'malware-nodes', 'malware-new', 'network-mesh', 'cyber-arcs', 'cyber-heads', 'cyber-impacts', 'gdelt-events', 'cf-outages', 'cf-attacks', 'fusion-correlations','border-waits','plaza-geofences'];
       sources.forEach(s => map.addSource(s, { type: 'geojson', data: EMPTY_FC }));
 
       // ── FLIGHT ROUTE VISUALIZATION SOURCES & LAYERS ──
@@ -708,6 +708,42 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
         'text-field': ['get', 'callsign'], 'text-size': 9, 'text-font': ['Open Sans Bold'],
         'text-offset': [0, 1.9], 'text-max-width': 14, 'text-allow-overlap': false,
       }, paint: { 'text-color': '#FF1744', 'text-halo-color': '#000', 'text-halo-width': 1.5, 'text-opacity': 0.95 }});
+
+      // ══ BORDER INTEL — CBP crossing pins + cartel plaza geofences ══
+      // Pin color follows the sidecar's anomaly thresholds: >=60m red pulse,
+      // 30-60m amber, <30m green, null (feed unavailable) gray.
+      map.addLayer({ id: 'border-wait-pulse', type: 'circle', source: 'border-waits', filter: ['>=', ['coalesce', ['get','wait'], 0], 60], paint: {
+        'circle-radius': 12, 'circle-color': 'transparent',
+        'circle-stroke-width': 1.6, 'circle-stroke-color': '#FF3D3D', 'circle-stroke-opacity': 0.5,
+      }});
+      map.addLayer({ id: 'border-wait-dots', type: 'circle', source: 'border-waits', paint: {
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 1, 4, 5, 6.5, 10, 8],
+        'circle-color': ['case',
+          ['==', ['get', 'wait'], null], '#8A8880',
+          ['>=', ['coalesce', ['get', 'wait'], 0], 60], '#FF3D3D',
+          ['>=', ['coalesce', ['get', 'wait'], 0], 30], '#FFB300',
+          '#4ADE80'],
+        'circle-opacity': 0.92,
+        'circle-stroke-width': 1.2, 'circle-stroke-color': '#FFFFFF', 'circle-stroke-opacity': 0.6,
+      }});
+      map.addLayer({ id: 'border-wait-label', type: 'symbol', source: 'border-waits', minzoom: 5, layout: {
+        'text-field': ['concat', ['get', 'name'], ' ', ['case', ['==', ['get', 'wait'], null], 'UNAVAIL', ['concat', ['to-string', ['get', 'wait']], 'm']]],
+        'text-size': 8, 'text-font': ['Open Sans Regular'], 'text-offset': [0, 1.4], 'text-allow-overlap': false,
+      }, paint: { 'text-color': '#E8E6E0', 'text-halo-color': '#000', 'text-halo-width': 1.2 }});
+
+      // Cartel plaza geofences — translucent violet buffer + glowing edge.
+      map.addLayer({ id: 'plaza-fill', type: 'fill', source: 'plaza-geofences', paint: {
+        'fill-color': '#A855F7', 'fill-opacity': 0.25,
+      }});
+      map.addLayer({ id: 'plaza-glow', type: 'line', source: 'plaza-geofences', paint: {
+        'line-color': '#A855F7',
+        'line-width': ['interpolate', ['linear'], ['zoom'], 1, 0.8, 6, 1.6, 10, 2.6],
+        'line-opacity': 0.75, 'line-blur': 1.5,
+      }});
+      map.addLayer({ id: 'plaza-label', type: 'symbol', source: 'plaza-geofences', minzoom: 5, layout: {
+        'text-field': ['get', 'name'], 'text-size': 8, 'text-font': ['Open Sans Regular'],
+        'text-transform': 'uppercase', 'text-allow-overlap': false,
+      }, paint: { 'text-color': '#C084FC', 'text-halo-color': '#000', 'text-halo-width': 1.2, 'text-opacity': 0.85 }});
 
       // Flight layers (WebGL symbol — GPU rendered, handles 50K+ smooth)
       const flightLayers = [
@@ -1342,7 +1378,7 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
     });
 
     // ── Generic hover for clickables ──
-    ['conflict-icons','cctv-dots','eq-circles','fires-heat','gdelt-dots','weather-dots','infra-dots','maritime-dots','choke-dots','news-dots','balloon-dots','rad-dots','ship-dots','sweep-device-dots','scan-targets-dots','sdk-sea','sdk-sea-glow','sdk-sea-atmo','sdk-air','sdk-air-glow','sdk-air-atmo','sdk-intel','sdk-intel-glow','sdk-intel-atmo','malware-dots','cyber-heads','gdelt-events-dots','cf-outage-dots','cf-attack-dots','fusion-dots'].forEach(layer => {
+    ['conflict-icons','cctv-dots','eq-circles','fires-heat','gdelt-dots','weather-dots','infra-dots','maritime-dots','choke-dots','news-dots','balloon-dots','rad-dots','ship-dots','sweep-device-dots','scan-targets-dots','sdk-sea','sdk-sea-glow','sdk-sea-atmo','sdk-air','sdk-air-glow','sdk-air-atmo','sdk-intel','sdk-intel-glow','sdk-intel-atmo','malware-dots','cyber-heads','gdelt-events-dots','cf-outage-dots','cf-attack-dots','fusion-dots','border-wait-dots','plaza-fill'].forEach(layer => {
       map.on('mouseenter', layer, () => { map.getCanvas().style.cursor = 'pointer'; });
       map.on('mouseleave', layer, () => { map.getCanvas().style.cursor = ''; });
     });
@@ -1359,6 +1395,43 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
           <div><span style="color:#5C5A54;">TYPE</span><br/><span style="color:#00E5FF;">${(p.type || 'UNKNOWN').toUpperCase()}</span></div>
           <div><span style="color:#5C5A54;">COORDS</span><br/><span style="color:#E8E6E0;">${coords[1].toFixed(3)}°, ${coords[0].toFixed(3)}°</span></div>
         </div>
+      </div>`);
+    });
+
+    // ── Border Intel: CBP crossing pin → wait-time tooltip ──
+    map.on('click', 'border-wait-dots', (e: any) => {
+      const p = e.features?.[0]?.properties;
+      if (!p) return;
+      const coords = e.features[0].geometry.coordinates.slice();
+      const wait = p.wait;
+      const waitColor = wait == null ? '#8A8880' : wait >= 60 ? '#FF3D3D' : wait >= 30 ? '#FFB300' : '#4ADE80';
+      popup(coords, `<div style="${pStyle}border:1px solid ${waitColor}40;">
+        <div style="color:${waitColor};font-size:12px;font-weight:700;margin-bottom:4px;">${htmlEsc(p.name)}</div>
+        <div style="font-size:9px;color:#8A8880;margin-bottom:8px;">${htmlEsc(p.port)} / ${htmlEsc(p.crossing)} — COMMERCIAL LANES</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:10px;">
+          <div><span style="color:#5C5A54;font-size:8px;">DELAY</span><br/><span style="color:${waitColor};font-weight:bold;">${wait == null ? 'UNAVAILABLE' : Math.round(wait) + ' MIN'}</span></div>
+          <div><span style="color:#5C5A54;font-size:8px;">STATUS</span><br/><span style="color:#E8E6E0;">${htmlEsc(p.status)}</span></div>
+          <div><span style="color:#5C5A54;font-size:8px;">LANE STATUS</span><br/><span style="color:#E8E6E0;">${htmlEsc(p.lane_status || '—')}</span></div>
+          <div><span style="color:#5C5A54;font-size:8px;">LANE REPORT</span><br/><span style="color:#E8E6E0;">${htmlEsc(p.lane || '—')}</span></div>
+          <div><span style="color:#5C5A54;font-size:8px;">UPSTREAM</span><br/><span style="color:#E8E6E0;">${formatTime(p.upstream)}</span></div>
+        </div>
+        <div style="margin-top:8px;font-size:7px;color:#5C5A54;text-align:center;letter-spacing:0.1em;">SOURCE: CBP BWT (${htmlEsc(String(p.source || 'unavailable')).toUpperCase()})</div>
+      </div>`);
+    });
+
+    // ── Border Intel: cartel plaza geofence → faction tooltip ──
+    map.on('click', 'plaza-fill', (e: any) => {
+      const p = e.features?.[0]?.properties;
+      if (!p) return;
+      popup(e.lngLat, `<div style="${pStyle}border:1px solid rgba(168,85,247,0.5);">
+        <div style="color:#A855F7;font-size:12px;font-weight:700;margin-bottom:4px;">${htmlEsc(p.name)}</div>
+        <div style="font-size:9px;color:#8A8880;margin-bottom:8px;">${htmlEsc(p.state)} — ${htmlEsc(p.event_type)}${p.contested ? ' · CONTESTED' : ''}</div>
+        <div style="display:grid;grid-template-columns:1fr;gap:5px;font-size:10px;">
+          <div><span style="color:#5C5A54;font-size:8px;">DOMINANT / CONTESTED FACTIONS</span><br/><span style="color:#E8E6E0;">${htmlEsc(p.factions || '—')}</span></div>
+          <div><span style="color:#5C5A54;font-size:8px;">BUFFER RADIUS</span> <span style="color:#E8E6E0;">${p.radius_km} KM</span> &nbsp;&nbsp;<span style="color:#5C5A54;font-size:8px;">RISK WEIGHT</span> <span style="color:#A855F7;font-weight:bold;">${p.risk_weight ?? '—'}</span></div>
+          <div><span style="color:#5C5A54;font-size:8px;">LAST EVENT</span> <span style="color:#E8E6E0;">${htmlEsc(p.last_event || '—')}</span></div>
+        </div>
+        <div style="margin-top:8px;font-size:7px;color:#5C5A54;text-align:center;letter-spacing:0.1em;">SOURCE: FUSION INTEL / SPATIAL_ZONES</div>
       </div>`);
     });
 
@@ -2071,11 +2144,65 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
         map.setPaintProperty('fusion-pulse-ring', 'circle-stroke-opacity', 0.55 * (1 - t));
         map.setPaintProperty('fusion-pulse-ring', 'circle-radius', 14 + t * 30);
       }
+      if (map.getLayer('border-wait-pulse')) {
+        const t = ((now - started) % 2000) / 2000;
+        map.setPaintProperty('border-wait-pulse', 'circle-stroke-opacity', 0.5 * (1 - t));
+        map.setPaintProperty('border-wait-pulse', 'circle-radius', 12 + t * 22);
+      }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, [mapReady]);
+
+  // Border Intel — CBP crossing wait pins (polls via page.tsx while the
+  // layer is on; null waits render gray = feed unavailable).
+  useEffect(() => {
+    if (!mapReady) return;
+    const rows: any[] = Array.isArray(data.border_wait_times) ? data.border_wait_times : [];
+    setGeo('border-waits', activeLayers.cbp_waits ? rows.map((w: any) => ({
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [w.longitude, w.latitude] },
+      properties: {
+        name: w.crossing_name === 'Commercial' ? w.port_name : `${w.port_name} ${w.crossing_name}`,
+        port: w.port_name,
+        crossing: w.crossing_name,
+        wait: w.wait_minutes,
+        status: w.status,
+        source: w.source,
+        upstream: w.upstream_reported_at,
+        lane: w.lane_update_time,
+        lane_status: w.lane_status,
+      },
+    })) : []);
+  }, [mapReady, data.border_wait_times, activeLayers.cbp_waits, setGeo]);
+
+  // Border Intel — cartel plaza geofences. Zone radii are km, so the buffer
+  // is drawn client-side as a polygon ring (no turf dependency).
+  useEffect(() => {
+    if (!mapReady) return;
+    const zones: any[] = Array.isArray(data.plaza_geofences) ? data.plaza_geofences : [];
+    const ring = (lng: number, lat: number, radiusKm: number, steps = 72) => {
+      const coords: [number, number][] = [];
+      for (let i = 0; i <= steps; i++) {
+        const a = (i / steps) * 2 * Math.PI;
+        const dLat = (radiusKm * Math.sin(a)) / 111.32;
+        const dLng = (radiusKm * Math.cos(a)) / (111.32 * Math.cos((lat * Math.PI) / 180));
+        coords.push([lng + dLng, lat + dLat]);
+      }
+      return coords;
+    };
+    setGeo('plaza-geofences', activeLayers.plaza_geofences ? zones.map((z: any) => ({
+      type: 'Feature',
+      geometry: { type: 'Polygon', coordinates: [ring(z.longitude, z.latitude, z.radius_km)] },
+      properties: {
+        name: z.name, state: z.state, event_type: z.event_type,
+        contested: z.contested, factions: z.factions,
+        radius_km: z.radius_km, risk_weight: z.risk_weight,
+        last_event: z.last_event,
+      },
+    })) : []);
+  }, [mapReady, data.plaza_geofences, activeLayers.plaza_geofences, setGeo]);
 
   useEffect(() => {
     if (!mapReady) return;
