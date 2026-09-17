@@ -73,7 +73,7 @@ export async function GET() {
     const res = await fetch('https://feodotracker.abuse.ch/downloads/ipblocklist.json', {
       signal: AbortSignal.timeout(10000),
       cache: 'no-store',
-      headers: { 'User-Agent': 'OSIRIS/4.3', Accept: 'application/json' },
+      headers: { 'User-Agent': 'GIDEON/1.0', Accept: 'application/json' },
     });
 
     if (!res.ok) {

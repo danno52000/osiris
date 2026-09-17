@@ -1308,7 +1308,7 @@ export default function Dashboard() {
           </div>
         </div>
         <div className="flex items-center gap-3 mt-1.5 pl-[44px] min-w-0 pr-4">
-          <span className="text-[9px] md:text-[9px] text-[var(--text-muted)] font-mono tracking-[0.2em] md:tracking-[0.3em] uppercase opacity-40 truncate">
+          <span className="text-[9px] md:text-[9px] text-[var(--text-muted)] font-mono tracking-[0.2em] md:tracking-[0.3em] uppercase opacity-80 truncate">
             REAL-TIME MULTI-INT CORRELATION <span className="hidden md:inline">&amp; DECISION ADVANTAGE · OTA 4022 / 4023</span>
           </span>
         </div>
@@ -1335,8 +1335,6 @@ export default function Dashboard() {
         </span>
 
         {spaceWeather && <span className="hidden lg:inline" title={`Geomagnetic Storm Index — Kp${spaceWeather.kp_index}`}>SOLAR: <span style={{ color: spaceWeather.storm_color, fontWeight: 700 }}>Kp{spaceWeather.kp_index}</span></span>}
-
-        <span className="text-[11px] font-bold tracking-[0.2em] text-[var(--text-muted)] opacity-50">V.4.1</span>
 
         <span className="pointer-events-auto glass-panel px-3 py-1.5 text-[9px] font-mono tracking-widest border-[var(--cyan-primary)]/30 text-[var(--cyan-primary)]/90 ml-3">
           DEFENSE EXPERIMENT: OTA 4022 / 4023

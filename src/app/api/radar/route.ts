@@ -33,7 +33,7 @@ export async function GET() {
     const res = await fetch(url, {
       signal: AbortSignal.timeout(12000),
       cache: 'no-store',
-      headers: { 'User-Agent': 'OSIRIS/4.2', 'Accept': 'application/json' },
+      headers: { 'User-Agent': 'GIDEON/1.0', 'Accept': 'application/json' },
     });
 
     console.log('[OSIRIS] IODA response status:', res.status);

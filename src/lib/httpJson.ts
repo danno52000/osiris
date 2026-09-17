@@ -16,7 +16,7 @@ import type { Readable } from 'stream';
  * with 406/429 and ask for contact details in their usage policies.
  */
 
-export const OSIRIS_UA = 'OSIRIS-OSINT/1.0 (+https://github.com/simplifaisoul/osiris)';
+export const GIDEON_UA = 'GIDEON-INTEL/1.0 (+github.com/danno52000/3BAI-fusion)';
 
 export interface RequestOptions {
   timeoutMs?: number;
@@ -42,7 +42,7 @@ function request(url: string, { timeoutMs = 20000, headers = {} }: RequestOption
     const req = https.get(
       url,
       {
-        headers: { 'User-Agent': OSIRIS_UA, Accept: 'application/json', 'Accept-Language': 'en', ...headers },
+        headers: { 'User-Agent': GIDEON_UA, Accept: 'application/json', 'Accept-Language': 'en', ...headers },
         timeout: timeoutMs,
       },
       (res) => {

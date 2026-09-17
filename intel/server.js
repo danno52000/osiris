@@ -1,5 +1,5 @@
 /**
- * OSIRIS Intelligence Layer — osiris-intel
+ * GIDEON Intelligence Layer — gideon-intel
  *
  * Centralized ontology engine that ingests, indexes, and correlates entities
  * across open-source intelligence feeds. All other services query this one
@@ -25,7 +25,7 @@ const PORT = process.env.INTEL_PORT || 4000;
 
 const SDN_CSV_URL = 'https://data.opensanctions.org/datasets/latest/us_ofac_sdn/targets.simple.csv';
 const WIKIDATA_ENDPOINT = 'https://query.wikidata.org/sparql';
-const WIKIDATA_UA = 'OSIRIS-Intel/1.0 (https://osirisai.live; ontology engine)';
+const WIKIDATA_UA = 'GIDEON-Intel/1.0 (+https://github.com/danno52000/3BAI-fusion; ontology engine)';
 const SDN_REFRESH_MS = 24 * 60 * 60 * 1000; // 24h
 const WIKIDATA_CACHE_TTL = 24 * 60 * 60 * 1000; // 24h
 const WIKIDATA_CACHE_MAX = 10_000;
@@ -745,7 +745,7 @@ app.get('/resolve', async (req, res) => {
       nodes: result.nodes,
       links: result.links,
       entity: { type, id },
-      source: 'OSIRIS Intelligence Layer',
+      source: 'GIDEON Intelligence Layer',
       sanctions_index_size: sanctionsIndex.entries.length,
       wikidata_cache_hits: wdCache.size,
       timestamp: new Date().toISOString(),
@@ -761,7 +761,7 @@ app.get('/resolve', async (req, res) => {
 // ════════════════════════════════════════════════════
 
 async function boot() {
-  console.log('[INTEL] OSIRIS Intelligence Layer starting...');
+  console.log('[INTEL] GIDEON Intelligence Layer starting...');
   await loadSanctions();
   // Refresh sanctions every 24h
   setInterval(() => loadSanctions(), SDN_REFRESH_MS);
