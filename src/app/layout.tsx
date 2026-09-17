@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import ErrorBoundary from '@/components/ErrorBoundary';
 import "./globals.css";
 
-const SITE_URL = "https://osirisai.live";
+const SITE_URL = process.env.SITE_URL || "http://157.230.228.37:3000";
 const SITE_NAME = "GIDEON";
 const SITE_TITLE = "GIDEON | Cross-Domain Intelligence Platform";
 const SITE_DESCRIPTION = "GIDEON: Multi-domain decision advantage platform fusing tactical border surveillance with strategic supply chain illumination.";

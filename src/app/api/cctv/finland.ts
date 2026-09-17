@@ -10,7 +10,7 @@ export async function fetchFinlandCameras(): Promise<any[]> {
   try {
     const res = await stealthFetch('https://tie.digitraffic.fi/api/weathercam/v1/stations', {
       signal: AbortSignal.timeout(12000),
-      headers: { 'Digitraffic-User': 'OSIRIS/1.0' },
+      headers: { 'Digitraffic-User': 'GIDEON/1.0' },
     });
     if (!res.ok) return [];
 

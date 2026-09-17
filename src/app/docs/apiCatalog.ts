@@ -503,7 +503,7 @@ export const API_GROUPS: ApiGroup[] = [
       {
         path: '/api/scanner',
         method: 'GET',
-        summary: 'Runs a scan against a target via the OSIRIS scanner backend.',
+        summary: 'Runs a scan against a target via the GIDEON scanner backend.',
         params: [
           {
             name: 'type',

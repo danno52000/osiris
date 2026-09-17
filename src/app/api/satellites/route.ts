@@ -176,7 +176,7 @@ async function fetchCelesTrakGroup(url: string): Promise<{ name: string; line1: 
     const res = await fetch(url, {
       signal: AbortSignal.timeout(30000),
       cache: 'no-store',
-      headers: { 'User-Agent': 'OSIRIS/4.2 (satellite-tracker)' },
+      headers: { 'User-Agent': 'GIDEON/1.0 (satellite-tracker)' },
     });
     if (!res.ok) return [];
     const text = await res.text();

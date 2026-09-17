@@ -1,18 +1,42 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <defs>
-    <radialGradient id="iris" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#F5D76E"/>
-      <stop offset="100%" stop-color="#D4AF37"/>
-    </radialGradient>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#00E5FF"/>
+      <stop offset="1" stop-color="#0088CC"/>
+    </linearGradient>
   </defs>
-  <rect width="32" height="32" rx="6" fill="#06060C"/>
-  <!-- Eye shape -->
-  <path d="M3 15 Q10 7 16 9 Q22 7 29 15 Q22 23 16 21 Q10 23 3 15Z" 
-        fill="rgba(212,175,55,0.1)" stroke="#D4AF37" stroke-width="1.2"/>
-  <!-- Iris -->
-  <circle cx="16" cy="15" r="4" fill="url(#iris)"/>
-  <!-- Pupil -->
-  <circle cx="16" cy="15" r="1.5" fill="#06060C"/>
-  <!-- Teardrop -->
-  <path d="M16 19 L14 25 L13 23" stroke="#D4AF37" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+  <rect width="64" height="64" rx="14" fill="#0A0F18"/>
+  <!-- head profile dome -->
+  <path d="M44 52 V46 C50 42 53 37 53 31 C53 20 44 12 33 12 C22 12 13 20 13 30 C13 33 14 36 15 38 L12 42 C11 43 11 44 13 44 H16 V49 C16 50 17 51 18 51 H24"
+        fill="none" stroke="url(#g)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- neural lattice inside the dome -->
+  <g stroke="url(#g)" stroke-width="1.4" opacity="0.85">
+    <line x1="24" y1="24" x2="33" y2="19"/>
+    <line x1="33" y1="19" x2="41" y2="26"/>
+    <line x1="24" y1="24" x2="28" y2="33"/>
+    <line x1="28" y1="33" x2="38" y2="33"/>
+    <line x1="38" y1="33" x2="41" y2="26"/>
+    <line x1="28" y1="33" x2="23" y2="40"/>
+    <line x1="38" y1="33" x2="44" y2="39"/>
+  </g>
+  <g fill="#00E5FF">
+    <circle cx="24" cy="24" r="2.4"/>
+    <circle cx="33" cy="19" r="2.4"/>
+    <circle cx="41" cy="26" r="2.4"/>
+    <circle cx="28" cy="33" r="2.4"/>
+    <circle cx="38" cy="33" r="2.4"/>
+    <circle cx="23" cy="40" r="1.8"/>
+    <circle cx="44" cy="39" r="1.8"/>
+  </g>
+  <!-- circuit traces out of the neck -->
+  <g stroke="url(#g)" stroke-width="1.6" fill="none" opacity="0.9">
+    <path d="M36 52 V57"/>
+    <path d="M41 50 V60"/>
+    <path d="M46 47 V56"/>
+  </g>
+  <g fill="#0088CC">
+    <circle cx="36" cy="58.5" r="1.6"/>
+    <circle cx="41" cy="61.5" r="1.6"/>
+    <circle cx="46" cy="57.5" r="1.6"/>
+  </g>
 </svg>

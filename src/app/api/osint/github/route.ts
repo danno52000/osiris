@@ -8,8 +8,8 @@ export async function GET(req: Request) {
 
   try {
     const [userRes, reposRes] = await Promise.all([
-      fetch(`https://api.github.com/users/${encodeURIComponent(username)}`, { signal: AbortSignal.timeout(15000), headers: { 'User-Agent': 'OSIRIS-Recon' } }),
-      fetch(`https://api.github.com/users/${encodeURIComponent(username)}/repos?sort=updated&per_page=5`, { signal: AbortSignal.timeout(15000), headers: { 'User-Agent': 'OSIRIS-Recon' } })
+      fetch(`https://api.github.com/users/${encodeURIComponent(username)}`, { signal: AbortSignal.timeout(15000), headers: { 'User-Agent': 'GIDEON-INTEL/1.0 (+github.com/danno52000/3BAI-fusion)' } }),
+      fetch(`https://api.github.com/users/${encodeURIComponent(username)}/repos?sort=updated&per_page=5`, { signal: AbortSignal.timeout(15000), headers: { 'User-Agent': 'GIDEON-INTEL/1.0 (+github.com/danno52000/3BAI-fusion)' } })
     ]);
 
     if (userRes.status === 404) return NextResponse.json({ error: 'User not found' }, { status: 404 });
