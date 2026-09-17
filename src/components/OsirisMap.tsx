@@ -1423,6 +1423,9 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
     map.on('click', 'plaza-fill', (e: any) => {
       const p = e.features?.[0]?.properties;
       if (!p) return;
+      // Pins win over enclosing geofences — both layer handlers fire on the
+      // same click and the later registration would otherwise clobber the pin popup.
+      if (map.queryRenderedFeatures(e.point, { layers: ['border-wait-dots'] }).length) return;
       popup(e.lngLat, `<div style="${pStyle}border:1px solid rgba(168,85,247,0.5);">
         <div style="color:#A855F7;font-size:12px;font-weight:700;margin-bottom:4px;">${htmlEsc(p.name)}</div>
         <div style="font-size:9px;color:#8A8880;margin-bottom:8px;">${htmlEsc(p.state)} — ${htmlEsc(p.event_type)}${p.contested ? ' · CONTESTED' : ''}</div>
