@@ -556,7 +556,10 @@ function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'co
                   animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
                   exit={{ opacity: 0, x: -4, filter: 'blur(2px)' }}
                   transition={{ duration: 0.18, ease: 'easeOut' }}
-                  className="absolute left-[52px] top-1/2 -translate-y-1/2 z-[100] pointer-events-auto"
+                  /* Centered-on-button like the group flyouts would drop the
+                     card's lower half under the bottom-left map toolbar, so at
+                     the rail bottom it opens upward instead. */
+                  className="absolute left-[52px] bottom-full mb-2 z-[100] pointer-events-auto"
                 >
                   <BorderIntelPanel
                     cbpWaitsActive={!!activeLayers.cbp_waits}
