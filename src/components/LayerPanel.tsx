@@ -5,9 +5,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plane, Satellite, Sun, AlertTriangle, Camera,
   CloudLightning, Ship, Network, Database, Ghost,
-  Flame, Tv, Radio, Mountain, Anchor, Megaphone, SlidersHorizontal
+  Flame, Tv, Radio, Mountain, Anchor, Megaphone, SlidersHorizontal,
+  ShieldAlert
 } from 'lucide-react';
 import StyleStudio from './StyleStudio';
+import BorderIntelPanel from './BorderIntelPanel';
 import { TERRAIN_MIN_ZOOM, type TerrainStatus } from '@/lib/map-terrain';
 
 interface LayerPanelProps {
@@ -24,6 +26,10 @@ interface LayerPanelProps {
   onTerrainRetry?: () => void;
   onTerrainFocus?: () => void;
   on3DModeSelected?: () => void;
+  /** Border & Threat Corridors card — owned by the page so the right-rail
+   *  buttons can also close it. */
+  borderIntelOpen?: boolean;
+  onBorderIntelChange?: (open: boolean) => void;
 }
 
 interface LayerDef {
@@ -197,7 +203,7 @@ function SubLayerStem() {
   );
 }
 
-function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'core', setTheme, capabilities = {}, terrainStatus = 'idle', onTerrainRetry, onTerrainFocus, on3DModeSelected }: LayerPanelProps) {
+function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'core', setTheme, capabilities = {}, terrainStatus = 'idle', onTerrainRetry, onTerrainFocus, on3DModeSelected, borderIntelOpen = false, onBorderIntelChange }: LayerPanelProps) {
   const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
   /**
    * A pinned group stays open when the pointer leaves. Hover-only flyouts are
@@ -207,12 +213,14 @@ function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'co
   const [pinnedGroup, setPinnedGroup] = useState<string | null>(null);
   const [studioOpen, setStudioOpen] = useState(false);
 
+  const closeBorderIntel = () => onBorderIntelChange?.(false);
+
   useEffect(() => {
-    if (!pinnedGroup) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setPinnedGroup(null); };
+    if (!pinnedGroup && !borderIntelOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { setPinnedGroup(null); closeBorderIntel(); } };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [pinnedGroup]);
+  }, [pinnedGroup, borderIntelOpen]);
 
   const toggle = (key: string) => {
     if ((key === 'terrain_elevation' || key === 'terrain_3d') && !activeLayers[key]) on3DModeSelected?.();
@@ -372,14 +380,14 @@ function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'co
             <div
               key={group.label}
               className="relative flex items-center justify-center"
-              onMouseEnter={() => setHoveredGroup(group.label)}
+              onMouseEnter={() => { setHoveredGroup(group.label); closeBorderIntel(); }}
               onMouseLeave={() => setHoveredGroup(null)}
             >
               {/* A real button, not a div: this is keyboard reachable, focusable
                   and announced. Clicking pins the flyout open so it can be
                   worked in rather than only glanced at. */}
               <button
-                onClick={() => setPinnedGroup(isPinned ? null : group.label)}
+                onClick={() => { setPinnedGroup(isPinned ? null : group.label); if (!isPinned) closeBorderIntel(); }}
                 aria-expanded={isOpen}
                 aria-label={`${group.fullLabel}${activeCount ? ` — ${activeCount} active` : ''}`}
                 title={group.fullLabel}
@@ -501,9 +509,77 @@ function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'co
       {/* Subtle separator */}
       <div className="w-5 h-px bg-white/[0.06] my-2" />
 
+      {/* Border & Threat Corridors — CBP wait times + cartel geofences */}
+      {(() => {
+        const borderCount = (activeLayers.cbp_waits ? 1 : 0) + (activeLayers.plaza_geofences ? 1 : 0);
+        return (
+          <div className="relative flex items-center justify-center">
+            <button
+              onClick={() => { onBorderIntelChange?.(!borderIntelOpen); setPinnedGroup(null); setHoveredGroup(null); setStudioOpen(false); }}
+              aria-expanded={borderIntelOpen}
+              aria-label="Border & Threat Corridors"
+              title="Border & Threat Corridors"
+              className="relative w-10 h-10 flex items-center justify-center cursor-pointer rounded-lg transition-all duration-300 focus:outline-none focus-visible:ring-1 focus-visible:ring-white/40"
+              style={{ background: borderIntelOpen ? 'rgba(0,229,255,0.10)' : 'transparent' }}
+            >
+              <ShieldAlert
+                className="transition-all duration-300"
+                style={{
+                  width: 16,
+                  height: 16,
+                  color: borderIntelOpen
+                    ? 'rgba(0,229,255,0.9)'
+                    : borderCount > 0
+                      ? 'rgba(255,255,255,0.6)'
+                      : 'rgba(255,255,255,0.22)',
+                  filter: borderIntelOpen || borderCount > 0 ? 'drop-shadow(0 0 4px rgba(0,229,255,0.4))' : 'none',
+                }}
+              />
+              {borderCount > 0 && (
+                <span
+                  className="absolute top-1 right-1 min-w-[13px] h-[13px] px-[3px] rounded-full flex items-center justify-center text-[9px] font-mono tabular-nums leading-none"
+                  style={{
+                    background: 'rgba(0,229,255,0.9)',
+                    color: '#04040A',
+                    boxShadow: '0 0 6px rgba(0,229,255,0.5)',
+                  }}
+                >
+                  {borderCount}
+                </span>
+              )}
+            </button>
+
+            <AnimatePresence>
+              {borderIntelOpen && (
+                <motion.div
+                  initial={{ opacity: 0, x: -8, filter: 'blur(4px)' }}
+                  animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, x: -4, filter: 'blur(2px)' }}
+                  transition={{ duration: 0.18, ease: 'easeOut' }}
+                  /* Centered-on-button like the group flyouts would drop the
+                     card's lower half under the bottom-left map toolbar, so at
+                     the rail bottom it opens upward instead. */
+                  className="absolute left-[52px] bottom-full mb-2 z-[100] pointer-events-auto"
+                >
+                  <BorderIntelPanel
+                    cbpWaitsActive={!!activeLayers.cbp_waits}
+                    plazaGeofencesActive={!!activeLayers.plaza_geofences}
+                    onToggleWaits={() => toggle('cbp_waits')}
+                    onToggleGeofences={() => toggle('plaza_geofences')}
+                    waitCount={Array.isArray(data.border_wait_times) ? data.border_wait_times.length : undefined}
+                    zoneCount={Array.isArray(data.plaza_geofences) ? data.plaza_geofences.length : undefined}
+                    waitsDegraded={Array.isArray(data.border_wait_times) && data.border_wait_times.length > 0 && data.border_wait_times.every((p: any) => p.source === 'unavailable')}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        );
+      })()}
+
       {/* Style Studio */}
       <button
-        onClick={() => setStudioOpen(o => !o)}
+        onClick={() => setStudioOpen(o => { if (!o) closeBorderIntel(); return !o; })}
         aria-pressed={studioOpen}
         className="w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-500 cursor-pointer"
         style={{ background: studioOpen ? 'var(--hover-accent)' : 'transparent' }}

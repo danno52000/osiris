@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Layers, BarChart3, Newspaper, Search, X, Globe, MapPinned, Route, Radar, Satellite, Moon, ExternalLink, AlertTriangle, Activity, Database, Wifi, Play, Network, Crosshair, Bluetooth, Pentagon, Radio , PenLine, ShieldAlert } from 'lucide-react';
+import { Layers, BarChart3, Newspaper, Search, X, Globe, MapPinned, Route, Radar, Satellite, Moon, ExternalLink, AlertTriangle, Activity, Database, Wifi, Play, Network, Crosshair, Bluetooth, Pentagon, Radio , PenLine } from 'lucide-react';
 import { type TerrainStatus } from '@/lib/map-terrain';
 import { loadCameraCatalog, mergeCameraCatalog } from '@/lib/camera-catalog';
 import IntelFeed from '@/components/IntelFeed';
@@ -28,7 +28,6 @@ import ArcGISPanel from '@/components/ArcGISPanel';
 const OsirisMap = dynamic(() => import('@/components/OsirisMap'), { ssr: false });
 const EntityBriefDrawer = dynamic(() => import('@/components/EntityBriefDrawer'));
 const LayerPanel = dynamic(() => import('@/components/LayerPanel'));
-const BorderIntelPanel = dynamic(() => import('@/components/BorderIntelPanel'));
 const SpaceCam = dynamic(() => import('@/components/SpaceCam'), { ssr: false });
 const CameraViewer = dynamic(() => import('@/components/CameraViewer'));
 const OsintPanel = dynamic(() => import('@/components/OsintPanel'));
@@ -1375,7 +1374,7 @@ export default function Dashboard() {
 
 
       {/* ── NEW SIDEBAR (Root Level) ── */}
-      {showLayers && !isMobile && <LayerPanel {...terrainPanelProps} data={data} activeLayers={activeLayers} setActiveLayers={setActiveLayers} theme={osirisTheme} setTheme={setOsirisTheme} capabilities={capabilities} />}
+      {showLayers && !isMobile && <LayerPanel {...terrainPanelProps} data={data} activeLayers={activeLayers} setActiveLayers={setActiveLayers} theme={osirisTheme} setTheme={setOsirisTheme} capabilities={capabilities} borderIntelOpen={showBorderIntel} onBorderIntelChange={setShowBorderIntel} />}
 
 
 
@@ -1462,34 +1461,6 @@ export default function Dashboard() {
             {showAlerts && (
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="absolute right-12 top-1/2 -translate-y-1/2 w-80">
                 <LiveAlerts data={data} onLocate={(lat, lng) => setFlyToLocation({ lat, lng, ts: Date.now() })} onWatchFeed={(url, name) => { setLiveFeedUrl(url); setLiveFeedName(name); }} />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        <div className="relative group">
-          <button onClick={() => { setShowBorderIntel(!showBorderIntel); setShowIntel(false); setShowMarkets(false); setShowAlerts(false); setShowSpaceCam(false); setShowDrawing(false); }} className={`relative w-8 h-8 rounded-full flex items-center justify-center transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-white/50 ${showBorderIntel ? 'bg-[#00E5FF]/20' : 'hover:bg-white/10'}`} title="Border & Threat Corridors — CBP wait times, cartel geofences" aria-label="Border & Threat Corridors" aria-expanded={showBorderIntel}>
-            <ShieldAlert className={`w-4 h-4 ${showBorderIntel ? 'text-[#00E5FF]' : 'text-white/60'}`} />
-            {showBorderIntel && (
-              <span
-                aria-hidden="true"
-                className="absolute -right-1 top-1/2 -translate-y-1/2 h-4 w-[2px] rounded-full bg-current text-[#00E5FF]"
-              />
-            )}
-          </button>
-          <span className="absolute right-11 top-1/2 -translate-y-1/2 px-2 py-1 text-[9px] font-mono tracking-wider text-white/80 bg-black/80 backdrop-blur-sm rounded whitespace-nowrap opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity pointer-events-none">BORDER INTEL</span>
-          <AnimatePresence>
-            {showBorderIntel && (
-              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="absolute right-12 top-1/2 -translate-y-1/2 w-80">
-                <BorderIntelPanel
-                  cbpWaitsActive={!!(activeLayers as any).cbp_waits}
-                  plazaGeofencesActive={!!(activeLayers as any).plaza_geofences}
-                  onToggleWaits={() => setActiveLayers((prev: any) => ({ ...prev, cbp_waits: !prev.cbp_waits }))}
-                  onToggleGeofences={() => setActiveLayers((prev: any) => ({ ...prev, plaza_geofences: !prev.plaza_geofences }))}
-                  waitCount={Array.isArray(data.border_wait_times) ? data.border_wait_times.length : undefined}
-                  zoneCount={Array.isArray(data.plaza_geofences) ? data.plaza_geofences.length : undefined}
-                  waitsDegraded={Array.isArray(data.border_wait_times) && data.border_wait_times.length > 0 && data.border_wait_times.every((p: any) => p.source === 'unavailable')}
-                />
               </motion.div>
             )}
           </AnimatePresence>
