@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Layers, BarChart3, Newspaper, Search, X, Globe, MapPinned, Route, Radar, Satellite, Moon, ExternalLink, AlertTriangle, Activity, Database, Wifi, Play, Network, Crosshair, Bluetooth, Pentagon, Radio , PenLine } from 'lucide-react';
 import { type TerrainStatus } from '@/lib/map-terrain';
+import { DEMO_TARGETS, DEMO_TARGET_IDS } from '@/lib/demo-targets';
 import { loadCameraCatalog, mergeCameraCatalog } from '@/lib/camera-catalog';
 import IntelFeed from '@/components/IntelFeed';
 import MarketsPanel from '@/components/MarketsPanel';
@@ -162,6 +163,7 @@ export default function Dashboard() {
   const [showIntel, setShowIntel] = useState(false);
   const [showBorderIntel, setShowBorderIntel] = useState(false);
   const [showThreatLogic, setShowThreatLogic] = useState(false);
+  const [demoScenariosEnabled, setDemoScenariosEnabled] = useState(false);
   const [showDrawing, setShowDrawing] = useState(false);
   const [drawMode, setDrawMode] = useState<DrawMode | null>(null);
   const [drawProgress, setDrawProgress] = useState<DrawProgress | null>(null);
@@ -501,6 +503,12 @@ export default function Dashboard() {
       setLiveFeedEmbedAllowed(entity.embed_allowed !== false);
     }
     if (entity?.type === 'fusion_correlation' && entity.track_id) {
+      if (entity.demo_brief) {
+        // Demo targets carry their dossier inside the feature — the sidecar
+        // has no record of them, so a brief fetch would come back empty.
+        setEntityBrief(entity.demo_brief);
+        return;
+      }
       setBriefLoading(true); setEntityBrief(null);
       fetch(`/api/fusion/brief?track_id=${encodeURIComponent(entity.track_id)}`, { cache: 'no-store' })
         .then(res => (res.ok ? res.json() : null))
@@ -509,6 +517,13 @@ export default function Dashboard() {
         .finally(() => setBriefLoading(false));
     }
   }, []);
+
+  // Demo injection off → drop any open brief belonging to a scripted target.
+  useEffect(() => {
+    if (!demoScenariosEnabled && entityBrief && DEMO_TARGET_IDS.has(entityBrief.track_id)) {
+      setEntityBrief(null);
+    }
+  }, [demoScenariosEnabled, entityBrief]);
 
   // ── Drawing / AOI ──
   // OsirisMap already owns the draw interaction and the polygon rendering;
@@ -1172,7 +1187,9 @@ export default function Dashboard() {
       <ErrorBoundary name="Map">
         <OsirisMap 
           key={osirisTheme}
-          data={data} 
+          data={demoScenariosEnabled
+            ? { ...data, fusion_correlations: [...(data.fusion_correlations || []), ...DEMO_TARGETS] }
+            : data}
           activeLayers={activeLayers} 
           projection={mapProjection === 'mercator' ? 'mercator' : 'globe'}
           terrainEnabled={activeLayers.terrain_elevation && mapProjection === 'globe'}
@@ -1375,7 +1392,7 @@ export default function Dashboard() {
 
 
       {/* ── NEW SIDEBAR (Root Level) ── */}
-      {showLayers && !isMobile && <LayerPanel {...terrainPanelProps} data={data} activeLayers={activeLayers} setActiveLayers={setActiveLayers} theme={osirisTheme} setTheme={setOsirisTheme} capabilities={capabilities} borderIntelOpen={showBorderIntel} onBorderIntelChange={setShowBorderIntel} threatLogicOpen={showThreatLogic} onThreatLogicChange={setShowThreatLogic} />}
+      {showLayers && !isMobile && <LayerPanel {...terrainPanelProps} data={data} activeLayers={activeLayers} setActiveLayers={setActiveLayers} theme={osirisTheme} setTheme={setOsirisTheme} capabilities={capabilities} borderIntelOpen={showBorderIntel} onBorderIntelChange={setShowBorderIntel} threatLogicOpen={showThreatLogic} onThreatLogicChange={setShowThreatLogic} demoScenariosEnabled={demoScenariosEnabled} onDemoScenariosChange={setDemoScenariosEnabled} />}
 
 
 
