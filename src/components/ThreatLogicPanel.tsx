@@ -1,6 +1,7 @@
 'use client';
 
-import { Cpu } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Cpu, FlaskConical } from 'lucide-react';
 
 const TRIAGE_POINTS = [
   'Trajectory-physics filter strips 65–75% of nuisance alarms',
@@ -24,6 +25,34 @@ const FACTOR_WEIGHTS = [
   { name: 'CARTEL PLAZA PROXIMITY', weight: '0.10' },
 ];
 
+/** Presentational toggle — the row is the button (a button inside a button
+ *  silently drops the click handler). Amber accent marks simulated data. */
+function DemoToggle({ active }: { active: boolean }) {
+  return (
+    <span role="presentation" className="relative flex-shrink-0 block" style={{ width: 28, height: 14 }}>
+      <div
+        className="absolute inset-0 rounded-full transition-all duration-300"
+        style={{
+          background: active ? 'rgba(255,179,0,0.16)' : 'transparent',
+          border: active ? '1px solid rgba(255,179,0,0.5)' : '1px solid rgba(255,255,255,0.12)',
+          boxShadow: active ? '0 0 8px rgba(255,179,0,0.25)' : 'none',
+        }}
+      />
+      <motion.div
+        className="absolute top-[2px] rounded-full"
+        style={{
+          width: 10,
+          height: 10,
+          background: active ? '#FFB300' : 'rgba(255,255,255,0.2)',
+          boxShadow: active ? '0 0 6px rgba(255,179,0,0.6)' : 'none',
+        }}
+        animate={{ left: active ? 16 : 2 }}
+        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+      />
+    </span>
+  );
+}
+
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div className="px-4 pt-3 pb-1.5 text-[9px] font-mono font-bold tracking-[0.18em] text-[#00E5FF]/80 uppercase border-t border-white/[0.05]">
@@ -32,7 +61,12 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function ThreatLogicPanel() {
+interface ThreatLogicPanelProps {
+  demoScenariosEnabled?: boolean;
+  onDemoScenariosChange?: (enabled: boolean) => void;
+}
+
+export default function ThreatLogicPanel({ demoScenariosEnabled = false, onDemoScenariosChange }: ThreatLogicPanelProps) {
   return (
     <div className="glass-panel w-80 rounded-xl overflow-hidden flex flex-col pointer-events-auto">
       <div className="px-4 pt-3.5 pb-3">
@@ -78,6 +112,32 @@ export default function ThreatLogicPanel() {
             <span className="text-[9px] font-mono font-bold tabular-nums text-[#00E5FF]">{f.weight}</span>
           </div>
         ))}
+      </div>
+
+      <div className="border-t border-white/[0.06] px-2 py-1.5">
+        <button
+          onClick={() => onDemoScenariosChange?.(!demoScenariosEnabled)}
+          aria-pressed={demoScenariosEnabled}
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors hover:bg-white/[0.04] focus:outline-none focus-visible:ring-1 focus-visible:ring-white/40"
+        >
+          <span className={`${demoScenariosEnabled ? 'text-[#FFB300]' : 'text-white/30'} transition-colors`}>
+            <FlaskConical className="w-3.5 h-3.5" />
+          </span>
+          <span className="flex-1 min-w-0">
+            <span className="block text-[10px] font-mono font-bold tracking-[0.12em] text-white/85 truncate">
+              DEMO SCENARIO INJECTION
+            </span>
+            <span className="block text-[8px] font-mono tracking-wider text-white/35 mt-0.5 truncate">
+              Inject active 10 U.S.C. 4022/4023 correlated targets onto COP
+            </span>
+            {demoScenariosEnabled && (
+              <span className="block text-[8px] font-mono tracking-wider mt-0.5 text-[#FFB300]/80">
+                2 SIMULATED CRITICAL TARGETS LIVE
+              </span>
+            )}
+          </span>
+          <DemoToggle active={demoScenariosEnabled} />
+        </button>
       </div>
 
       <div className="px-4 py-2 border-t border-white/[0.06] flex items-center gap-2">

@@ -34,6 +34,9 @@ interface LayerPanelProps {
   /** Threat Logic Engine card — same page-owned pattern. */
   threatLogicOpen?: boolean;
   onThreatLogicChange?: (open: boolean) => void;
+  /** Demo Scenario Injection toggle inside the threat card. */
+  demoScenariosEnabled?: boolean;
+  onDemoScenariosChange?: (enabled: boolean) => void;
 }
 
 interface LayerDef {
@@ -207,7 +210,7 @@ function SubLayerStem() {
   );
 }
 
-function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'core', setTheme, capabilities = {}, terrainStatus = 'idle', onTerrainRetry, onTerrainFocus, on3DModeSelected, borderIntelOpen = false, onBorderIntelChange, threatLogicOpen = false, onThreatLogicChange }: LayerPanelProps) {
+function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'core', setTheme, capabilities = {}, terrainStatus = 'idle', onTerrainRetry, onTerrainFocus, on3DModeSelected, borderIntelOpen = false, onBorderIntelChange, threatLogicOpen = false, onThreatLogicChange, demoScenariosEnabled = false, onDemoScenariosChange }: LayerPanelProps) {
   const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
   /**
    * A pinned group stays open when the pointer leaves. Hover-only flyouts are
@@ -610,7 +613,7 @@ function LayerPanel({ data, activeLayers, setActiveLayers, isMobile, theme = 'co
                  under the bottom-left map toolbar. */
               className="absolute left-[52px] bottom-full mb-2 z-[100] pointer-events-auto"
             >
-              <ThreatLogicPanel />
+              <ThreatLogicPanel demoScenariosEnabled={demoScenariosEnabled} onDemoScenariosChange={onDemoScenariosChange} />
             </motion.div>
           )}
         </AnimatePresence>

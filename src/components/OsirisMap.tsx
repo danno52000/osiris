@@ -1449,6 +1449,7 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
         track_type: p.track_type,
         risk_score: p.risk_score,
         threat_classification: p.threat_classification,
+        demo_brief: p.demo_brief ? JSON.parse(p.demo_brief) : undefined,
       });
     });
 
@@ -2131,6 +2132,9 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
         risk_score: c.risk_score,
         threat_classification: c.threat_classification,
         high_risk: Boolean(c.sanctions_hit || (c.risk_score ?? 0) >= 0.7),
+        // GeoJSON properties must be primitives — the demo dossier rides
+        // through as a JSON string and is parsed back on click.
+        demo_brief: c.demo_brief ? JSON.stringify(c.demo_brief) : undefined,
       },
     })));
   }, [mapReady, data.fusion_correlations, setGeo]);
