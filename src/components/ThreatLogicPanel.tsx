@@ -127,7 +127,7 @@ export default function ThreatLogicPanel({ demoScenariosEnabled = false, onDemoS
             <span className="block text-[10px] font-mono font-bold tracking-[0.12em] text-white/85 truncate">
               DEMO SCENARIO INJECTION
             </span>
-            <span className="block text-[8px] font-mono tracking-wider text-white/35 mt-0.5 truncate">
+            <span className="block text-[8px] font-mono tracking-wider text-white/35 mt-0.5 leading-snug">
               Inject active 10 U.S.C. 4022/4023 correlated targets onto COP
             </span>
             {demoScenariosEnabled && (

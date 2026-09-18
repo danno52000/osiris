@@ -1392,7 +1392,7 @@ export default function Dashboard() {
 
 
       {/* ── NEW SIDEBAR (Root Level) ── */}
-      {showLayers && !isMobile && <LayerPanel {...terrainPanelProps} data={data} activeLayers={activeLayers} setActiveLayers={setActiveLayers} theme={osirisTheme} setTheme={setOsirisTheme} capabilities={capabilities} borderIntelOpen={showBorderIntel} onBorderIntelChange={setShowBorderIntel} threatLogicOpen={showThreatLogic} onThreatLogicChange={setShowThreatLogic} />}
+      {showLayers && !isMobile && <LayerPanel {...terrainPanelProps} data={data} activeLayers={activeLayers} setActiveLayers={setActiveLayers} theme={osirisTheme} setTheme={setOsirisTheme} capabilities={capabilities} borderIntelOpen={showBorderIntel} onBorderIntelChange={setShowBorderIntel} threatLogicOpen={showThreatLogic} onThreatLogicChange={setShowThreatLogic} demoScenariosEnabled={demoScenariosEnabled} onDemoScenariosChange={setDemoScenariosEnabled} />}
 
 
 
