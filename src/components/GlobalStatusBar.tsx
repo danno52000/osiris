@@ -13,6 +13,13 @@ const DocsIcon = () => (
     <path d="M12 7v14"/>
   </svg>
 );
+const DataIcon = () => (
+  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <ellipse cx="12" cy="5.5" rx="7" ry="2.5"/>
+    <path d="M5 5.5v6c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5v-6"/>
+    <path d="M5 11.5v6c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5v-6"/>
+  </svg>
+);
 
 export default function GlobalStatusBar() {
   const [quakes, setQuakes] = useState<Earthquake[]>([]);
@@ -72,6 +79,13 @@ export default function GlobalStatusBar() {
           >
             <DocsIcon />
             <span className="text-[9px] font-bold tracking-[0.15em] uppercase">Docs</span>
+          </Link>
+          {/* Data Admin: public-source status (aggregate metadata only) */}
+          <Link href="/data-admin" prefetch={false} title="Data Admin — public-source status" aria-label="Data Admin — public-source status"
+            className="h-full px-3 flex items-center gap-1.5 text-[var(--cyan-primary)]/70 hover:text-[var(--cyan-primary)] hover:bg-[var(--cyan-primary)]/15 border-r border-white/[0.04] transition-all duration-200"
+          >
+            <DataIcon />
+            <span className="text-[9px] font-bold tracking-[0.15em] uppercase">Data</span>
           </Link>
         </div>
 
