@@ -22,6 +22,8 @@ export interface FlagValue {
   cadence_text?: string | null;
   note?: string | null;
   rule?: string | null;
+  /** Live `loaded` only: which source-specific evidence decided the value. */
+  basis?: string | null;
   observed_at?: string | null;
 }
 
@@ -61,9 +63,13 @@ export interface DatasetCount {
 
 export interface SourcePeriod {
   kind: string;
+  /** Publisher-side period; null = unknown (never substituted with GIDEON `published_at`). */
   value: string | Record<string, unknown> | null;
   note?: string | null;
   release_last_modified?: string | null;
+  /** Declared coverage from the reviewed manifest (evidence), kept apart from `value`. */
+  declared_coverage?: string | null;
+  declared_coverage_provenance?: Provenance | null;
 }
 
 export interface LastAttempt {
@@ -245,4 +251,99 @@ export const NON_LIVE_DISPOSITIONS = new Set(['blocked', 'deferred']);
 
 export function isNonLive(source: Pick<DataAdminSource, 'disposition' | 'datasets'>): boolean {
   return NON_LIVE_DISPOSITIONS.has(source.disposition) || source.datasets.length === 0;
+}
+
+export type LoadedBadgeTone = 'loaded' | 'not_loaded' | 'unknown' | 'blocked' | 'deferred';
+
+export interface LoadedBadge {
+  label: string;
+  tone: LoadedBadgeTone;
+  /** `flags.loaded.value` for live sources; static dispositions carry no live value. */
+  liveValue: boolean | null;
+}
+
+/**
+ * The card badge follows the live `loaded` flag, never the static disposition alone:
+ * a `loaded` disposition with a false/unknown live flag must not read LOADED.
+ */
+export function loadedBadge(source: Pick<DataAdminSource, 'disposition' | 'datasets' | 'flags'>): LoadedBadge {
+  if (source.disposition === 'blocked') return { label: 'BLOCKED · NOT LOADED', tone: 'blocked', liveValue: null };
+  if (source.disposition === 'deferred') return { label: 'DEFERRED', tone: 'deferred', liveValue: null };
+  const manual = source.disposition === 'loaded_manual' ? ' · MANUAL ONLY' : '';
+  const value = source.flags?.loaded?.value ?? null;
+  if (value === true) return { label: `LOADED${manual}`, tone: 'loaded', liveValue: true };
+  if (value === false) return { label: `NOT LOADED${manual}`, tone: 'not_loaded', liveValue: false };
+  return { label: `LOADED: UNKNOWN${manual}`, tone: 'unknown', liveValue: null };
+}
+
+/** Mirrors the sidecar's STALE_MAX_AGE_S: a retained payload older than this is dropped. */
+export const RETAINED_MAX_AGE_S = 6 * 3600;
+
+/** Browser-side feed state; the view is derived from it by `resolveView`, never from the body alone. */
+export interface FeedState {
+  body: DataAdminResponse | null;
+  /** Wall-clock instant the current `body` was received by the browser. */
+  bodyAt: string | null;
+  fetchError: string | null;
+  fetchedAt: string | null;
+  recovered: boolean;
+}
+
+export const INITIAL_FEED: FeedState = { body: null, bodyAt: null, fetchError: null, fetchedAt: null, recovered: false };
+
+export type FeedEvent =
+  | { type: 'response'; body: DataAdminResponse; at: string }
+  | { type: 'failure'; message: string; at: string };
+
+export type StaleOrigin = 'server' | 'browser' | null;
+
+export interface ResolvedView {
+  view: ViewState;
+  /** Which side failed when `view` is `stale`: the sidecar refresh or this browser's fetch. */
+  staleOrigin: StaleOrigin;
+  /** Seconds since the retained body was last confirmed good (sidecar cache age included). */
+  retainedAgeS: number | null;
+  /** Body safe to render (null once the retained payload has aged out). */
+  body: DataAdminResponse | null;
+}
+
+function ageSeconds(fromIso: string | null, nowIso: string): number | null {
+  if (!fromIso) return null;
+  const from = new Date(fromIso).getTime();
+  const now = new Date(nowIso).getTime();
+  if (Number.isNaN(from) || Number.isNaN(now)) return null;
+  return Math.max(0, Math.round((now - from) / 1000));
+}
+
+/**
+ * A browser/network/JSON failure after a good payload renders `stale` (retained data,
+ * explicit) while the retained payload is younger than RETAINED_MAX_AGE_S, otherwise
+ * `unavailable`; it never renders the old body as fresh `available`.
+ */
+export function resolveView(state: FeedState, nowIso: string, maxAgeS: number = RETAINED_MAX_AGE_S): ResolvedView {
+  const { body, bodyAt, fetchError } = state;
+  if (!fetchError) {
+    const view = deriveViewState(body);
+    return { view, staleOrigin: view === 'stale' ? 'server' : null, retainedAgeS: body?.cache_age_s ?? null, body };
+  }
+  const retainedView = deriveViewState(body);
+  const retainable = retainedView === 'available' || retainedView === 'stale' || retainedView === 'empty';
+  const browserAge = ageSeconds(bodyAt, nowIso);
+  if (!body || !retainable || browserAge === null) {
+    return { view: 'unavailable', staleOrigin: null, retainedAgeS: null, body: null };
+  }
+  const retainedAgeS = browserAge + (body.cache_age_s ?? 0);
+  if (retainedAgeS >= maxAgeS) return { view: 'unavailable', staleOrigin: null, retainedAgeS, body: null };
+  return { view: 'stale', staleOrigin: 'browser', retainedAgeS, body };
+}
+
+export function reduceFeed(prev: FeedState, event: FeedEvent): FeedState {
+  const prevView = resolveView(prev, event.at).view;
+  if (event.type === 'failure') {
+    return { ...prev, fetchError: event.message, fetchedAt: event.at, recovered: false };
+  }
+  const next: FeedState = { body: event.body, bodyAt: event.at, fetchError: null, fetchedAt: event.at, recovered: false };
+  const nextView = deriveViewState(event.body);
+  next.recovered = nextView === 'available' && (prevView === 'unavailable' || prevView === 'stale');
+  return next;
 }
