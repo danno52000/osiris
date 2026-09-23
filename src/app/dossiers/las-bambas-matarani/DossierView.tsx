@@ -386,6 +386,7 @@ export function DossierView({ feed, resolved, selectedEdgeId, onSelectEdge }: Do
                 { key: 'quantity', label: 'Quantity', render: (r) => r.quantity, mono: true },
                 { key: 'product', label: 'Product', render: (r) => r.product },
                 { key: 'basis', label: 'Basis', render: (r) => r.basis },
+                { key: 'shareof', label: 'Share of', render: (r) => r.shareOf ?? '—' },
                 { key: 'period', label: 'Reporting period', render: (r) => r.period, mono: true },
                 { key: 'docdate', label: 'Document date', render: (r) => r.documentDate, mono: true },
               ]}

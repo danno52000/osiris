@@ -556,6 +556,62 @@ describe('E3A: operating baseline (C1), declared public-safe gaps (C2), required
     expect(html).toContain('Quoted text is not redistributed');
   });
 
+  // Correction 1 (GIDEON-E3A-CORRECTION-1): real packet shapes served by the corrected sidecar.
+  const realShare = {
+    ...metric('e3a-real-share', { metric: 'cargo_share', product: 'terminal_cargo', quantity: '17.7', unit: 'percent', basis: 'reported_share' },
+      { period_start: '2025-01-01', period_end: '2025-12-31', document_published_at: null }),
+    scope: { share_of: 'port:matarani-pe-mri' },
+  };
+  const realUnquantified = metric('e3a-real-null', { metric: 'production', product: null, quantity: null, unit: null, basis: 'actual' },
+    { period_start: '2025-01-01', period_end: '2025-12-31', document_published_at: null });
+  const realOperator = {
+    id: 'e3a-real-operator', version: 1, predicate: 'operates' as const, subject: reporter, object: mine,
+    evidence_category: 'reported', evidence: doc.evidence, value: null, scope: {}, temporal: { document_published_at: null }, correction: null,
+  };
+
+  it('cargo share visibly names Las Bambas as numerator and total Matarani cargo as denominator in the table, without the drawer', () => {
+    const body = withE3A([realShare], []);
+    expect(isDossierResponse(body)).toBe(true);
+    const g = groupPublication(body.publication!);
+    expect(g.operating[0].shareOf).toBe(
+      "Las Bambas Copper Mine's share of total cargo handled by Matarani (PE MRI) (not a share of Las Bambas Copper Mine's output or of national exports)",
+    );
+    const html = render(fed(body), T2);
+    expect(html).toContain('17.7 %');
+    expect(html).toContain('share of total cargo handled by Matarani (PE MRI)');
+    expect(html).toContain('not a share of Las Bambas Copper Mine');
+    expect(html).not.toContain('data-selected-edge=');
+  });
+
+  it('cargo share without a denominator shows no share context and never infers one', () => {
+    const g = groupPublication(withE3A([share], []).publication!);
+    expect(g.operating[0].shareOf).toBeNull();
+    expect(render(fed(withE3A([share], [])), T2)).not.toContain('share of total cargo');
+  });
+
+  it('null product/quantity/unit renders as Not published, never zero or an invented product', () => {
+    const g = groupPublication(withE3A([realUnquantified], []).publication!);
+    expect(g.operating[0]).toMatchObject({ metric: 'production', product: 'Not published', quantity: 'Not published', basis: 'actual figure', shareOf: null });
+    const html = render(fed(withE3A([realUnquantified], [])), T2);
+    expect(html).toContain('Not published');
+    expect(html).not.toContain('>0<');
+    expect(html).not.toContain('gross concentrate mass');
+    expect(html).not.toContain('metal, not concentrate mass');
+  });
+
+  it('document-backed operates with null value renders as a reported operator next to the F01 structured record', () => {
+    const body = withE3A([realOperator], []);
+    expect(isDossierResponse(body)).toBe(true);
+    const g = groupPublication(body.publication!);
+    expect(g.operators.map((r) => r.operatorType)).toEqual([
+      'Joint Venture/Special Purpose Vehicle',
+      'reported operator (document, date not established)',
+    ]);
+    const html = render(fed(body), T2, 'e3a-real-operator');
+    expect(html).toContain('reported operator (document, date not established)');
+    expect(html).toContain('data-evidence-kind="document_locator"');
+  });
+
   it('states that no operating figure is published rather than showing zero', () => {
     const html = render(fed(AVAILABLE_DOCUMENT), T2);
     expect(html).toContain('data-section="operating"');

@@ -496,6 +496,7 @@ export interface OperatorRow {
   edge: Edge;
   operator: string;
   asset: string;
+  /** F01 structured operator type, or the document-reported form when the claim carries no value. */
   operatorType: string;
 }
 
@@ -523,6 +524,11 @@ export interface OperatingRow {
   basis: string;
   period: string;
   documentDate: string;
+  /**
+   * Denominator of a reported share (`scope.share_of`), e.g. "share of total cargo handled by
+   * Matarani". Only present for share metrics; never inferred for quantities.
+   */
+  shareOf: string | null;
 }
 
 const OPERATING_PRODUCT_TEXT: Record<string, string> = {
@@ -539,6 +545,22 @@ const OPERATING_BASIS_TEXT: Record<string, string> = {
 };
 
 const OPERATING_UNIT_TEXT: Record<string, string> = { tonnes: 't', tonnes_per_year: 't/yr', percent: '%' };
+
+/** Product as published; a null product (metric with a period but no figure) stays visibly unknown. */
+export function formatOperatingProduct(product: unknown): string {
+  const p = str(product);
+  return p === null ? 'Not published' : OPERATING_PRODUCT_TEXT[p] ?? p;
+}
+
+/**
+ * Denominator context of a reported share: the numerator asset's share of the total cargo
+ * handled by the `share_of` entity — not a share of the asset's output or of national exports.
+ */
+export function formatShareOf(entities: Map<string, Entity>, asset: string, shareOf: unknown): string | null {
+  const d = str(shareOf);
+  if (d === null) return null;
+  return `${asset}'s share of total cargo handled by ${labelOf(entities, d)} (not a share of ${asset}'s output or of national exports)`;
+}
 
 /** Quantity + unit as published; a null quantity is "not published", never zero. */
 export function formatOperatingQuantity(quantity: unknown, unit: unknown): string {
@@ -628,7 +650,14 @@ export function groupPublication(pub: Publication): Grouped {
         });
         break;
       case 'operates':
-        operators.push({ edge, operator: subject, asset: object, operatorType: str(v.operator_type) ?? 'unknown' });
+        operators.push({
+          edge,
+          operator: subject,
+          asset: object,
+          operatorType: edge.value === null
+            ? `reported operator (document, ${str(t.document_published_at) ?? 'date not established'})`
+            : str(v.operator_type) ?? 'unknown',
+        });
         break;
       case 'finances': {
         const loanEvent = str(v.loan_event);
@@ -663,18 +692,18 @@ export function groupPublication(pub: Publication): Grouped {
         reportedEvents.push({ edge, event: subject, affects: object, kind: str(s.kind) ?? 'unknown' });
         break;
       case 'reports_operating_metric': {
-        const product = str(v.product);
         const basis = str(v.basis);
         operating.push({
           edge,
           reporter: subject,
           asset: object,
           metric: str(v.metric) ?? 'unknown',
-          product: product ? OPERATING_PRODUCT_TEXT[product] ?? product : 'unknown',
+          product: formatOperatingProduct(v.product),
           quantity: formatOperatingQuantity(v.quantity, v.unit),
           basis: basis ? OPERATING_BASIS_TEXT[basis] ?? basis : 'unknown',
           period: formatPeriod(t.period_start, t.period_end),
           documentDate: str(t.document_published_at) ?? 'not established',
+          shareOf: formatShareOf(entities, object, s.share_of),
         });
         break;
       }
