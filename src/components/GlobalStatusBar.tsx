@@ -13,6 +13,13 @@ const DocsIcon = () => (
     <path d="M12 7v14"/>
   </svg>
 );
+const DossierIcon = () => (
+  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M6 3h9l4 4v14H6z"/>
+    <path d="M15 3v4h4"/>
+    <path d="M9 12h6M9 16h6"/>
+  </svg>
+);
 const DataIcon = () => (
   <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <ellipse cx="12" cy="5.5" rx="7" ry="2.5"/>
@@ -86,6 +93,13 @@ export default function GlobalStatusBar() {
           >
             <DataIcon />
             <span className="text-[9px] font-bold tracking-[0.15em] uppercase">Data</span>
+          </Link>
+          {/* Dossier: read-only Las Bambas–Pillones–Matarani prospect dossier (E2) */}
+          <Link href="/dossiers/las-bambas-matarani" prefetch={false} title="Dossier — Las Bambas–Pillones–Matarani" aria-label="Dossier — Las Bambas–Pillones–Matarani"
+            className="h-full px-3 flex items-center gap-1.5 text-[var(--cyan-primary)]/70 hover:text-[var(--cyan-primary)] hover:bg-[var(--cyan-primary)]/15 border-r border-white/[0.04] transition-all duration-200"
+          >
+            <DossierIcon />
+            <span className="text-[9px] font-bold tracking-[0.15em] uppercase">Dossier</span>
           </Link>
         </div>
 
