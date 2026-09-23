@@ -2,6 +2,7 @@ import Link from 'next/link';
 import {
   describeChange,
   describeReason,
+  displayNarrative,
   formatLocator,
   formatTimestamp,
   groupPublication,
@@ -253,6 +254,13 @@ export function DossierView({ feed, resolved, selectedEdgeId, onSelectEdge }: Do
             It is not hosted operational intelligence; counts are fixture counts.
           </p>
         )}
+        {!replay && pub && body?.evidence_origins.includes('retained_source') && (
+          <p data-banner="retained-source" role="note" className="rounded border border-white/20 px-3 py-2 text-xs text-white/75">
+            <span className="font-bold tracking-widest font-mono">RETAINED REAL-SOURCE EVIDENCE</span>. This publication uses
+            retained source originals, not demo fixtures or a fresh database query. Source release and event dates
+            determine its coverage; publication checks do not independently confirm current ownership or debt balances.
+          </p>
+        )}
 
         <section data-view-state={view} data-stale-origin={staleOrigin ?? undefined} className={`rounded-lg border px-4 py-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] font-mono bg-white/[0.02] ${style.cls}`}>
           <span className="font-bold tracking-widest">{style.label}</span>
@@ -397,7 +405,7 @@ export function DossierView({ feed, resolved, selectedEdgeId, onSelectEdge }: Do
 
             <details className="rounded-lg border border-white/[0.08] p-4 text-[11px]">
               <summary className="cursor-pointer text-white/70">Narrative sentences ({pub.narrative.length}) and attribution</summary>
-              <ul className="mt-2 flex flex-col gap-1 text-white/70">{pub.narrative.map((n, i) => <li key={i}>{n}</li>)}</ul>
+              <ul className="mt-2 flex flex-col gap-1 text-white/70">{pub.narrative.map((n, i) => <li key={i}>{displayNarrative(n)}</li>)}</ul>
               <ul className="mt-3 text-[10px] text-white/45">{pub.attribution.map((a) => <li key={a.source_id}>{a.source_id}: {a.attribution}</li>)}</ul>
             </details>
           </>

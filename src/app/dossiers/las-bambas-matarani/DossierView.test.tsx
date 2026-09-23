@@ -10,6 +10,8 @@ import {
   INITIAL_FEED,
   PROXY_PATH,
   describeChange,
+  displayNarrative,
+  formatUsd,
   formatLocator,
   groupPublication,
   isDossierResponse,
@@ -97,6 +99,33 @@ describe('dossier grouping', () => {
 });
 
 describe('DossierView', () => {
+  it('labels retained real evidence, preserves fixture warnings, and displays missing values honestly', () => {
+    const real = structuredClone(AVAILABLE);
+    real.origin = 'retained_source';
+    real.evidence_origins = ['retained_source'];
+    const pub = real.publication!;
+    pub.evidence_manifest.forEach((m) => {
+      if (m.kind === 'structured_record') m.record_origin = 'retained_source';
+    });
+    pub.narrative = ['A debt rescheduling commitment of USD None (nominal).'];
+    pub.gap_register = [{ kind: 'context_withheld', detail: 'a restricted-source context input exists but is not part of this projection', key: null, count: null }];
+    const finance = pub.edges.find((e) => e.predicate === 'finances')!;
+    finance.value!.amount_nominal_usd_native = null;
+    const html = render(fed(real), T2);
+    expect(html).toContain('RETAINED REAL-SOURCE EVIDENCE');
+    expect(html).not.toContain('REPLAY DEMONSTRATION');
+    expect(html).not.toContain('synthetic');
+    expect(html).toContain('No additional context is included in this publication.');
+    expect(html).not.toContain('context input exists');
+    expect(html).toContain('Not reported');
+    expect(html).not.toContain('USD None');
+    expect(pub.narrative[0]).toContain('USD None'); // original evidence unchanged
+    expect(formatUsd('0')).toBe('USD 0');
+    expect(formatUsd(null)).toBe('Not reported');
+    expect(displayNarrative('USD 350000000 (nominal)')).toBe('USD 350000000 (nominal)');
+    real.evidence_origins.push('replay_fixture');
+    expect(render(fed(real), T2)).toContain('REPLAY DEMONSTRATION');
+  });
   it('renders an available dossier with replay banner, separate sections, currentness and gaps', () => {
     const html = render(fed(AVAILABLE), T2);
     expect(attr(html, 'data-view-state')).toBe('available');

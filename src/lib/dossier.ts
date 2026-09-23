@@ -442,7 +442,7 @@ export function formatTimestamp(iso: string | null | undefined): string {
 
 /** Native strings are kept as strings; format only for display, never re-typed. */
 export function formatUsd(native: unknown): string {
-  if (typeof native !== 'string' || native.trim() === '') return 'unknown';
+  if (typeof native !== 'string' || native.trim() === '') return 'Not reported';
   const n = Number(native);
   if (!Number.isFinite(n)) return native;
   return `USD ${n.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
@@ -622,7 +622,11 @@ export function groupPublication(pub: Publication): Grouped {
     roles,
     physical,
     reportedEvents,
-    gaps: pub.gap_register,
+    // E1's context_withheld covers both absent and withheld inputs. Do not
+    // imply that an input exists when this projection cannot establish that.
+    gaps: pub.gap_register.map((g) => g.kind === 'context_withheld'
+      ? { ...g, detail: 'No additional context is included in this publication.' }
+      : g),
     routeGaps: pub.gap_register.filter((g) => ROUTE_GAP_KINDS.has(g.kind)),
     loanEvents: pub.entities.filter((e) => e.kind === 'loan_event'),
     evidenceByRef,
@@ -643,5 +647,13 @@ export function describeChange(pub: Publication): string {
 
 /** Fixture / replay origins are labelled as demonstration, never as hosted intelligence. */
 export function isReplay(body: Pick<DossierResponse, 'origin' | 'evidence_origins'>): boolean {
-  return body.origin !== 'hosted_records' || body.evidence_origins.some((o) => o !== 'hosted_record');
+  const real = new Set(['hosted_record', 'retained_source', 'verified_document']);
+  return !['hosted_records', 'retained_source', 'verified_documents'].includes(body.origin)
+    || body.evidence_origins.length === 0
+    || body.evidence_origins.some((o) => !real.has(o));
+}
+
+/** Correct the legacy null-amount sentence for display without mutating evidence. */
+export function displayNarrative(text: string): string {
+  return text.replaceAll('USD None (nominal)', 'an unreported nominal USD amount');
 }
