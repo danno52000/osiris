@@ -2,7 +2,7 @@
  * GIDEON E2 dossier contract (`e2-dossier/1.0`) — the prospect-safe, read-only
  * Las Bambas–Pillones–Matarani dossier served by the Fusion sidecar
  * (`GET /api/v1/foundation/dossiers/{dossier_id}`) and reached through the
- * same-origin `/api/fusion/dossier` proxy. The payload is already an explicit
+ * same-origin `/api/fusion/dossiers/las-bambas-matarani` proxy. The payload is already an explicit
  * public allowlist (no reviewer/actor identities, excluded details, run ids,
  * raw errors or restricted-source derivatives); this module only types, groups
  * and formats it. Nothing here calls a model or joins demo data.
@@ -13,9 +13,25 @@ export const SCHEMA_VERSION = 'e2-dossier/1.0';
 
 export type DossierState = 'available' | 'stale' | 'not_published' | 'withdrawn' | 'unavailable';
 
-export type Predicate = 'owns_equity' | 'finances' | 'holds_role_in' | 'operates';
+export const PROXY_PATH = '/api/fusion/dossiers/las-bambas-matarani';
 
-export type EntityKind = 'organization' | 'mining_asset' | 'loan_event' | 'port' | 'transport_node';
+/** F01 structured predicates plus the two accepted-document (verified quotation) predicates. */
+export type Predicate =
+  | 'owns_equity'
+  | 'finances'
+  | 'holds_role_in'
+  | 'operates'
+  | 'transports_to'
+  | 'reported_event_affects';
+
+export type EntityKind =
+  | 'organization'
+  | 'mining_asset'
+  | 'loan_event'
+  | 'port'
+  | 'transport_node'
+  | 'logistics_facility'
+  | 'reported_event';
 
 export interface Attempt {
   started_at: string | null;
@@ -85,16 +101,50 @@ export interface StructuredRecordEvidence {
   attribution: string | null;
 }
 
-export interface DocumentEvidence {
-  ref: string;
-  kind: 'document';
-  source_id: string;
-  locator: string;
-  sha256: string;
-  verification: string;
+/** Textual locator inside a verified document; rendered as text, never as a link. */
+export interface DocumentLocator {
+  kind: string | null;
+  page: string | number | null;
+  section: string | null;
 }
 
-export type EvidenceEntry = StructuredRecordEvidence | DocumentEvidence;
+/**
+ * E1 verified-quotation evidence as projected by Fusion: digest and verification
+ * timestamp are structurally required upstream; the verifier identity and the quoted
+ * text are never in the payload.
+ */
+export interface DocumentLocatorEvidence {
+  ref: string;
+  kind: 'document_locator';
+  source_id: 'DOC' | string;
+  document_id: string;
+  url: string | null;
+  locator: DocumentLocator | null;
+  document_sha256: string;
+  document_published_at: string | null;
+  retrieved_at: string | null;
+  quotation_verified_at: string;
+  verification: 'quotation_verified' | string;
+  text_redistributed: false;
+}
+
+export type EvidenceEntry = StructuredRecordEvidence | DocumentLocatorEvidence;
+
+/** Only http(s) URLs are ever rendered as links; anything else stays text-less. */
+export function safeHttpUrl(url: unknown): string | null {
+  if (typeof url !== 'string') return null;
+  return /^https?:\/\/[^\s]+$/i.test(url) ? url : null;
+}
+
+/** `locator {kind, page, section}` → one text line; missing parts are omitted, never invented. */
+export function formatLocator(locator: DocumentLocator | null | undefined): string {
+  if (!locator || typeof locator !== 'object') return 'locator unknown';
+  const parts: string[] = [];
+  if (typeof locator.kind === 'string' && locator.kind) parts.push(locator.kind);
+  if (locator.page !== null && locator.page !== undefined && locator.page !== '') parts.push(`page ${String(locator.page)}`);
+  if (typeof locator.section === 'string' && locator.section) parts.push(`section “${locator.section}”`);
+  return parts.length ? parts.join(' · ') : 'locator unknown';
+}
 
 export interface WhatChanged {
   kind: 'initial' | 'revision';
@@ -134,7 +184,7 @@ export interface DossierResponse {
   currentness: Currentness | null;
   evidence_origins: string[];
   publication: Publication | null;
-  /** Set by the Next proxy when the sidecar itself could not be reached. */
+  /** Set by the Next proxy when the sidecar itself could not be reached or answered outside the contract. */
   degraded?: boolean;
 }
 
@@ -161,6 +211,13 @@ const REASON_TEXT: Record<string, string> = {
   store_unconfigured: 'No E1 publication store is mounted for the dossier reader.',
   store_unreadable: 'The E1 publication store could not be read.',
   sidecar_unreachable: 'The Fusion sidecar did not answer in time.',
+  dossier_route_missing: 'The Fusion sidecar release has no dossier route.',
+  query_parameters_rejected: 'Query parameters are not accepted on the dossier route.',
+  method_not_allowed: 'Only GET is accepted on the dossier route.',
+  rate_limited: 'Too many dossier requests from this client.',
+  browser_fetch_failed: 'This browser could not reach the dossier proxy; current eligibility cannot be checked.',
+  browser_fetch_timeout: 'The dossier proxy did not answer this browser within the request deadline.',
+  browser_response_malformed: 'The dossier proxy answer could not be parsed.',
   no_publication: 'No prospect publication has been produced for this dossier yet.',
   eligibility_withdrawn: 'The current publication was withdrawn (rights, review or evidence eligibility changed).',
   publication_invalidated: 'The current publication was invalidated by the publisher.',
@@ -214,61 +271,55 @@ export function deriveViewState(body: DossierResponse | null | undefined): ViewS
 
 /** Browser-side feed; the page derives its view from this, never from a body alone. */
 export interface FeedState {
+  /** Body of the newest server answer, or null after any browser-side failure. */
   body: DossierResponse | null;
   bodyAt: string | null;
+  /** Browser-side reason code (`browser_fetch_failed` | `browser_fetch_timeout` | `browser_response_malformed`). */
   fetchError: string | null;
   fetchedAt: string | null;
+  /** Monotonic generation of the newest event applied; older generations are ignored. */
+  generation: number;
 }
 
-export const INITIAL_FEED: FeedState = { body: null, bodyAt: null, fetchError: null, fetchedAt: null };
+export const INITIAL_FEED: FeedState = { body: null, bodyAt: null, fetchError: null, fetchedAt: null, generation: 0 };
 
+export type BrowserFailure = 'browser_fetch_failed' | 'browser_fetch_timeout' | 'browser_response_malformed';
+
+/** Every event carries the generation of the request that produced it. */
 export type FeedEvent =
-  | { type: 'response'; body: DossierResponse; at: string }
-  | { type: 'failure'; message: string; at: string };
-
-/** Retained publication is dropped after this age when the browser cannot reach the proxy. */
-export const RETAINED_MAX_AGE_S = 6 * 3600;
+  | { type: 'response'; body: DossierResponse; at: string; generation: number }
+  | { type: 'failure'; reason: BrowserFailure; at: string; generation: number };
 
 export interface ResolvedView {
   view: ViewState;
-  /** `browser` when this browser's fetch failed and a retained publication is shown. */
-  staleOrigin: 'server' | 'browser' | null;
+  /** `server` when the sidecar itself reported stale. Browsers never originate stale. */
+  staleOrigin: 'server' | null;
   body: DossierResponse | null;
 }
 
-function ageSeconds(fromIso: string | null, nowIso: string): number | null {
-  if (!fromIso) return null;
-  const from = Date.parse(fromIso);
-  const now = Date.parse(nowIso);
-  if (Number.isNaN(from) || Number.isNaN(now)) return null;
-  return Math.max(0, Math.round((now - from) / 1000));
+/**
+ * The browser is not an authority: any browser-side failure (network, timeout, malformed
+ * answer) renders state-only `unavailable` with NO retained claims, because current
+ * eligibility cannot be checked. `stale` exists only when the server confirmed it
+ * (valid current publication, latest attempt not a qualifying refresh).
+ */
+export function resolveView(state: FeedState): ResolvedView {
+  if (state.fetchError) return { view: 'unavailable', staleOrigin: null, body: null };
+  const view = deriveViewState(state.body);
+  return { view, staleOrigin: view === 'stale' ? 'server' : null, body: state.body };
 }
 
 /**
- * A browser fetch failure after a good payload renders `stale` with the retained
- * publication (younger than RETAINED_MAX_AGE_S), otherwise `unavailable`. A retained
- * withdrawn/not_published/unavailable body is never re-rendered as data.
+ * Generation guard: an event from an older request than the newest applied one is dropped,
+ * so a slow `available` answer can never overwrite a later `withdrawn`/`unavailable`
+ * (or vice versa). A failure clears the body: nothing is served from history.
  */
-export function resolveView(state: FeedState, nowIso: string, maxAgeS: number = RETAINED_MAX_AGE_S): ResolvedView {
-  const { body, bodyAt, fetchError } = state;
-  if (!fetchError) {
-    const view = deriveViewState(body);
-    return { view, staleOrigin: view === 'stale' ? 'server' : null, body };
-  }
-  const retained = deriveViewState(body);
-  const age = ageSeconds(bodyAt, nowIso);
-  if (!body || (retained !== 'available' && retained !== 'stale') || age === null || age >= maxAgeS) {
-    return { view: 'unavailable', staleOrigin: null, body: null };
-  }
-  return { view: 'stale', staleOrigin: 'browser', body };
-}
-
 export function reduceFeed(prev: FeedState, event: FeedEvent): FeedState {
+  if (event.generation <= prev.generation) return prev;
   if (event.type === 'failure') {
-    return { ...prev, fetchError: event.message, fetchedAt: event.at };
+    return { body: null, bodyAt: null, fetchError: event.reason, fetchedAt: event.at, generation: event.generation };
   }
-  // A withdrawal or 503 replaces the retained publication: nothing is served from history.
-  return { body: event.body, bodyAt: event.at, fetchError: null, fetchedAt: event.at };
+  return { body: event.body, bodyAt: event.at, fetchError: null, fetchedAt: event.at, generation: event.generation };
 }
 
 export function formatTimestamp(iso: string | null | undefined): string {
@@ -336,14 +387,33 @@ export interface OperatorRow {
   operatorType: string;
 }
 
+/** Document-reported physical link (`transports_to`): a quoted statement, not observed movement. */
+export interface TransportRow {
+  edge: Edge;
+  from: string;
+  to: string;
+  commodity: string;
+  mode: string;
+}
+
+/** Document-reported event affecting a node (`reported_event_affects`). */
+export interface ReportedEventRow {
+  edge: Edge;
+  event: string;
+  affects: string;
+  kind: string;
+}
+
 export interface Grouped {
   entities: Map<string, Entity>;
   ownership: OwnershipRow[];
   operators: OperatorRow[];
   finance: FinanceRow[];
   roles: RoleRow[];
-  /** Physical relationships (port/transport predicates). Empty in every accepted publication so far. */
-  physical: Edge[];
+  /** Physical route links reported in accepted verified documents (`transports_to`). Empty when unpublished. */
+  physical: TransportRow[];
+  /** Reported events affecting route nodes (`reported_event_affects`). */
+  reportedEvents: ReportedEventRow[];
   gaps: Gap[];
   routeGaps: Gap[];
   loanEvents: Entity[];
@@ -351,7 +421,8 @@ export interface Grouped {
   assertionsByEdge: Map<string, Assertion>;
 }
 
-export const PHYSICAL_ENTITY_KINDS = new Set<EntityKind>(['port', 'transport_node']);
+export const PHYSICAL_ENTITY_KINDS = new Set<EntityKind>(['port', 'transport_node', 'logistics_facility']);
+export const DOCUMENT_PREDICATES = new Set<Predicate>(['transports_to', 'reported_event_affects']);
 export const ROUTE_GAP_KINDS = new Set(['route_unpublished', 'document_unverified']);
 
 export function labelOf(entities: Map<string, Entity>, id: string): string {
@@ -367,10 +438,12 @@ export function groupPublication(pub: Publication): Grouped {
   const operators: OperatorRow[] = [];
   const finance: FinanceRow[] = [];
   const roles: RoleRow[] = [];
-  const physical: Edge[] = [];
+  const physical: TransportRow[] = [];
+  const reportedEvents: ReportedEventRow[] = [];
   for (const edge of pub.edges) {
     const v = edge.value ?? {};
     const t = edge.temporal ?? {};
+    const s = edge.scope ?? {};
     const subject = labelOf(entities, edge.subject);
     const object = labelOf(entities, edge.object);
     switch (edge.predicate) {
@@ -414,11 +487,15 @@ export function groupPublication(pub: Publication): Grouped {
           rows: typeof v.rows === 'number' ? String(v.rows) : 'unknown',
         });
         break;
+      case 'transports_to':
+        physical.push({ edge, from: subject, to: object, commodity: str(s.commodity) ?? 'unknown', mode: str(s.mode) ?? 'unknown' });
+        break;
+      case 'reported_event_affects':
+        reportedEvents.push({ edge, event: subject, affects: object, kind: str(s.kind) ?? 'unknown' });
+        break;
       default:
-        if (PHYSICAL_ENTITY_KINDS.has(entities.get(edge.subject)?.kind ?? 'organization')
-          || PHYSICAL_ENTITY_KINDS.has(entities.get(edge.object)?.kind ?? 'organization')) {
-          physical.push(edge);
-        }
+        // Unknown predicate: dropped, never guessed into a family.
+        break;
     }
   }
   const byLabel = (a: { holder?: string; lender?: string; organization?: string }, b: typeof a) =>
@@ -433,6 +510,7 @@ export function groupPublication(pub: Publication): Grouped {
     finance,
     roles,
     physical,
+    reportedEvents,
     gaps: pub.gap_register,
     routeGaps: pub.gap_register.filter((g) => ROUTE_GAP_KINDS.has(g.kind)),
     loanEvents: pub.entities.filter((e) => e.kind === 'loan_event'),

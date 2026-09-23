@@ -1,11 +1,12 @@
 import Link from 'next/link';
 import {
-  RETAINED_MAX_AGE_S,
   describeChange,
   describeReason,
+  formatLocator,
   formatTimestamp,
   groupPublication,
   isReplay,
+  safeHttpUrl,
   type Assertion,
   type Edge,
   type EvidenceEntry,
@@ -50,20 +51,35 @@ function EvidenceButton({ edge, selected, onSelect }: { edge: Edge; selected: bo
 }
 
 function EvidenceRecord({ entry }: { entry: EvidenceEntry }) {
-  if (entry.kind === 'document') {
+  if (entry.kind === 'document_locator') {
+    const url = safeHttpUrl(entry.url);
     return (
-      <li data-evidence-kind="document" className="rounded border border-white/[0.08] p-2 text-[11px]">
-        <div className="text-white/40 font-mono text-[10px]">{entry.source_id} · document · {entry.verification}</div>
-        <a href={entry.locator} target="_blank" rel="noreferrer noopener" className="text-[var(--cyan-primary)]/80 underline underline-offset-2 break-all">{entry.locator}</a>
-        <div className="font-mono text-[10px] text-white/40 break-all">sha256 {entry.sha256}</div>
+      <li data-evidence-kind="document_locator" className="rounded border border-white/[0.08] p-2 text-[11px]">
+        <div className="text-white/40 font-mono text-[10px]">{entry.source_id} · verified document · {entry.verification ?? 'unknown'}</div>
+        <div className="text-white/85 break-words">{entry.document_id ?? 'document id unknown'}</div>
+        <div className="text-white/60" data-field="locator">{formatLocator(entry.locator)}</div>
+        {url ? (
+          <a href={url} target="_blank" rel="noreferrer noopener" className="text-[var(--cyan-primary)]/80 underline underline-offset-2 break-all">{url}</a>
+        ) : (
+          <div className="text-white/35">no public URL</div>
+        )}
+        <div className="font-mono text-[10px] text-white/40 break-all">document sha256 {entry.document_sha256 ?? 'unknown'}</div>
+        <div className="font-mono text-[10px] text-white/40">
+          quotation verified {formatTimestamp(entry.quotation_verified_at)} · published {formatTimestamp(entry.document_published_at)} · retrieved {formatTimestamp(entry.retrieved_at)}
+        </div>
+        <div className="text-[10px] text-white/35">Quoted text is not redistributed; the locator points into the document.</div>
       </li>
     );
   }
+  if ((entry as { kind: string }).kind !== 'structured_record') {
+    return <li data-evidence-kind="unsupported" className="rounded border border-white/[0.08] p-2 text-[11px] text-white/45">Evidence entry of an unsupported kind is not shown.</li>;
+  }
+  const nativeKey = entry.native_key && typeof entry.native_key === 'object' ? entry.native_key : {};
   return (
     <li data-evidence-kind="structured_record" className="rounded border border-white/[0.08] p-2 text-[11px]">
       <div className="text-white/40 font-mono text-[10px]">{entry.source_id} · {entry.table} · {entry.record_origin}{entry.release_label ? ` · ${entry.release_label}` : ''}</div>
       <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 mt-1">
-        {Object.entries(entry.native_key).map(([k, v]) => (
+        {Object.entries(nativeKey).map(([k, v]) => (
           <div key={k} className="contents">
             <dt className="text-white/40 font-mono">{k}</dt>
             <dd className="text-white/85 break-words">{v === '' ? <span className="text-white/35">(empty)</span> : v}</dd>
@@ -94,7 +110,12 @@ function EvidenceDrawer({ edge, grouped, assertion, onClose }: { edge: Edge; gro
         </div>
         <button type="button" onClick={onClose} className="text-[10px] font-mono text-white/50 hover:text-white underline underline-offset-2">close</button>
       </header>
-      {edge.value && (
+      {edge.scope && Object.keys(edge.scope).length > 0 && (
+        <div className="text-[10px] font-mono text-white/45" data-field="scope">
+          scope: {Object.entries(edge.scope).map(([k, v]) => `${k}=${v === null || v === undefined ? 'unknown' : String(v)}`).join(' · ')}
+        </div>
+      )}
+      {edge.value && typeof edge.value === 'object' && (
         <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-[11px] font-mono">
           {Object.entries(edge.value).map(([k, v]) => (
             <div key={k} className="contents">
@@ -144,7 +165,12 @@ function Schematic({ grouped }: { grouped: Grouped }) {
             {route?.detail ?? 'No accepted, verified evidence links the mine to Pillones or the port of Matarani.'}
           </p>
         ) : (
-          <ul className="mt-1 text-white/80">{grouped.physical.map((e) => <li key={e.id}>{e.predicate}: {grouped.entities.get(e.subject)?.label ?? e.subject} → {grouped.entities.get(e.object)?.label ?? e.object}</li>)}</ul>
+          <>
+            <ul className="mt-1 text-white/80">
+              {grouped.physical.map((r) => <li key={r.edge.id}>{r.from} → {r.to} <span className="text-white/45">({r.commodity}, {r.mode})</span></li>)}
+            </ul>
+            <p className="text-[10px] text-[#FFB74D] mt-1">Reported in accepted verified documents (quotation verified); not observed movement, schedules or port calls.</p>
+          </>
         )}
       </div>
     </section>
@@ -240,10 +266,10 @@ export function DossierView({ feed, resolved, selectedEdgeId, onSelectEdge }: Do
           )}
           {view === 'unavailable' && (
             <span>
-              {feed.fetchError
-                ? `Browser fetch failed (${feed.fetchError}); no retained publication within the ${Math.round(RETAINED_MAX_AGE_S / 3600)} h stale limit.`
-                : reasonText ?? 'The dossier is unavailable.'}{' '}
-              <span className="text-white/40">(reason code: {feed.fetchError ? 'fetch_failed' : body?.reason ?? 'unknown'})</span>
+              {feed.fetchError ? describeReason(feed.fetchError) : reasonText ?? 'The dossier is unavailable.'}{' '}
+              <span className="text-white/40">
+                No claims are shown while current eligibility cannot be checked; nothing is served from history. (reason code: {feed.fetchError ?? body?.reason ?? 'unknown'})
+              </span>
             </span>
           )}
           {view === 'stale' && staleOrigin === 'server' && (
@@ -252,14 +278,14 @@ export function DossierView({ feed, resolved, selectedEdgeId, onSelectEdge }: Do
               latest attempt {cur?.latest_attempt?.status ?? 'unknown'} at {formatTimestamp(cur?.latest_attempt?.ended_at ?? cur?.latest_attempt?.started_at)} — {reasonText ?? body?.reason}. Not fresh.
             </span>
           )}
-          {view === 'stale' && staleOrigin === 'browser' && (
-            <span>
-              Browser fetch failed at {formatTimestamp(feed.fetchedAt)} ({feed.fetchError}); showing the publication received {formatTimestamp(feed.bodyAt)}. Not fresh.
-            </span>
-          )}
           {view === 'available' && <span className="text-white/60">Checked {formatTimestamp(body?.checked_at)}</span>}
           <span className="ml-auto text-white/35">page fetched {formatTimestamp(feed.fetchedAt)}</span>
         </section>
+
+        <p data-banner="refresh-not-configured" role="note" className="text-[10px] font-mono text-white/40">
+          Automatic dossier refresh is not configured. This page re-checks the current publication pointer about once a minute;
+          polling does not refresh source evidence, run the E1 engine or verify documents.
+        </p>
 
         {pub && cur && grouped && (
           <>
@@ -323,6 +349,27 @@ export function DossierView({ feed, resolved, selectedEdgeId, onSelectEdge }: Do
                 { key: 'flow', label: 'Flow', render: (r) => r.flowType },
                 { key: 'status', label: 'Status', render: (r) => r.status },
                 { key: 'event', label: 'Loan event', render: (r) => r.loanEventLabel + (r.tranche ? ` (tranche ${r.tranche})` : '') },
+              ]}
+            />
+            <RelationshipTable
+              title="Physical route links reported in verified documents (not observed movement)" section="transports" rows={grouped.physical}
+              empty="No published route links: the mine–Pillones–Matarani chain remains a gap."
+              selectedEdgeId={selectedEdgeId} onSelectEdge={onSelectEdge}
+              columns={[
+                { key: 'from', label: 'From', render: (r) => r.from },
+                { key: 'to', label: 'To', render: (r) => r.to },
+                { key: 'commodity', label: 'Commodity', render: (r) => r.commodity },
+                { key: 'mode', label: 'Mode', render: (r) => r.mode, mono: true },
+              ]}
+            />
+            <RelationshipTable
+              title="Reported events affecting route nodes (document-reported)" section="reported-events" rows={grouped.reportedEvents}
+              empty="No published reported events."
+              selectedEdgeId={selectedEdgeId} onSelectEdge={onSelectEdge}
+              columns={[
+                { key: 'event', label: 'Reported event', render: (r) => r.event },
+                { key: 'affects', label: 'Affects', render: (r) => r.affects },
+                { key: 'kind', label: 'Kind', render: (r) => r.kind, mono: true },
               ]}
             />
             <RelationshipTable
