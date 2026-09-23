@@ -12,6 +12,7 @@ import {
   describeChange,
   formatLocator,
   groupPublication,
+  isDossierResponse,
   reduceFeed,
   resolveView,
   safeHttpUrl,
@@ -346,6 +347,39 @@ describe('accepted verified-document publication (engine-generated fixture, API 
   });
 });
 
+describe('isDossierResponse (bounded render-contract guard)', () => {
+  it('accepts every well-formed shape the sidecar emits, including the engine-generated document fixture', () => {
+    expect(isDossierResponse(AVAILABLE)).toBe(true);
+    expect(isDossierResponse(STALE_FAILED)).toBe(true);
+    expect(isDossierResponse(AVAILABLE_DOCUMENT)).toBe(true);
+    expect(isDossierResponse(stateOnly('not_published', 'no_publication'))).toBe(true);
+    expect(isDossierResponse({ ...stateOnly('unavailable', 'sidecar_unreachable'), degraded: true })).toBe(true);
+    // withdrawn/not_published carry a currentness object with a null publication_no
+    expect(isDossierResponse({
+      ...stateOnly('withdrawn', 'eligibility_withdrawn'),
+      currentness: { publication_no: null, eligibility_established_at: null, eligibility_changed_at: T2, restored: false, latest_attempt: AVAILABLE.currentness!.latest_attempt, last_successful_refresh: null },
+    })).toBe(true);
+  });
+
+  it('rejects claim-bearing bodies whose render contract is broken, and state-only bodies carrying a publication', () => {
+    const pub = AVAILABLE.publication!;
+    expect(isDossierResponse({ ...AVAILABLE, publication: {} })).toBe(false);
+    expect(isDossierResponse({ ...AVAILABLE, publication: { ...pub, entities: undefined } })).toBe(false);
+    expect(isDossierResponse({ ...AVAILABLE, publication: { ...pub, assertions: {} } })).toBe(false);
+    expect(isDossierResponse({ ...AVAILABLE, publication: { ...pub, edges: [{ ...pub.edges[0], subject: 7 }] } })).toBe(false);
+    expect(isDossierResponse({ ...AVAILABLE, publication: { ...pub, edges: [{ ...pub.edges[0], evidence: ['ok', 3] }] } })).toBe(false);
+    expect(isDossierResponse({ ...AVAILABLE, publication: { ...pub, evidence_manifest: [{ ...pub.evidence_manifest[0], native_key: 'k=v' }] } })).toBe(false);
+    expect(isDossierResponse({ ...AVAILABLE, publication: { ...pub, attribution: [{ source_id: 'F01' }] } })).toBe(false);
+    expect(isDossierResponse({ ...AVAILABLE, currentness: { ...AVAILABLE.currentness, latest_attempt: 'done' } })).toBe(false);
+    expect(isDossierResponse({ ...AVAILABLE, currentness: { ...AVAILABLE.currentness, publication_no: null } })).toBe(false);
+    expect(isDossierResponse({ ...STALE_FAILED, publication: {} })).toBe(false);
+    expect(isDossierResponse({ ...stateOnly('withdrawn', 'eligibility_withdrawn'), publication: pub })).toBe(false);
+    expect(isDossierResponse({ ...AVAILABLE, evidence_origins: 'replay' })).toBe(false);
+    expect(isDossierResponse(null)).toBe(false);
+    expect(isDossierResponse([])).toBe(false);
+  });
+});
+
 describe('fetchDossierOnce (bounded browser request)', () => {
   const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 
@@ -378,6 +412,49 @@ describe('fetchDossierOnce (bounded browser request)', () => {
     expect(await fetchDossierOnce(3, f as unknown as typeof fetch)).toMatchObject({ type: 'failure', reason: 'browser_response_malformed' });
     const g = vi.fn().mockResolvedValue(json({ hello: 'world' }));
     expect(await fetchDossierOnce(4, g as unknown as typeof fetch)).toMatchObject({ type: 'failure', reason: 'browser_response_malformed' });
+  });
+
+  it('R6: available -> structurally malformed claim (publication: {}) -> unavailable with no claims -> recovery only on a newer valid answer', async () => {
+    const malformed = { ...AVAILABLE, publication: {} };
+    // Precondition: the defect is real — this body reaches render code only via the generic error boundary.
+    expect(() => render(fed(malformed as unknown as DossierResponse))).toThrow();
+
+    const f = vi.fn()
+      .mockResolvedValueOnce(json(AVAILABLE))
+      .mockResolvedValueOnce(json(malformed))
+      .mockResolvedValueOnce(json({ ...AVAILABLE, currentness: { publication_no: 1 } }))
+      .mockResolvedValueOnce(json(AVAILABLE));
+    const fetchImpl = f as unknown as typeof fetch;
+
+    let feed = reduceFeed(INITIAL_FEED, await fetchDossierOnce(1, fetchImpl));
+    let html = render(feed);
+    expect(attr(html, 'data-view-state')).toBe('available');
+    expect(html).toContain('data-section="finance"');
+
+    const bad = await fetchDossierOnce(2, fetchImpl);
+    expect(bad).toMatchObject({ type: 'failure', reason: 'browser_response_malformed', generation: 2 });
+    feed = reduceFeed(feed, bad);
+    expect(feed.body).toBeNull();
+    html = render(feed);
+    expect(attr(html, 'data-view-state')).toBe('unavailable');
+    expect(attr(html, 'data-stale-origin')).toBeNull();
+    expect(html).toContain('browser_response_malformed');
+    expect(html).not.toContain('data-section="finance"');
+    expect(html).not.toContain('USD 350,000,000');
+
+    // a second malformed shape (bad currentness) keeps it unavailable
+    feed = reduceFeed(feed, await fetchDossierOnce(3, fetchImpl));
+    expect(attr(render(feed), 'data-view-state')).toBe('unavailable');
+
+    // a late (older-generation) valid answer cannot recover it
+    feed = reduceFeed(feed, { type: 'response', body: AVAILABLE, at: plus(1), generation: 1 });
+    expect(attr(render(feed), 'data-view-state')).toBe('unavailable');
+
+    // recovery: newer structurally valid success
+    feed = reduceFeed(feed, await fetchDossierOnce(4, fetchImpl));
+    html = render(feed);
+    expect(attr(html, 'data-view-state')).toBe('available');
+    expect(html).toContain('data-section="finance"');
   });
 
   it('a 503 state-only proxy answer is a response event (server authority), rendered unavailable', async () => {

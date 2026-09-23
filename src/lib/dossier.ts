@@ -41,7 +41,8 @@ export interface Attempt {
 }
 
 export interface Currentness {
-  publication_no: number;
+  /** null for the state-only states (withdrawn, not_published). */
+  publication_no: number | null;
   eligibility_established_at: string | null;
   eligibility_changed_at: string | null;
   restored: boolean;
@@ -205,12 +206,122 @@ export function unavailableResponse(reason: string): DossierResponse {
   };
 }
 
+export const CONTRACT_INVALID_REASON = 'sidecar_contract_invalid';
+
+const STATES: ReadonlySet<string> = new Set<DossierState>(['available', 'stale', 'not_published', 'withdrawn', 'unavailable']);
+
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return typeof v === 'object' && v !== null && !Array.isArray(v);
+}
+
+function isStringArray(v: unknown): v is string[] {
+  return Array.isArray(v) && v.every((x) => typeof x === 'string');
+}
+
+function isNullableString(v: unknown): boolean {
+  return v === null || typeof v === 'string';
+}
+
+function isNullableRecord(v: unknown): boolean {
+  return v === null || v === undefined || isRecord(v);
+}
+
+function isAttempt(v: unknown): boolean {
+  if (v === null) return true;
+  return isRecord(v) && isNullableString(v.started_at) && isNullableString(v.ended_at)
+    && typeof v.status === 'string' && typeof v.outcome === 'string';
+}
+
+function isCurrentness(v: unknown, claims: boolean): boolean {
+  return isRecord(v) && (typeof v.publication_no === 'number' || (!claims && v.publication_no === null))
+    && isNullableString(v.eligibility_established_at) && isNullableString(v.eligibility_changed_at)
+    && typeof v.restored === 'boolean' && isAttempt(v.latest_attempt) && isAttempt(v.last_successful_refresh);
+}
+
+function isEntity(v: unknown): boolean {
+  return isRecord(v) && typeof v.id === 'string' && typeof v.kind === 'string' && isNullableString(v.label)
+    && isStringArray(v.sources) && isStringArray(v.evidence);
+}
+
+function isEdge(v: unknown): boolean {
+  return isRecord(v) && typeof v.id === 'string' && typeof v.predicate === 'string'
+    && typeof v.subject === 'string' && typeof v.object === 'string' && typeof v.evidence_category === 'string'
+    && isStringArray(v.evidence) && isNullableRecord(v.value) && isNullableRecord(v.temporal)
+    && isNullableRecord(v.scope) && isNullableRecord(v.correction);
+}
+
+function isAssertion(v: unknown): boolean {
+  return isRecord(v) && typeof v.id === 'string' && typeof v.predicate === 'string'
+    && typeof v.currentness === 'string' && isNullableString(v.confidence);
+}
+
+function isGap(v: unknown): boolean {
+  return isRecord(v) && isNullableString(v.key) && typeof v.kind === 'string' && typeof v.detail === 'string'
+    && (v.count === null || typeof v.count === 'number');
+}
+
+function isEvidenceEntry(v: unknown): boolean {
+  if (!isRecord(v) || typeof v.ref !== 'string') return false;
+  if (v.kind === 'structured_record') {
+    return typeof v.source_id === 'string' && typeof v.table === 'string' && isRecord(v.native_key)
+      && Object.values(v.native_key).every((x) => typeof x === 'string') && isNullableString(v.attribution);
+  }
+  if (v.kind === 'document_locator') {
+    return typeof v.document_id === 'string' && isNullableString(v.url) && isNullableRecord(v.locator)
+      && typeof v.document_sha256 === 'string' && typeof v.quotation_verified_at === 'string';
+  }
+  return false;
+}
+
+function isPublication(v: unknown): boolean {
+  if (!isRecord(v)) return false;
+  if (typeof v.publication_no !== 'number' || typeof v.created_at !== 'string' || typeof v.contract !== 'string'
+    || typeof v.bundle_fingerprint !== 'string') return false;
+  const rules = v.rule_versions;
+  if (!isRecord(rules) || typeof rules.mapping !== 'string' || typeof rules.projection !== 'string') return false;
+  const w = v.what_changed;
+  if (!isRecord(w) || (w.kind !== 'initial' && w.kind !== 'revision')) return false;
+  for (const k of ['edges_added', 'edges_removed', 'edges_reversioned']) {
+    if (w[k] !== undefined && !isStringArray(w[k])) return false;
+  }
+  return Array.isArray(v.entities) && v.entities.every(isEntity)
+    && Array.isArray(v.edges) && v.edges.every(isEdge)
+    && Array.isArray(v.assertions) && v.assertions.every(isAssertion)
+    && isStringArray(v.narrative)
+    && Array.isArray(v.gap_register) && v.gap_register.every(isGap)
+    && Array.isArray(v.attribution)
+    && v.attribution.every((a) => isRecord(a) && typeof a.source_id === 'string' && typeof a.attribution === 'string')
+    && Array.isArray(v.evidence_manifest) && v.evidence_manifest.every(isEvidenceEntry);
+}
+
+/**
+ * Bounded contract guard shared by the proxy and the browser: exactly the shape the page
+ * renders. Envelope fields are always checked; `currentness` and `publication` must be
+ * present, well-formed objects whenever the body claims `available`/`stale`; for the
+ * state-only states `publication` must be null and `currentness` null or well-formed.
+ * Anything else is not a dossier answer and is never stored, forwarded or rendered — the
+ * caller turns it into state-only `unavailable`.
+ */
+export function isDossierResponse(body: unknown): body is DossierResponse {
+  if (!isRecord(body)) return false;
+  if (body.schema_version !== SCHEMA_VERSION) return false;
+  if (typeof body.state !== 'string' || !STATES.has(body.state)) return false;
+  if (body.dossier_id !== null && body.dossier_id !== DOSSIER_ID) return false;
+  if (!isNullableString(body.reason) || typeof body.checked_at !== 'string' || typeof body.origin !== 'string') return false;
+  if (!isStringArray(body.evidence_origins)) return false;
+  if (body.degraded !== undefined && typeof body.degraded !== 'boolean') return false;
+  const claims = body.state === 'available' || body.state === 'stale';
+  if (claims) return isCurrentness(body.currentness, true) && isPublication(body.publication);
+  return body.publication === null && (body.currentness === null || isCurrentness(body.currentness, false));
+}
+
 /** Closed set of sidecar reason codes → analyst wording. Unknown codes render verbatim. */
 const REASON_TEXT: Record<string, string> = {
   feature_disabled: 'The dossier API is switched off (GIDEON_DOSSIER_ENABLED=0).',
   store_unconfigured: 'No E1 publication store is mounted for the dossier reader.',
   store_unreadable: 'The E1 publication store could not be read.',
   sidecar_unreachable: 'The Fusion sidecar did not answer in time.',
+  sidecar_contract_invalid: 'The Fusion sidecar answered outside the dossier contract; nothing from that answer is shown.',
   dossier_route_missing: 'The Fusion sidecar release has no dossier route.',
   query_parameters_rejected: 'Query parameters are not accepted on the dossier route.',
   method_not_allowed: 'Only GET is accepted on the dossier route.',

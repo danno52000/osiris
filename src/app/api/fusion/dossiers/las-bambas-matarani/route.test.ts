@@ -127,6 +127,43 @@ describe('GET /api/fusion/dossiers/las-bambas-matarani', () => {
     expect(body.degraded).toBe(true);
   });
 
+  it('turns a structurally malformed claim-bearing 200 into 503 state-only sidecar_contract_invalid (R6)', async () => {
+    const malformed: unknown[] = [
+      { ...AVAILABLE, publication: {} },
+      { ...AVAILABLE, publication: null },
+      { ...AVAILABLE, currentness: null },
+      { ...AVAILABLE, currentness: { publication_no: 1 } },
+      { ...AVAILABLE, publication: { ...AVAILABLE.publication, edges: undefined } },
+      { ...AVAILABLE, publication: { ...AVAILABLE.publication, edges: 'many' } },
+      { ...AVAILABLE, publication: { ...AVAILABLE.publication, edges: [{ id: 'e1' }] } },
+      { ...AVAILABLE, publication: { ...AVAILABLE.publication, edges: [{ ...AVAILABLE.publication!.edges[0], evidence: null }] } },
+      { ...AVAILABLE, publication: { ...AVAILABLE.publication, evidence_manifest: [{ ref: 'x', kind: 'internal_note' }] } },
+      { ...AVAILABLE, publication: { ...AVAILABLE.publication, evidence_manifest: [{ kind: 'structured_record' }] } },
+      { ...AVAILABLE, publication: { ...AVAILABLE.publication, gap_register: [null] } },
+      { ...AVAILABLE, publication: { ...AVAILABLE.publication, narrative: [1, 2] } },
+      { ...AVAILABLE, publication: { ...AVAILABLE.publication, rule_versions: null } },
+      { ...AVAILABLE, publication: { ...AVAILABLE.publication, what_changed: {} } },
+      { ...STALE_FAILED, publication: {} },
+      { ...stateOnly('withdrawn', 'eligibility_withdrawn'), publication: AVAILABLE.publication },
+    ];
+    for (const body of malformed) {
+      fetchMock.mockResolvedValue(sidecar(200, body));
+      const res = await GET(request());
+      expect(res.status, JSON.stringify(body).slice(0, 120)).toBe(503);
+      expect(res.headers.get('cache-control')).toBe('no-store');
+      const out = await res.json();
+      expect(out.state).toBe('unavailable');
+      expect(out.reason).toBe('sidecar_contract_invalid');
+      expect(out.degraded).toBe(true);
+      expect(out.publication).toBeNull();
+      expect(out.currentness).toBeNull();
+      expect(JSON.stringify(out)).not.toContain('owns_equity');
+    }
+    // a well-formed answer immediately afterwards is forwarded again (no sticky failure)
+    fetchMock.mockResolvedValue(sidecar(200, AVAILABLE));
+    expect((await GET(request())).status).toBe(200);
+  });
+
   it('answers 404 unavailable when the sidecar has no dossier route', async () => {
     fetchMock.mockResolvedValue(sidecar(404, { detail: 'Not Found' }));
     const res = await GET(request());

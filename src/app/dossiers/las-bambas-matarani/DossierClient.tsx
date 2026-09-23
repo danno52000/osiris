@@ -4,10 +4,10 @@ import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import {
   INITIAL_FEED,
   PROXY_PATH,
+  isDossierResponse,
   reduceFeed,
   resolveView,
   type BrowserFailure,
-  type DossierResponse,
   type FeedEvent,
 } from '@/lib/dossier';
 import { DossierView } from './DossierView';
@@ -41,10 +41,12 @@ export async function fetchDossierOnce(
     } catch {
       return { type: 'failure', reason: 'browser_response_malformed', at: at(), generation };
     }
-    if (!body || typeof body !== 'object' || typeof (body as DossierResponse).state !== 'string') {
+    // Same bounded contract guard as the proxy: a body that is not the rendered shape
+    // (e.g. `available` with `publication: {}`) never enters the feed or the view.
+    if (!isDossierResponse(body)) {
       return { type: 'failure', reason: 'browser_response_malformed', at: at(), generation };
     }
-    return { type: 'response', body: body as DossierResponse, at: at(), generation };
+    return { type: 'response', body, at: at(), generation };
   } catch (e) {
     const reason: BrowserFailure = e instanceof Error && e.name === 'AbortError' ? 'browser_fetch_timeout' : 'browser_fetch_failed';
     return { type: 'failure', reason, at: at(), generation };

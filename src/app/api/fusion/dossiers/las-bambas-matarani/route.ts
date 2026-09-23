@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import { isRateLimited, getClientIp } from '@/lib/ssrf-guard';
 import {
+  CONTRACT_INVALID_REASON,
   DOSSIER_ID,
   PROXY_UNAVAILABLE_REASON,
-  SCHEMA_VERSION,
+  isDossierResponse,
   unavailableResponse,
-  type DossierResponse,
 } from '@/lib/dossier';
 
 export const dynamic = 'force-dynamic';
@@ -17,16 +17,17 @@ export const dynamic = 'force-dynamic';
  * The route is the literal `/api/fusion/dossiers/las-bambas-matarani`: no client-supplied
  * id, query parameter, audience, publication number or path ever reaches the sidecar
  * (any other `/api/fusion/dossiers/...` path is a Next 404). Sidecar 200/503 bodies are
- * forwarded with their status (available/stale/not_published/withdrawn/unavailable);
- * anything else — including an unreachable sidecar — is 503 `unavailable` + `degraded`,
- * never an empty dossier and never a cached copy. Every answer, whatever its status,
+ * forwarded with their status (available/stale/not_published/withdrawn/unavailable) only
+ * after the bounded contract guard (`isDossierResponse`) accepts the whole body, so a
+ * claim-bearing 200 with a malformed publication becomes 503 `sidecar_contract_invalid`
+ * state-only; anything else — including an unreachable sidecar — is 503 `unavailable` +
+ * `degraded`, never an empty dossier and never a cached copy. Every answer, whatever its status,
  * carries `Cache-Control: no-store`; non-GET methods are 405.
  */
 
 const SIDECAR_URL = process.env.SIDECAR_URL || 'http://localhost:8080';
 const SIDECAR_PATH = `/api/v1/foundation/dossiers/${DOSSIER_ID}`;
 const NO_STORE = { 'Cache-Control': 'no-store' };
-const STATES: ReadonlySet<string> = new Set(['available', 'stale', 'not_published', 'withdrawn', 'unavailable']);
 
 function reject(reason: string, status: number): NextResponse {
   return NextResponse.json(unavailableResponse(reason), { status, headers: NO_STORE });
@@ -53,15 +54,14 @@ export async function GET(req: Request) {
     if (res.status !== 200 && res.status !== 503) {
       return reject(PROXY_UNAVAILABLE_REASON, 503);
     }
-    const data = (await res.json()) as Partial<DossierResponse>;
-    if (
-      data.schema_version !== SCHEMA_VERSION
-      || typeof data.state !== 'string'
-      || !STATES.has(data.state)
-      || (data.dossier_id !== null && data.dossier_id !== DOSSIER_ID)
-      || (res.status === 503) !== (data.state === 'unavailable')
-    ) {
+    let data: unknown;
+    try {
+      data = await res.json();
+    } catch {
       return reject(PROXY_UNAVAILABLE_REASON, 503);
+    }
+    if (!isDossierResponse(data) || (res.status === 503) !== (data.state === 'unavailable')) {
+      return reject(CONTRACT_INVALID_REASON, 503);
     }
     return NextResponse.json(data, { status: res.status, headers: NO_STORE });
   } catch {
