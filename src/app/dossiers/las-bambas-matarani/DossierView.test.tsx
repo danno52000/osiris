@@ -495,3 +495,152 @@ describe('fetchDossierOnce (bounded browser request)', () => {
     expect(feed.body?.publication).toBeNull();
   });
 });
+
+describe('E3A: operating baseline (C1), declared public-safe gaps (C2), required-segment route gaps (C3)', () => {
+  const base = AVAILABLE_DOCUMENT.publication!;
+  const doc = base.edges.find((e) => e.predicate === 'transports_to')!;
+  const mine = doc.subject;
+  const reporter = base.edges.find((e) => e.predicate === 'operates')?.subject ?? doc.subject;
+
+  /** Test-local E3A shape on top of the engine fixture: a replay demonstration, not a real metric. */
+  const withE3A = (edges: typeof base.edges, gaps: typeof base.gap_register): DossierResponse => ({
+    ...AVAILABLE_DOCUMENT,
+    publication: {
+      ...base,
+      edges: [...base.edges, ...edges],
+      assertions: [
+        ...base.assertions,
+        ...edges.map((e) => ({ id: e.id, version: e.version, predicate: e.predicate, evidence_category: e.evidence_category, currentness: 'unknown' as const, confidence: null })),
+      ],
+      gap_register: [...base.gap_register, ...gaps],
+    },
+  });
+  const metric = (id: string, value: Record<string, unknown>, temporal: Record<string, unknown>) => ({
+    id, version: 1, predicate: 'reports_operating_metric' as const, subject: reporter, object: mine,
+    evidence_category: 'reported', evidence: doc.evidence, value, temporal, scope: null, correction: null,
+  });
+  const production = metric('edge-op-prod', { metric: 'production', product: 'copper_contained', quantity: '410834', unit: 'tonnes', basis: 'actual' },
+    { period_start: '2025-01-01', period_end: '2025-12-31', document_published_at: '2026-04-21' });
+  const guidance = metric('edge-op-guid', { metric: 'guidance', product: 'copper_contained', quantity: '380000-400000', unit: 'tonnes', basis: 'guidance' },
+    { period_start: '2026-01-01', period_end: '2026-12-31', document_published_at: null });
+  const share = metric('edge-op-share', { metric: 'cargo_share', product: 'terminal_cargo', quantity: '17.7', unit: 'percent', basis: 'reported_share' },
+    { period_start: null, period_end: '2025-12-31', document_published_at: null });
+  const unquantified = metric('edge-op-cap', { metric: 'capacity', product: 'copper_concentrate', quantity: null, unit: null, basis: 'design' },
+    { period_start: '2025-01-01', period_end: null, document_published_at: null });
+
+  it('groups reports_operating_metric rows with products and bases kept distinct, never converted', () => {
+    const g = groupPublication(withE3A([production, guidance, share, unquantified], []).publication!);
+    expect(g.operating.map((r) => [r.metric, r.quantity, r.product, r.basis, r.period, r.documentDate])).toEqual([
+      ['production', '410834 t', 'copper contained in concentrate (metal, not concentrate mass)', 'actual figure', '2025-01-01 → 2025-12-31', '2026-04-21'],
+      ['guidance', '380000-400000 t', 'copper contained in concentrate (metal, not concentrate mass)', 'forward guidance, not actual output', '2026-01-01 → 2026-12-31', 'not established'],
+      ['cargo_share', '17.7 %', 'terminal cargo', 'reported share, not a movement count', 'to 2025-12-31', 'not established'],
+      ['capacity', 'Not published', 'copper concentrate (gross concentrate mass)', 'design/nameplate capacity, not actual output', 'from 2025-01-01', 'not established'],
+    ]);
+    // the operating edge never leaks into the physical route family
+    expect(g.physical).toHaveLength(2);
+    expect(g.reportedEvents).toHaveLength(1);
+  });
+
+  it('renders the operating baseline table and opens its evidence drawer (document_locator) without throwing', () => {
+    const body = withE3A([production, guidance], []);
+    expect(isDossierResponse(body)).toBe(true);
+    let html = '';
+    expect(() => { html = render(fed(body), T2, 'edge-op-prod'); }).not.toThrow();
+    expect(html).toContain('data-section="operating"');
+    expect(html).toContain('data-predicate="reports_operating_metric"');
+    expect(html).toContain('410834 t');
+    expect(html).toContain('metal, not concentrate mass');
+    expect(html).toContain('forward guidance, not actual output');
+    expect(html).toContain('data-selected-edge="edge-op-prod"');
+    expect(html).toContain('data-evidence-kind="document_locator"');
+    expect(html).toContain('Quoted text is not redistributed');
+  });
+
+  it('states that no operating figure is published rather than showing zero', () => {
+    const html = render(fed(AVAILABLE_DOCUMENT), T2);
+    expect(html).toContain('data-section="operating"');
+    expect(html).toContain('No published operating figures');
+    expect(html).not.toContain('data-predicate="reports_operating_metric"');
+  });
+
+  it('shows the five E3A declared gap kinds explicitly, keyed, and counts declared unknowns', () => {
+    const gaps = [
+      { kind: 'offtake_unknown', key: 'offtake', detail: 'Offtake counterparties are not published in the retained sources.', count: null },
+      { kind: 'recovery_unknown', key: 'recovery', detail: 'Recovery paths after a disruption are not published.', count: null },
+      { kind: 'alternatives_unknown', key: 'alternatives', detail: 'Alternative export routes are not evidenced.', count: null },
+      { kind: 'baseline_currentness', key: 'baseline-2025', detail: 'The operating baseline is a 2025 annual figure and may not reflect current output.', count: null },
+      { kind: 'segment_unevidenced', key: 'pillones->matarani', detail: 'No accepted primary evidence for the Pillones–Matarani rail segment.', count: null },
+    ];
+    const body = withE3A([], gaps);
+    expect(isDossierResponse(body)).toBe(true);
+    const g = groupPublication(body.publication!);
+    expect(g.declaredUnknowns.map((x) => x.kind)).toEqual(['offtake_unknown', 'recovery_unknown', 'alternatives_unknown', 'baseline_currentness']);
+    expect(g.routeGaps.map((x) => x.kind)).toEqual(['segment_unevidenced']);
+    const html = render(fed(body), T2);
+    for (const gap of gaps) {
+      expect(html).toContain(`data-gap-kind="${gap.kind}"`);
+      expect(html).toContain(`data-gap-key="${gap.key.replaceAll('>', '&gt;')}"`);
+      expect(html).toContain(gap.detail);
+    }
+    expect(html).toContain('data-section="declared-unknowns"');
+    expect(html).toContain('4 declared unknown(s)');
+  });
+
+  it('C3: one transport edge never clears the route gap; the missing segment stays named in the schematic', () => {
+    const rail = base.edges.find((e) => e.predicate === 'transports_to' && e.scope?.mode === 'rail')!;
+    const partial: DossierResponse = {
+      ...AVAILABLE_DOCUMENT,
+      publication: {
+        ...base,
+        edges: base.edges.filter((e) => e.id !== rail.id),
+        assertions: base.assertions.filter((a) => a.id !== rail.id),
+        gap_register: [
+          ...base.gap_register,
+          { kind: 'route_unpublished', key: null, detail: 'Required segment pillones->matarani is not evidenced; the route is not published.', count: null },
+          { kind: 'segment_unevidenced', key: 'pillones->matarani', detail: 'Pillones -> Matarani (rail) has no accepted verified evidence.', count: null },
+        ],
+      },
+    };
+    expect(isDossierResponse(partial)).toBe(true);
+    const g = groupPublication(partial.publication!);
+    expect(g.physical).toHaveLength(1);
+    expect(g.routeGaps.map((x) => x.kind).sort()).toEqual(['route_unpublished', 'segment_unevidenced']);
+    const html = render(fed(partial), T2);
+    expect(html).toContain('GAP — not published.');
+    expect(html).toContain('data-section="segments"');
+    expect(html).toContain('data-segment="pillones-&gt;matarani"');
+    expect(html).toContain('segment pillones-&gt;matarani: unevidenced');
+    // the single accepted road link is still listed as a reported link, not as a route
+    expect(html).toContain('data-section="transports"');
+    expect(html.match(/data-predicate="transports_to"/g)).toHaveLength(1);
+  });
+
+  it('withdrawal of the rail edge after a complete route restores the segment gap (route → gap, no history)', () => {
+    const complete = render(fed(AVAILABLE_DOCUMENT), T2);
+    expect(complete).not.toContain('GAP — not published.');
+    expect(complete).not.toContain('data-section="segments"');
+    const rail = base.edges.find((e) => e.predicate === 'transports_to' && e.scope?.mode === 'rail')!;
+    const after: DossierResponse = {
+      ...AVAILABLE_DOCUMENT,
+      publication: {
+        ...base,
+        publication_no: 3,
+        what_changed: { kind: 'revision', previous_publication_no: 2, edges_added: [], edges_removed: [rail.id], edges_reversioned: [] },
+        edges: base.edges.filter((e) => e.id !== rail.id),
+        assertions: base.assertions.filter((a) => a.id !== rail.id),
+        gap_register: [
+          ...base.gap_register,
+          { kind: 'route_unpublished', key: null, detail: 'Required segment pillones->matarani is not evidenced.', count: null },
+          { kind: 'segment_unevidenced', key: 'pillones->matarani', detail: 'Pillones -> Matarani (rail) has no accepted verified evidence.', count: null },
+        ],
+      },
+      currentness: { ...AVAILABLE_DOCUMENT.currentness!, publication_no: 3 },
+    };
+    const feed = next(fed(AVAILABLE_DOCUMENT), { type: 'response', body: after, at: plus(60) });
+    const html = render(feed, plus(60));
+    expect(html).toContain('GAP — not published.');
+    expect(html).toContain('data-segment="pillones-&gt;matarani"');
+    expect(html).toContain('0 added, 1 removed');
+    expect(html.match(/data-predicate="transports_to"/g)).toHaveLength(1);
+  });
+});

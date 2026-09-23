@@ -439,7 +439,7 @@
   ],
   "audience": "prospect",
   "bundle_fingerprint": "89729f05ac5ba0e445acdd57c6f7fc4d5972488bfedc91463732d58338d2dd10",
-  "config_version": "1.0",
+  "config_version": "1.1",
   "contract": "e2i-contracts-1.0/Publication",
   "created_at": "2026-09-22T01:00:00+00:00",
   "edges": [
@@ -5013,15 +5013,15 @@
    "CITIC Metal Co. Ltd. holds an equity share of 0.15 in Las Bambas Copper Mine (documented, dataset ownership row).",
    "Guoxin Investment Corp. holds an equity share of 0.22500000000000001 in Las Bambas Copper Mine (documented, dataset ownership row).",
    "MMG Limited (MMG) (formerly Minmetals Resources Limited) holds an equity share of 0.625 in Las Bambas Copper Mine (documented, dataset ownership row).",
-   "A reported event is claimed to affect Pillones transfer station (reported) (reported; reviewer-accepted).",
-   "Las Bambas Copper Mine is reported to transport concentrate to Pillones transfer station (reported) (reported; reviewer-accepted).",
-   "Pillones transfer station (reported) is reported to transport concentrate to Matarani (PE MRI) (reported; reviewer-accepted)."
+   "A reported event is claimed to affect Pillones transfer station (reported) (reported; verified document quotation, reviewer-accepted).",
+   "Las Bambas Copper Mine is stated to move copper concentrate by road to Pillones transfer station (reported) (reported; verified document quotation, reviewer-accepted).",
+   "Pillones transfer station (reported) is stated to move copper concentrate by rail to Matarani (PE MRI) (reported; verified document quotation, reviewer-accepted)."
   ],
   "publication_no": 2,
   "rights_version": "1.0",
   "rule_versions": {
    "mapping": "deterministic_f01_mapping/1.1",
-   "projection": "prospect_projection/1.2"
+   "projection": "prospect_projection/1.3"
   },
   "what_changed": {
    "edges_added": [

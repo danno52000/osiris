@@ -15,14 +15,15 @@ export type DossierState = 'available' | 'stale' | 'not_published' | 'withdrawn'
 
 export const PROXY_PATH = '/api/fusion/dossiers/las-bambas-matarani';
 
-/** F01 structured predicates plus the two accepted-document (verified quotation) predicates. */
+/** F01 structured predicates plus the accepted-document (verified quotation) predicates. */
 export type Predicate =
   | 'owns_equity'
   | 'finances'
   | 'holds_role_in'
   | 'operates'
   | 'transports_to'
-  | 'reported_event_affects';
+  | 'reported_event_affects'
+  | 'reports_operating_metric';
 
 export type EntityKind =
   | 'organization'
@@ -507,6 +508,56 @@ export interface TransportRow {
   mode: string;
 }
 
+/**
+ * Document-reported operating figure (`reports_operating_metric`). Product and basis are
+ * shown exactly as published: gross concentrate mass is not copper contained, guidance or
+ * design capacity is not actual output, and a port cargo share is not a movement count.
+ */
+export interface OperatingRow {
+  edge: Edge;
+  reporter: string;
+  asset: string;
+  metric: string;
+  product: string;
+  quantity: string;
+  basis: string;
+  period: string;
+  documentDate: string;
+}
+
+const OPERATING_PRODUCT_TEXT: Record<string, string> = {
+  copper_concentrate: 'copper concentrate (gross concentrate mass)',
+  copper_contained: 'copper contained in concentrate (metal, not concentrate mass)',
+  terminal_cargo: 'terminal cargo',
+};
+
+const OPERATING_BASIS_TEXT: Record<string, string> = {
+  actual: 'actual figure',
+  design: 'design/nameplate capacity, not actual output',
+  guidance: 'forward guidance, not actual output',
+  reported_share: 'reported share, not a movement count',
+};
+
+const OPERATING_UNIT_TEXT: Record<string, string> = { tonnes: 't', tonnes_per_year: 't/yr', percent: '%' };
+
+/** Quantity + unit as published; a null quantity is "not published", never zero. */
+export function formatOperatingQuantity(quantity: unknown, unit: unknown): string {
+  const q = str(quantity);
+  if (q === null) return 'Not published';
+  const u = str(unit);
+  return u === null ? q : `${q} ${OPERATING_UNIT_TEXT[u] ?? u}`;
+}
+
+/** Reporting period from source-relative bounds; open bounds stay visible as such. */
+export function formatPeriod(start: unknown, end: unknown): string {
+  const s = str(start);
+  const e = str(end);
+  if (s && e) return s === e ? s : `${s} → ${e}`;
+  if (s) return `from ${s}`;
+  if (e) return `to ${e}`;
+  return 'period unknown';
+}
+
 /** Document-reported event affecting a node (`reported_event_affects`). */
 export interface ReportedEventRow {
   edge: Edge;
@@ -525,16 +576,22 @@ export interface Grouped {
   physical: TransportRow[];
   /** Reported events affecting route nodes (`reported_event_affects`). */
   reportedEvents: ReportedEventRow[];
+  /** Document-reported operating baseline (`reports_operating_metric`). Empty when none is published. */
+  operating: OperatingRow[];
   gaps: Gap[];
   routeGaps: Gap[];
+  /** Operator-declared explicit unknowns (E3A C2 kinds) — always shown, never resolved by the UI. */
+  declaredUnknowns: Gap[];
   loanEvents: Entity[];
   evidenceByRef: Map<string, EvidenceEntry>;
   assertionsByEdge: Map<string, Assertion>;
 }
 
 export const PHYSICAL_ENTITY_KINDS = new Set<EntityKind>(['port', 'transport_node', 'logistics_facility']);
-export const DOCUMENT_PREDICATES = new Set<Predicate>(['transports_to', 'reported_event_affects']);
-export const ROUTE_GAP_KINDS = new Set(['route_unpublished', 'document_unverified']);
+export const DOCUMENT_PREDICATES = new Set<Predicate>(['transports_to', 'reported_event_affects', 'reports_operating_metric']);
+export const ROUTE_GAP_KINDS = new Set(['route_unpublished', 'document_unverified', 'segment_unevidenced']);
+/** E3A validated public-safe declared gap kinds (closed set; the sidecar rejects any other). */
+export const DECLARED_GAP_KINDS = new Set(['offtake_unknown', 'recovery_unknown', 'alternatives_unknown', 'baseline_currentness']);
 
 export function labelOf(entities: Map<string, Entity>, id: string): string {
   return entities.get(id)?.label ?? id;
@@ -551,6 +608,7 @@ export function groupPublication(pub: Publication): Grouped {
   const roles: RoleRow[] = [];
   const physical: TransportRow[] = [];
   const reportedEvents: ReportedEventRow[] = [];
+  const operating: OperatingRow[] = [];
   for (const edge of pub.edges) {
     const v = edge.value ?? {};
     const t = edge.temporal ?? {};
@@ -604,6 +662,22 @@ export function groupPublication(pub: Publication): Grouped {
       case 'reported_event_affects':
         reportedEvents.push({ edge, event: subject, affects: object, kind: str(s.kind) ?? 'unknown' });
         break;
+      case 'reports_operating_metric': {
+        const product = str(v.product);
+        const basis = str(v.basis);
+        operating.push({
+          edge,
+          reporter: subject,
+          asset: object,
+          metric: str(v.metric) ?? 'unknown',
+          product: product ? OPERATING_PRODUCT_TEXT[product] ?? product : 'unknown',
+          quantity: formatOperatingQuantity(v.quantity, v.unit),
+          basis: basis ? OPERATING_BASIS_TEXT[basis] ?? basis : 'unknown',
+          period: formatPeriod(t.period_start, t.period_end),
+          documentDate: str(t.document_published_at) ?? 'not established',
+        });
+        break;
+      }
       default:
         // Unknown predicate: dropped, never guessed into a family.
         break;
@@ -622,12 +696,14 @@ export function groupPublication(pub: Publication): Grouped {
     roles,
     physical,
     reportedEvents,
+    operating,
     // E1's context_withheld covers both absent and withheld inputs. Do not
     // imply that an input exists when this projection cannot establish that.
     gaps: pub.gap_register.map((g) => g.kind === 'context_withheld'
       ? { ...g, detail: 'No additional context is included in this publication.' }
       : g),
     routeGaps: pub.gap_register.filter((g) => ROUTE_GAP_KINDS.has(g.kind)),
+    declaredUnknowns: pub.gap_register.filter((g) => DECLARED_GAP_KINDS.has(g.kind)),
     loanEvents: pub.entities.filter((e) => e.kind === 'loan_event'),
     evidenceByRef,
     assertionsByEdge,
