@@ -1,0 +1,154 @@
+{
+  "checked_at": "2026-09-24T12:00:00+00:00",
+  "currentness": {
+    "eligibility_changed_at": "2026-09-24T12:20:00+00:00",
+    "publication_no": 1
+  },
+  "ddd": {
+    "eligibility_changed_at": null,
+    "eligibility_established_at": "2026-09-24T00:37:52.863795+00:00",
+    "publication_no": 3,
+    "publication_sha256": "3ea2b261bfae1da748afd2d40765d247eac8f43d496fd778c5c87e6e182ec6e6",
+    "reason": null,
+    "state": "available"
+  },
+  "dossier_id": "las-bambas-matarani",
+  "publication": {
+    "anchor_datasets": [
+      {
+        "license": "ODbL-1.0",
+        "name": "openstreetmap-anchors",
+        "sha256": "34cb00a7336b5bb041db9d88bbadcc6ddf7e64c65ed0dd6080b1be8672c927ab"
+      },
+      {
+        "license": "CC0-1.0",
+        "name": "wikidata-anchors",
+        "sha256": "e2284b03742f35056486f242f701ab94bb34f75a5960ae3ed43c4e70799d8f05"
+      }
+    ],
+    "attribution": [
+      {
+        "feature_ids": [
+          "aec2b20a2abb56847f488e6e"
+        ],
+        "license": "ODbL-1.0",
+        "license_name": "Open Data Commons Open Database License 1.0",
+        "license_url": "https://opendatacommons.org/licenses/odbl/1-0/",
+        "text": "© OpenStreetMap contributors",
+        "url": "https://www.openstreetmap.org/copyright"
+      }
+    ],
+    "contract": "e4-geo-1.0",
+    "created_at": "2026-09-24T12:20:00+00:00",
+    "ddd": {
+      "created_at": "2026-09-24T00:37:52.863795+00:00",
+      "evidence_cutoff": "2026-09-24T00:37:52.863795+00:00",
+      "evidence_cutoff_basis": "publication_snapshot_created_at",
+      "publication_no": 3,
+      "publication_sha256": "3ea2b261bfae1da748afd2d40765d247eac8f43d496fd778c5c87e6e182ec6e6"
+    },
+    "features": [
+      {
+        "caveats": [
+          "Community-mapped coordinate, unverified against the operator.",
+          "Coordinate decimals do not establish survey accuracy.",
+          "The Wikidata coordinate statement has no supporting reference."
+        ],
+        "entity_id": "asset:aiddata-site-20",
+        "entity_label": "Las Bambas Copper Mine",
+        "feature_id": "3525fa6e8f99c703c56f08d0",
+        "gaps": [
+          "No operator-published site coordinate or footprint is in the dossier."
+        ],
+        "label": "Las Bambas · approximate mine location",
+        "lat": -14.099024,
+        "lifecycle": "published",
+        "lon": -72.3197801,
+        "precision_class": "approximate_site",
+        "precision_text": "approximate site location",
+        "source": {
+          "api_url": "https://www.wikidata.org/wiki/Special:EntityData/Q16832786.json",
+          "attribution": null,
+          "attribution_url": null,
+          "coordinate_reference": "P625 statement without a supporting reference; community-mapped, not operator-verified.",
+          "feature_id": "Q16832786",
+          "feature_name": "Las Bambas mine",
+          "feature_type": "item (P625 coordinate location)",
+          "feature_version": null,
+          "license": "CC0-1.0",
+          "license_name": "Creative Commons CC0 1.0 Universal",
+          "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+          "provider": "wikidata",
+          "retrieved_at": "2026-09-24",
+          "source_modified_at": "2026-09-16",
+          "url": "https://www.wikidata.org/wiki/Q16832786"
+        },
+        "version": 1
+      },
+      {
+        "caveats": [
+          "Town anchor, not the terminal footprint."
+        ],
+        "entity_id": "port:matarani-pe-mri",
+        "entity_label": "Matarani (PE MRI)",
+        "feature_id": "aec2b20a2abb56847f488e6e",
+        "gaps": [
+          "Terminal area and berth used for concentrate export are not established by the dossier."
+        ],
+        "label": "Matarani · approximate port locality",
+        "lat": -17.0007604,
+        "lifecycle": "published",
+        "lon": -72.097831,
+        "precision_class": "port_locality",
+        "precision_text": "approximate port locality",
+        "source": {
+          "api_url": "https://api.openstreetmap.org/api/0.6/node/541993558.json",
+          "attribution": "© OpenStreetMap contributors",
+          "attribution_url": "https://www.openstreetmap.org/copyright",
+          "coordinate_reference": "OSM place node for the town; not the port terminal footprint.",
+          "feature_id": "node/541993558",
+          "feature_name": "Matarani",
+          "feature_type": "place=town",
+          "feature_version": "8",
+          "license": "ODbL-1.0",
+          "license_name": "Open Data Commons Open Database License 1.0",
+          "license_url": "https://opendatacommons.org/licenses/odbl/1-0/",
+          "provider": "openstreetmap",
+          "retrieved_at": "2026-09-24",
+          "source_modified_at": "2026-05-19",
+          "url": "https://www.openstreetmap.org/node/541993558"
+        },
+        "version": 1
+      }
+    ],
+    "legend": "Schematic connections; not surveyed routes.",
+    "links": [],
+    "missing": [
+      {
+        "entity_id": "facility:pillones-transfer-station",
+        "reason": "anchor candidate not accepted (review state: pending)"
+      }
+    ],
+    "omitted_links": [
+      {
+        "edge_id": "dc90c6d342eb4d0f1a1152a5",
+        "reason": "endpoint without a visible anchor: facility:pillones-transfer-station"
+      },
+      {
+        "edge_id": "aa5d3e48412f4a8827aa9559",
+        "reason": "endpoint without a visible anchor: facility:pillones-transfer-station"
+      }
+    ],
+    "publication_no": 1,
+    "summary": {
+      "features_published": 2,
+      "links_published": 0,
+      "missing_entities": 1,
+      "omitted_links": 2
+    },
+    "what_changed": []
+  },
+  "reason": null,
+  "schema_version": "e4-geography/1.0",
+  "state": "available"
+}

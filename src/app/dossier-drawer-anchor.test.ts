@@ -21,7 +21,7 @@ describe('Supply Chain Dossiers drawer anchoring', () => {
     expect(drawerStart).toBeLessThan(stripStart);
     const strip = source.slice(stripStart, source.indexOf('</div>}', stripStart));
     expect(strip).not.toContain('<SupplyChainDossiersPanel');
-    expect(source.match(/<SupplyChainDossiersPanel\s*\/>/g)).toHaveLength(1);
+    expect(source.match(/<SupplyChainDossiersPanel[\s\S]*?\/>/g)).toHaveLength(1);
   });
 
   it('anchors the drawer to the viewport with bounded width and height', () => {

@@ -163,7 +163,7 @@ function Schematic({ grouped }: { grouped: Grouped }) {
         <div className="text-white font-semibold">{asset?.label ?? 'unknown asset'}</div>
         <div className="text-white/50 mt-1">{grouped.finance.length} finance commitment edge(s) from {lenders.length} lender(s) · {grouped.roles.length} role edge(s)</div>
       </div>
-      <div data-section="physical" className="rounded border border-dashed border-[#FF8A65]/60 p-3">
+      <div id="physical-route" data-section="physical" className="rounded border border-dashed border-[#FF8A65]/60 p-3">
         <div className="text-[10px] font-mono tracking-widest text-[#FF8A65] uppercase">Physical route → Pillones → Matarani</div>
         {grouped.physical.length === 0 || route ? (
           <p className="text-[#FFB74D] mt-1">

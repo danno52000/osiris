@@ -15,6 +15,7 @@ import LiveNewsPreviews, { type PreviewFeed } from '@/components/LiveNewsPreview
 import { attachTerrain, type TerrainStatus } from '@/lib/map-terrain';
 
 import { applyMapProjection } from '@/lib/map-projection';
+import { overlayBounds, overlayGeoJSON, type DossierOverlay, type DossierSelection } from '@/lib/geography';
 
 /** The catalogue fields the satellite layer and its popup actually read. */
 interface SatelliteRow {
@@ -50,6 +51,15 @@ interface OsirisMapProps {
   theme?: 'core' | 'ghost';
   drawnPolygons?: Array<{ id: string; name: string; geojson: GeoJSON.Feature<GeoJSON.Polygon | GeoJSON.LineString>; color: string }>;
   arcgisLayers?: Array<{ id: string; title: string; geojson: any; color?: string; opacity?: number }>;
+  /**
+   * E4 dossier geography (approximate anchors + schematic endpoint connectors). Owned by the
+   * page, drawn under its own `dossier-*` source/layer namespace, removed entirely when null.
+   * Fits once per distinct `fitSeq`, never on re-render, pan or projection change.
+   */
+  dossierOverlay?: DossierOverlay | null;
+  onDossierSelect?: (sel: DossierSelection | null) => void;
+  /** Right-hand padding (px) reserved for the dossier drawer when framing the overlay. */
+  dossierFitPaddingRight?: number;
   /** Active draw mode, or null when not drawing. */
   drawMode?: DrawMode | null;
   onDrawProgress?: (p: DrawProgress | null) => void;
@@ -105,7 +115,7 @@ function computeSolarTerminator(): [number, number][] {
 
 const EMPTY_FC = { type: 'FeatureCollection' as const, features: [] };
 
-function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightClick, onViewStateChange, flyToLocation, projection = 'globe', terrainEnabled = false, terrainRetry = 0, terrainFocus = 0, onTerrainStatusChange, mapStyle = 'dark', sweepData, scanTargets = [], demoMode = false, theme = 'core', drawnPolygons = [], arcgisLayers = [], drawMode = null, onDrawComplete, onDrawProgress, onDrawCancel, drawCommand = null, onMapCenter, route = null, userLocation = null, followUser = false, onFollowInterrupt, navigating = false, aircraftAirports = {} }: OsirisMapProps) {
+function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightClick, onViewStateChange, flyToLocation, projection = 'globe', terrainEnabled = false, terrainRetry = 0, terrainFocus = 0, onTerrainStatusChange, mapStyle = 'dark', sweepData, scanTargets = [], demoMode = false, theme = 'core', drawnPolygons = [], arcgisLayers = [], dossierOverlay = null, onDossierSelect, dossierFitPaddingRight = 0, drawMode = null, onDrawComplete, onDrawProgress, onDrawCancel, drawCommand = null, onMapCenter, route = null, userLocation = null, followUser = false, onFollowInterrupt, navigating = false, aircraftAirports = {} }: OsirisMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const popupRef = useRef<maplibregl.Popup | null>(null);
@@ -1053,7 +1063,7 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
       'balloon-dots','rad-dots','ship-dots','sweep-device-dots','scan-targets-dots',
       'sdk-sea','sdk-air','sdk-intel','malware-dots','cyber-heads','gdelt-events-dots',
       'cf-outage-dots','cf-attack-dots','flight-dots','military-dots','jet-dots','private-dots',
-      'fusion-dots']);
+      'fusion-dots','dossier-point','dossier-line']);
 
     // Satellites are picked on the GPU: the pick pass runs the same vertex
     // shader as the visible one, so the target is always exactly where the
@@ -3041,6 +3051,136 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
       }
     });
   }, [mapReady, arcgisLayers]);
+
+  // ── DOSSIER GEOGRAPHY OVERLAY (E4) ──
+  // Separate namespace from user ArcGIS layers: `dossier-points` / `dossier-lines` sources,
+  // `dossier-*` layers, one click handler per layer installed with the layers and removed
+  // with them. Lines are the two published endpoints only (dashed, labelled); no geometry
+  // is derived here. Projection switches keep sources, so nothing is re-added on globe/flat.
+  const dossierSelectRef = useRef(onDossierSelect);
+  useEffect(() => { dossierSelectRef.current = onDossierSelect; }, [onDossierSelect]);
+  const dossierPresent = !!dossierOverlay;
+  useEffect(() => {
+    if (!mapReady || !mapRef.current) return;
+    const map = mapRef.current;
+    if (!dossierPresent) return;
+    const SRC_PTS = 'dossier-points';
+    const SRC_LINES = 'dossier-lines';
+    const empty = { type: 'FeatureCollection' as const, features: [] };
+    if (!map.getSource(SRC_PTS)) map.addSource(SRC_PTS, { type: 'geojson', data: empty });
+    if (!map.getSource(SRC_LINES)) map.addSource(SRC_LINES, { type: 'geojson', data: empty });
+    if (!map.getLayer('dossier-line')) {
+      map.addLayer({
+        id: 'dossier-line', type: 'line', source: SRC_LINES,
+        layout: { 'line-cap': 'butt', 'line-join': 'miter' },
+        paint: {
+          'line-color': ['match', ['get', 'mode'], 'rail', '#7FD1FF', '#F2C15A'],
+          'line-width': ['case', ['boolean', ['get', 'selected'], false], 3.2, 2],
+          'line-dasharray': [2.5, 2],
+          'line-opacity': 0.95,
+        },
+      });
+    }
+    if (!map.getLayer('dossier-line-label')) {
+      map.addLayer({
+        id: 'dossier-line-label', type: 'symbol', source: SRC_LINES,
+        layout: {
+          'symbol-placement': 'line-center',
+          'text-field': ['get', 'label'],
+          'text-size': 11,
+          'text-font': ['Open Sans Regular'],
+          'text-allow-overlap': true,
+          'text-ignore-placement': true,
+          'text-offset': [0, -0.9],
+        },
+        paint: { 'text-color': '#E8EEF5', 'text-halo-color': '#0C0E1A', 'text-halo-width': 1.5 },
+      });
+    }
+    if (!map.getLayer('dossier-point')) {
+      map.addLayer({
+        id: 'dossier-point', type: 'circle', source: SRC_PTS,
+        paint: {
+          'circle-radius': ['case', ['boolean', ['get', 'selected'], false], 8, 6],
+          'circle-color': '#FFFFFF',
+          'circle-opacity': 0.92,
+          'circle-stroke-width': ['case', ['boolean', ['get', 'selected'], false], 3, 2],
+          'circle-stroke-color': '#F2C15A',
+        },
+      });
+    }
+    if (!map.getLayer('dossier-point-label')) {
+      map.addLayer({
+        id: 'dossier-point-label', type: 'symbol', source: SRC_PTS,
+        layout: {
+          'text-field': ['get', 'label'],
+          'text-size': 12,
+          'text-font': ['Open Sans Regular'],
+          'text-anchor': 'left',
+          'text-offset': [0.9, 0],
+          'text-allow-overlap': true,
+          'text-ignore-placement': true,
+        },
+        paint: { 'text-color': '#FFFFFF', 'text-halo-color': '#0C0E1A', 'text-halo-width': 1.6 },
+      });
+    }
+    const onPoint = (e: maplibregl.MapLayerMouseEvent) => {
+      const id = e.features?.[0]?.properties?.feature_id;
+      if (typeof id === 'string') dossierSelectRef.current?.({ kind: 'feature', id });
+    };
+    const onLine = (e: maplibregl.MapLayerMouseEvent) => {
+      // A point sitting on a line end wins; the line handler runs only when no point is hit.
+      if (map.queryRenderedFeatures(e.point, { layers: ['dossier-point'] }).length) return;
+      const id = e.features?.[0]?.properties?.link_id;
+      if (typeof id === 'string') dossierSelectRef.current?.({ kind: 'link', id });
+    };
+    const enter = () => { map.getCanvas().style.cursor = 'pointer'; };
+    const leave = () => { map.getCanvas().style.cursor = ''; };
+    map.on('click', 'dossier-point', onPoint);
+    map.on('click', 'dossier-line', onLine);
+    map.on('mouseenter', 'dossier-point', enter);
+    map.on('mouseleave', 'dossier-point', leave);
+    map.on('mouseenter', 'dossier-line', enter);
+    map.on('mouseleave', 'dossier-line', leave);
+    return () => {
+      map.off('click', 'dossier-point', onPoint);
+      map.off('click', 'dossier-line', onLine);
+      map.off('mouseenter', 'dossier-point', enter);
+      map.off('mouseleave', 'dossier-point', leave);
+      map.off('mouseenter', 'dossier-line', enter);
+      map.off('mouseleave', 'dossier-line', leave);
+      for (const id of ['dossier-point-label', 'dossier-point', 'dossier-line-label', 'dossier-line']) {
+        if (map.getLayer(id)) map.removeLayer(id);
+      }
+      for (const id of [SRC_PTS, SRC_LINES]) {
+        if (map.getSource(id)) map.removeSource(id);
+      }
+      map.getCanvas().style.cursor = '';
+    };
+  }, [mapReady, dossierPresent]);
+
+  // Data/selection refresh: setData only, never re-adds layers or handlers.
+  useEffect(() => {
+    if (!mapReady || !mapRef.current || !dossierOverlay) return;
+    const map = mapRef.current;
+    const gj = overlayGeoJSON(dossierOverlay);
+    (map.getSource('dossier-points') as maplibregl.GeoJSONSource | undefined)?.setData(gj.points);
+    (map.getSource('dossier-lines') as maplibregl.GeoJSONSource | undefined)?.setData(gj.lines);
+  }, [mapReady, dossierOverlay]);
+
+  // One-shot framing: once per distinct fitSeq (selection or "Locate dossier"), padded for the drawer.
+  const dossierFitSeq = dossierOverlay?.fitSeq ?? 0;
+  const dossierFitKey = dossierOverlay ? `${dossierOverlay.publicationNo}:${dossierFitSeq}` : null;
+  useEffect(() => {
+    if (!mapReady || !mapRef.current || !dossierOverlay || !dossierFitKey) return;
+    const bounds = overlayBounds(dossierOverlay.features);
+    if (!bounds) return;
+    mapRef.current.fitBounds(bounds, {
+      padding: { top: 80, bottom: 80, left: 80, right: 80 + dossierFitPaddingRight },
+      duration: 900,
+      maxZoom: 9,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mapReady, dossierFitKey]);
 
   const drawCbRef = useRef({ onDrawComplete, onDrawProgress, onDrawCancel });
   /** Set by the drawing effect so on-screen buttons can dispatch into it. */
