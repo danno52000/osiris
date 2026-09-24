@@ -16,6 +16,8 @@ import {
   type ResolvedView,
   type ViewState,
 } from '@/lib/dossier';
+import { VulnerabilityView } from '@/components/VulnerabilityView';
+import type { ResolvedVuln, VulnFeedState } from '@/lib/vulnerability';
 
 const STATE_STYLE: Record<ViewState, { label: string; cls: string }> = {
   loading: { label: 'LOADING', cls: 'text-white/50 border-white/20' },
@@ -32,6 +34,8 @@ export interface DossierViewProps {
   /** Edge currently opened for evidence drill-down (null = closed). */
   selectedEdgeId: string | null;
   onSelectEdge: (edgeId: string | null) => void;
+  /** E3B vulnerability view (opt-in). Omitted = control not rendered (e.g. static tests). */
+  vulnerability?: { on: boolean; onToggle: (on: boolean) => void; feed: VulnFeedState; resolved: ResolvedVuln };
 }
 
 function EvidenceButton({ edge, selected, onSelect }: { edge: Edge; selected: boolean; onSelect: (id: string | null) => void }) {
@@ -225,7 +229,7 @@ function RelationshipTable<T extends { edge: Edge }>({
   );
 }
 
-export function DossierView({ feed, resolved, selectedEdgeId, onSelectEdge }: DossierViewProps) {
+export function DossierView({ feed, resolved, selectedEdgeId, onSelectEdge, vulnerability }: DossierViewProps) {
   const { view, staleOrigin, body } = resolved;
   const style = STATE_STYLE[view];
   const reasonText = describeReason(body?.reason);
@@ -436,6 +440,27 @@ export function DossierView({ feed, resolved, selectedEdgeId, onSelectEdge }: Do
               <ul className="mt-3 text-[10px] text-white/45">{pub.attribution.map((a) => <li key={a.source_id}>{a.source_id}: {a.attribution}</li>)}</ul>
             </details>
           </>
+        )}
+
+        {vulnerability && (
+          <section data-section="vulnerability" aria-labelledby="vulnerability-heading" className="rounded-lg border border-white/[0.08] p-4 flex flex-col gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 id="vulnerability-heading" className="text-sm font-semibold text-white">Vulnerability assessment <span className="text-white/40 font-mono text-[10px]">e3b-vulnerability/1.0</span></h2>
+              <label className="flex items-center gap-2 text-[11px] text-white/70 cursor-pointer select-none">
+                <input type="checkbox" checked={vulnerability.on} onChange={(e) => vulnerability.onToggle(e.target.checked)} data-toggle="vulnerability" className="accent-[var(--gold-primary)]" />
+                Show vulnerability view
+              </label>
+            </div>
+            <p className="text-[11px] text-white/50 max-w-3xl">
+              Read-only scenario dispositions bound to the exact dossier publication above. Magnitude is a rubric range
+              from reviewed extent and duration bands, not a probability; null means accepted evidence does not bound it.
+              Conditional scenarios are unscored and hidden from type cards until opted in. No actor, intent or attack
+              procedure is asserted.
+            </p>
+            {vulnerability.on
+              ? <VulnerabilityView feed={vulnerability.feed} resolved={vulnerability.resolved} />
+              : <p data-vuln-view="off" className="font-mono text-[10px] text-white/40">Vulnerability view off — nothing is fetched or shown until switched on.</p>}
+          </section>
         )}
 
         <footer className="text-[10px] text-white/30 border-t border-white/[0.06] pt-3">
