@@ -2,8 +2,10 @@
   "contract": "e2-dossier/1.0",
   "fixture": "src/lib/dossier-fixtures/available_document.json",
   "source": "3BAI-fusion sidecar/dossier.py public projection of gideon-database tests/fixtures/intel/e2_contract/available_document (engine-generated accepted verified-document publication 2)",
-  "gideon_database_commit": "cd742e1e1cadc3c68cc7ee95e618a575a5daa0b6",
-  "gideon_database_manifest_sha256": "aed34293e72e7ba7cd10be0ea6ab8c282b2e29e81aee97900679e4982bd3239b",
-  "projection_sha256_available_document": "6445116182466cd48f20e0a3767ba60084a36b6d84ff6017f8f6f7780bcd07b5",
-  "note": "Replay demonstration: fixture-constant digest and fixture-actor accept decisions; verifies no real-world document. Counts are fixture counts, not hosted counts. checked_at is normalised."
+  "gideon_database_commit": "37343c12f747cd94d30693ada5ee1a7024798427",
+  "gideon_database_manifest_sha256": "cd651a9ef755233fdaa8cb1f79ba8f18fa904c4c5e9506d0ec4ef996ba596e1f",
+  "projection_sha256_available_document": "d9e9e793d4e9c11becc0345f3d0750ac8e6de553bbe44057d6e0828fb80397d5",
+  "note": "Replay demonstration: fixture-constant digest and fixture-actor accept decisions; verifies no real-world document. Counts are fixture counts, not hosted counts. checked_at is normalised.",
+  "fusion_commit": "540b3ddc952377d9d4fed191b51c46470baca8aa",
+  "e3a_additions": "reports_operating_metric (C1), gap kinds segment_unevidenced/offtake_unknown/recovery_unknown/alternatives_unknown/baseline_currentness (C2), required-segment route completeness (C3). No fixture carries a real operating metric; E3A shapes are exercised by test-local mutations only."
 }

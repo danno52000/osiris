@@ -16,6 +16,8 @@ import {
   type ResolvedView,
   type ViewState,
 } from '@/lib/dossier';
+import { VulnerabilityView } from '@/components/VulnerabilityView';
+import type { ResolvedVuln, VulnFeedState } from '@/lib/vulnerability';
 
 const STATE_STYLE: Record<ViewState, { label: string; cls: string }> = {
   loading: { label: 'LOADING', cls: 'text-white/50 border-white/20' },
@@ -32,6 +34,8 @@ export interface DossierViewProps {
   /** Edge currently opened for evidence drill-down (null = closed). */
   selectedEdgeId: string | null;
   onSelectEdge: (edgeId: string | null) => void;
+  /** E3B vulnerability view (opt-in). Omitted = control not rendered (e.g. static tests). */
+  vulnerability?: { on: boolean; onToggle: (on: boolean) => void; feed: VulnFeedState; resolved: ResolvedVuln };
 }
 
 function EvidenceButton({ edge, selected, onSelect }: { edge: Edge; selected: boolean; onSelect: (id: string | null) => void }) {
@@ -144,6 +148,7 @@ function Schematic({ grouped }: { grouped: Grouped }) {
   const owners = grouped.ownership.map((r) => `${r.holder} ${r.share}`);
   const lenders = [...new Set(grouped.finance.map((r) => r.lender))];
   const route = grouped.routeGaps.find((g) => g.kind === 'route_unpublished');
+  const segments = grouped.routeGaps.filter((g) => g.kind === 'segment_unevidenced');
   return (
     <section aria-label="Dossier schematic" data-section="schematic" className="rounded-lg border border-white/[0.08] p-4 grid grid-cols-1 md:grid-cols-3 gap-3 text-[11px]">
       <div className="rounded border border-white/[0.08] p-3">
@@ -160,18 +165,23 @@ function Schematic({ grouped }: { grouped: Grouped }) {
       </div>
       <div data-section="physical" className="rounded border border-dashed border-[#FF8A65]/60 p-3">
         <div className="text-[10px] font-mono tracking-widest text-[#FF8A65] uppercase">Physical route → Pillones → Matarani</div>
-        {grouped.physical.length === 0 ? (
+        {grouped.physical.length === 0 || route ? (
           <p className="text-[#FFB74D] mt-1">
             <span className="font-bold">GAP — not published.</span>{' '}
             {route?.detail ?? 'No accepted, verified evidence links the mine to Pillones or the port of Matarani.'}
           </p>
         ) : (
-          <>
-            <ul className="mt-1 text-white/80">
-              {grouped.physical.map((r) => <li key={r.edge.id}>{r.from} → {r.to} <span className="text-white/45">({r.commodity}, {r.mode})</span></li>)}
-            </ul>
-            <p className="text-[10px] text-[#FFB74D] mt-1">Reported in accepted verified documents (quotation verified); not observed movement, schedules or port calls.</p>
-          </>
+          <p className="text-[10px] text-[#FFB74D] mt-1">Reported in accepted verified documents (quotation verified); not observed movement, schedules or port calls.</p>
+        )}
+        {grouped.physical.length > 0 && (
+          <ul className="mt-1 text-white/80">
+            {grouped.physical.map((r) => <li key={r.edge.id}>{r.from} → {r.to} <span className="text-white/45">({r.commodity}, {r.mode})</span></li>)}
+          </ul>
+        )}
+        {segments.length > 0 && (
+          <ul data-section="segments" className="mt-1 text-[10px] text-[#FFB74D]">
+            {segments.map((g) => <li key={g.key ?? g.detail} data-segment={g.key ?? undefined}>segment {g.key ?? 'unknown'}: unevidenced — {g.detail}</li>)}
+          </ul>
         )}
       </div>
     </section>
@@ -219,7 +229,7 @@ function RelationshipTable<T extends { edge: Edge }>({
   );
 }
 
-export function DossierView({ feed, resolved, selectedEdgeId, onSelectEdge }: DossierViewProps) {
+export function DossierView({ feed, resolved, selectedEdgeId, onSelectEdge, vulnerability }: DossierViewProps) {
   const { view, staleOrigin, body } = resolved;
   const style = STATE_STYLE[view];
   const reasonText = describeReason(body?.reason);
@@ -371,6 +381,21 @@ export function DossierView({ feed, resolved, selectedEdgeId, onSelectEdge }: Do
               ]}
             />
             <RelationshipTable
+              title="Operating baseline reported in verified documents (as published; products and bases are not interchangeable)" section="operating" rows={grouped.operating}
+              empty="No published operating figures: production, capacity, guidance and cargo share remain unreported here."
+              selectedEdgeId={selectedEdgeId} onSelectEdge={onSelectEdge}
+              columns={[
+                { key: 'reporter', label: 'Reported by', render: (r) => r.reporter },
+                { key: 'metric', label: 'Metric', render: (r) => r.metric, mono: true },
+                { key: 'quantity', label: 'Quantity', render: (r) => r.quantity, mono: true },
+                { key: 'product', label: 'Product', render: (r) => r.product },
+                { key: 'basis', label: 'Basis', render: (r) => r.basis },
+                { key: 'shareof', label: 'Share of', render: (r) => r.shareOf ?? '—' },
+                { key: 'period', label: 'Reporting period', render: (r) => r.period, mono: true },
+                { key: 'docdate', label: 'Document date', render: (r) => r.documentDate, mono: true },
+              ]}
+            />
+            <RelationshipTable
               title="Reported events affecting route nodes (document-reported)" section="reported-events" rows={grouped.reportedEvents}
               empty="No published reported events."
               selectedEdgeId={selectedEdgeId} onSelectEdge={onSelectEdge}
@@ -395,12 +420,18 @@ export function DossierView({ feed, resolved, selectedEdgeId, onSelectEdge }: Do
               <h2 id="gaps-heading" className="text-sm font-semibold text-[#FFB74D]">Explicit gaps and unknowns <span className="text-white/40 font-mono text-[10px]">{grouped.gaps.length}</span></h2>
               <ul className="flex flex-col gap-1 text-[11px]">
                 {grouped.gaps.map((g, i) => (
-                  <li key={`${g.kind}-${g.key ?? i}`} data-gap-kind={g.kind} className="flex gap-2">
-                    <span className="font-mono text-[10px] text-[#FFB74D] whitespace-nowrap">{g.kind}</span>
+                  <li key={`${g.kind}-${g.key ?? i}`} data-gap-kind={g.kind} data-gap-key={g.key ?? undefined} className="flex gap-2">
+                    <span className="font-mono text-[10px] text-[#FFB74D] whitespace-nowrap">{g.kind}{g.key ? ` [${g.key}]` : ''}</span>
                     <span className="text-white/75">{g.detail}{g.count !== null ? ` (${g.count})` : ''}</span>
                   </li>
                 ))}
               </ul>
+              {grouped.declaredUnknowns.length > 0 && (
+                <p data-section="declared-unknowns" className="text-[10px] text-white/50">
+                  {grouped.declaredUnknowns.length} declared unknown(s) (offtake, recovery, alternatives, baseline currentness) are operator-declared
+                  and stay open until evidenced; this page never resolves them.
+                </p>
+              )}
             </section>
 
             <details className="rounded-lg border border-white/[0.08] p-4 text-[11px]">
@@ -409,6 +440,27 @@ export function DossierView({ feed, resolved, selectedEdgeId, onSelectEdge }: Do
               <ul className="mt-3 text-[10px] text-white/45">{pub.attribution.map((a) => <li key={a.source_id}>{a.source_id}: {a.attribution}</li>)}</ul>
             </details>
           </>
+        )}
+
+        {vulnerability && (
+          <section data-section="vulnerability" aria-labelledby="vulnerability-heading" className="rounded-lg border border-white/[0.08] p-4 flex flex-col gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 id="vulnerability-heading" className="text-sm font-semibold text-white">Vulnerability assessment <span className="text-white/40 font-mono text-[10px]">e3b-vulnerability/1.0</span></h2>
+              <label className="flex items-center gap-2 text-[11px] text-white/70 cursor-pointer select-none">
+                <input type="checkbox" checked={vulnerability.on} onChange={(e) => vulnerability.onToggle(e.target.checked)} data-toggle="vulnerability" className="accent-[var(--gold-primary)]" />
+                Show vulnerability view
+              </label>
+            </div>
+            <p className="text-[11px] text-white/50 max-w-3xl">
+              Read-only scenario dispositions bound to the exact dossier publication above. Magnitude is a rubric range
+              from reviewed extent and duration bands, not a probability; null means accepted evidence does not bound it.
+              Conditional scenarios are unscored and hidden from type cards until opted in. No actor, intent or attack
+              procedure is asserted.
+            </p>
+            {vulnerability.on
+              ? <VulnerabilityView feed={vulnerability.feed} resolved={vulnerability.resolved} />
+              : <p data-vuln-view="off" className="font-mono text-[10px] text-white/40">Vulnerability view off — nothing is fetched or shown until switched on.</p>}
+          </section>
         )}
 
         <footer className="text-[10px] text-white/30 border-t border-white/[0.06] pt-3">

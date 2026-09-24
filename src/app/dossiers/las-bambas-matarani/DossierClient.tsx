@@ -10,6 +10,8 @@ import {
   type BrowserFailure,
   type FeedEvent,
 } from '@/lib/dossier';
+import { INITIAL_VULN_FEED, reduceVulnFeed, resolveVuln } from '@/lib/vulnerability';
+import { fetchVulnerabilityOnce } from '@/lib/vulnerability-client';
 import { DossierView } from './DossierView';
 
 /**
@@ -57,9 +59,13 @@ export async function fetchDossierOnce(
 
 export default function DossierClient() {
   const [feed, dispatch] = useReducer(reduceFeed, INITIAL_FEED);
+  const [vulnFeed, dispatchVuln] = useReducer(reduceVulnFeed, INITIAL_VULN_FEED);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
+  const [vulnOn, setVulnOn] = useState(false);
   const generation = useRef(0);
+  const vulnGeneration = useRef(0);
   const inFlight = useRef(false);
+  const vulnInFlight = useRef(false);
   const mounted = useRef(true);
 
   // Serialized: a tick while a request is still in flight is skipped, never overlapped.
@@ -74,6 +80,28 @@ export default function DossierClient() {
       inFlight.current = false;
     }
   }, []);
+
+  const loadVuln = useCallback(async () => {
+    if (vulnInFlight.current) return;
+    vulnInFlight.current = true;
+    vulnGeneration.current += 1;
+    try {
+      const event = await fetchVulnerabilityOnce(vulnGeneration.current);
+      if (mounted.current) dispatchVuln(event);
+    } finally {
+      vulnInFlight.current = false;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!vulnOn) return;
+    const first = setTimeout(loadVuln, 0);
+    const iv = setInterval(loadVuln, POLL_MS);
+    return () => {
+      clearTimeout(first);
+      clearInterval(iv);
+    };
+  }, [vulnOn, loadVuln]);
 
   useEffect(() => {
     mounted.current = true;
@@ -92,6 +120,7 @@ export default function DossierClient() {
       resolved={resolveView(feed)}
       selectedEdgeId={selectedEdgeId}
       onSelectEdge={setSelectedEdgeId}
+      vulnerability={{ on: vulnOn, onToggle: setVulnOn, feed: vulnFeed, resolved: resolveVuln(vulnFeed) }}
     />
   );
 }
