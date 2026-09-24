@@ -21,7 +21,7 @@ describe('Supply Chain Dossiers drawer anchoring', () => {
     expect(drawerStart).toBeLessThan(stripStart);
     const strip = source.slice(stripStart, source.indexOf('</div>}', stripStart));
     expect(strip).not.toContain('<SupplyChainDossiersPanel');
-    expect(source.match(/<SupplyChainDossiersPanel\s*\/>/g)).toHaveLength(1);
+    expect(source.match(/<SupplyChainDossiersPanel[\s\S]*?\/>/g)).toHaveLength(1);
   });
 
   it('anchors the drawer to the viewport with bounded width and height', () => {
@@ -30,5 +30,15 @@ describe('Supply Chain Dossiers drawer anchoring', () => {
     expect(tag).toContain('max-h-[calc(100vh-2rem)]');
     expect(tag).toContain('max-w-[calc(100vw-4.5rem)]');
     expect(tag).not.toContain('fixed');
+  });
+
+  it('renders the OSM map-corner credit as a root-level sibling of the map, not inside the drawer', () => {
+    const badge = source.indexOf('<DossierMapAttribution');
+    expect(badge).toBeGreaterThan(0);
+    expect(badge).toBeLessThan(drawerStart);
+    const wrapper = source.slice(source.lastIndexOf('<div', badge), badge);
+    expect(wrapper).toContain('absolute bottom-[52px]');
+    expect(source.slice(badge - 200, badge)).toContain('dossierGeo.overlay &&');
+    expect(source.match(/<DossierMapAttribution[\s\S]*?\/>/g)).toHaveLength(1);
   });
 });

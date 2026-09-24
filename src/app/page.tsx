@@ -27,6 +27,8 @@ import LiveAlerts from '@/components/LiveAlerts';
 import WorldRemote from '@/components/WorldRemote';
 import ArcGISPanel from '@/components/ArcGISPanel';
 import SupplyChainDossiersPanel from '@/components/SupplyChainDossiersPanel';
+import { DossierMapAttribution } from '@/components/DossierGeographyView';
+import { useDossierGeography } from '@/lib/use-dossier-geography';
 const OsirisMap = dynamic(() => import('@/components/OsirisMap'), { ssr: false });
 const EntityBriefDrawer = dynamic(() => import('@/components/EntityBriefDrawer'));
 const LayerPanel = dynamic(() => import('@/components/LayerPanel'));
@@ -165,6 +167,11 @@ export default function Dashboard() {
   const [showBorderIntel, setShowBorderIntel] = useState(false);
   const [showThreatLogic, setShowThreatLogic] = useState(false);
   const [showDossiers, setShowDossiers] = useState(false);
+  // Selected dossier + its geography live here so the map overlay and the drawer share one state.
+  const [selectedDossier, setSelectedDossier] = useState<string | null>(null);
+  // Closing the control (from any strip button) removes the overlay and resets its feed.
+  const activeDossier = showDossiers ? selectedDossier : null;
+  const dossierGeo = useDossierGeography(activeDossier);
   const [demoScenariosEnabled, setDemoScenariosEnabled] = useState(false);
   const [showDrawing, setShowDrawing] = useState(false);
   const [drawMode, setDrawMode] = useState<DrawMode | null>(null);
@@ -1209,6 +1216,9 @@ export default function Dashboard() {
           demoMode={demoMode}
           theme={osirisTheme}
           arcgisLayers={arcgisLayers.filter(l => l.visible).map(l => ({ id: l.id, title: l.title, geojson: l.geojson, color: l.color, opacity: l.opacity }))}
+          dossierOverlay={dossierGeo.overlay}
+          onDossierSelect={dossierGeo.select}
+          dossierFitPaddingRight={showDossiers && !isMobile ? 460 : 0}
           onMapCenter={setMapCenter}
           route={activeRoute}
           userLocation={
@@ -1228,6 +1238,15 @@ export default function Dashboard() {
           aircraftAirports={aircraftAirports}
         />
       </ErrorBoundary>
+
+      {/* Fixed map-corner OSM/ODbL credit: shown whenever the dossier overlay draws OSM-derived
+          anchors/links, independent of the scrolling drawer. Sits above the cursor readout and
+          below the map view controls. */}
+      {dossierGeo.overlay && (
+        <div className="absolute bottom-[52px] z-[200] pointer-events-none" style={{ left: isMobile ? '12px' : '72px' }}>
+          <DossierMapAttribution attribution={dossierGeo.overlay.attribution} />
+        </div>
+      )}
 
       {/* ── DIRECTIONS — opens beside the right-hand tool rail ── */}
       <div
@@ -1403,7 +1422,17 @@ export default function Dashboard() {
       <AnimatePresence>
         {showDossiers && !isMobile && (
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="absolute right-14 top-1/2 -translate-y-1/2 w-96 max-w-[calc(100vw-4.5rem)] max-h-[calc(100vh-2rem)] flex flex-col z-[240] pointer-events-auto" data-drawer="supply-chain-dossiers">
-            <SupplyChainDossiersPanel />
+            <SupplyChainDossiersPanel
+              selected={activeDossier}
+              onSelect={setSelectedDossier}
+              geography={activeDossier ? {
+                feed: dossierGeo.feed,
+                resolved: dossierGeo.resolved,
+                selection: dossierGeo.selection,
+                onSelectElement: dossierGeo.select,
+                onLocate: dossierGeo.locate,
+              } : null}
+            />
           </motion.div>
         )}
       </AnimatePresence>
@@ -1412,7 +1441,7 @@ export default function Dashboard() {
       {!isMobile && <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-[250] pointer-events-auto bg-black/40 backdrop-blur-sm p-1 rounded-full border border-white/5">
 
         <div className="relative group">
-          <button onClick={() => { setShowDossiers(v => !v); setShowIntel(false); setShowMarkets(false); setShowAlerts(false); setShowSpaceCam(false); setShowBorderIntel(false); setShowThreatLogic(false); }} className={`relative w-8 h-8 rounded-full flex items-center justify-center transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-white/50 ${showDossiers ? 'bg-[var(--gold-primary)]/20' : 'hover:bg-white/10'}`} title="Supply Chain Dossiers — read-only GIDEON dossier list and vulnerability view (no map geometry)" aria-label="Supply Chain Dossiers" aria-expanded={showDossiers} data-control="supply-chain-dossiers">
+          <button onClick={() => { setShowDossiers(v => !v); setShowIntel(false); setShowMarkets(false); setShowAlerts(false); setShowSpaceCam(false); setShowBorderIntel(false); setShowThreatLogic(false); }} className={`relative w-8 h-8 rounded-full flex items-center justify-center transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-white/50 ${showDossiers ? 'bg-[var(--gold-primary)]/20' : 'hover:bg-white/10'}`} title="Supply Chain Dossiers — read-only GIDEON dossier list, approximate geography and vulnerability view" aria-label="Supply Chain Dossiers" aria-expanded={showDossiers} data-control="supply-chain-dossiers">
             <Boxes className={`w-4 h-4 ${showDossiers ? 'text-[var(--gold-primary)]' : 'text-white/60'}`} />
             {showDossiers && (
               <span

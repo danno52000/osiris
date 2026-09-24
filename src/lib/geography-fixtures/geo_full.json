@@ -1,0 +1,222 @@
+{
+  "checked_at": "2026-09-24T12:00:00+00:00",
+  "currentness": {
+    "eligibility_changed_at": "2026-09-24T12:20:00+00:00",
+    "publication_no": 1
+  },
+  "ddd": {
+    "eligibility_changed_at": null,
+    "eligibility_established_at": "2026-09-24T00:37:52.863795+00:00",
+    "publication_no": 3,
+    "publication_sha256": "3ea2b261bfae1da748afd2d40765d247eac8f43d496fd778c5c87e6e182ec6e6",
+    "reason": null,
+    "state": "available"
+  },
+  "dossier_id": "las-bambas-matarani",
+  "publication": {
+    "anchor_datasets": [
+      {
+        "license": "ODbL-1.0",
+        "name": "openstreetmap-anchors",
+        "sha256": "34cb00a7336b5bb041db9d88bbadcc6ddf7e64c65ed0dd6080b1be8672c927ab"
+      },
+      {
+        "license": "CC0-1.0",
+        "name": "wikidata-anchors",
+        "sha256": "e2284b03742f35056486f242f701ab94bb34f75a5960ae3ed43c4e70799d8f05"
+      }
+    ],
+    "attribution": [
+      {
+        "feature_ids": [
+          "aec2b20a2abb56847f488e6e",
+          "f355ed83fca00f2d3c25726b"
+        ],
+        "license": "ODbL-1.0",
+        "license_name": "Open Data Commons Open Database License 1.0",
+        "license_url": "https://opendatacommons.org/licenses/odbl/1-0/",
+        "text": "© OpenStreetMap contributors",
+        "url": "https://www.openstreetmap.org/copyright"
+      }
+    ],
+    "contract": "e4-geo-1.0",
+    "created_at": "2026-09-24T12:20:00+00:00",
+    "ddd": {
+      "created_at": "2026-09-24T00:37:52.863795+00:00",
+      "evidence_cutoff": "2026-09-24T00:37:52.863795+00:00",
+      "evidence_cutoff_basis": "publication_snapshot_created_at",
+      "publication_no": 3,
+      "publication_sha256": "3ea2b261bfae1da748afd2d40765d247eac8f43d496fd778c5c87e6e182ec6e6"
+    },
+    "features": [
+      {
+        "caveats": [
+          "Community-mapped coordinate, unverified against the operator.",
+          "Coordinate decimals do not establish survey accuracy.",
+          "The Wikidata coordinate statement has no supporting reference."
+        ],
+        "entity_id": "asset:aiddata-site-20",
+        "entity_label": "Las Bambas Copper Mine",
+        "feature_id": "3525fa6e8f99c703c56f08d0",
+        "gaps": [
+          "No operator-published site coordinate or footprint is in the dossier."
+        ],
+        "label": "Las Bambas · approximate mine location",
+        "lat": -14.099024,
+        "lifecycle": "published",
+        "lon": -72.3197801,
+        "precision_class": "approximate_site",
+        "precision_text": "approximate site location",
+        "source": {
+          "api_url": "https://www.wikidata.org/wiki/Special:EntityData/Q16832786.json",
+          "attribution": null,
+          "attribution_url": null,
+          "coordinate_reference": "P625 statement without a supporting reference; community-mapped, not operator-verified.",
+          "feature_id": "Q16832786",
+          "feature_name": "Las Bambas mine",
+          "feature_type": "item (P625 coordinate location)",
+          "feature_version": null,
+          "license": "CC0-1.0",
+          "license_name": "Creative Commons CC0 1.0 Universal",
+          "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+          "provider": "wikidata",
+          "retrieved_at": "2026-09-24",
+          "source_modified_at": "2026-09-16",
+          "url": "https://www.wikidata.org/wiki/Q16832786"
+        },
+        "version": 1
+      },
+      {
+        "caveats": [
+          "Transfer facility location unverified.",
+          "The anchor is the mapped railway station, not a verified cargo-transfer footprint."
+        ],
+        "entity_id": "facility:pillones-transfer-station",
+        "entity_label": "Pillones transfer station (reported)",
+        "feature_id": "f355ed83fca00f2d3c25726b",
+        "gaps": [
+          "The reported road-to-rail transfer facility footprint is not established by any dossier source."
+        ],
+        "label": "Pillones · rail-station vicinity",
+        "lat": -15.9831921,
+        "lifecycle": "published",
+        "lon": -71.2161395,
+        "precision_class": "rail_station_vicinity",
+        "precision_text": "rail-station vicinity",
+        "source": {
+          "api_url": "https://api.openstreetmap.org/api/0.6/node/7306696316.json",
+          "attribution": "© OpenStreetMap contributors",
+          "attribution_url": "https://www.openstreetmap.org/copyright",
+          "coordinate_reference": "OSM node position as mapped by contributors; railway station, not a cargo-transfer footprint.",
+          "feature_id": "node/7306696316",
+          "feature_name": "Pillones",
+          "feature_type": "railway=station; public_transport=station",
+          "feature_version": "3",
+          "license": "ODbL-1.0",
+          "license_name": "Open Data Commons Open Database License 1.0",
+          "license_url": "https://opendatacommons.org/licenses/odbl/1-0/",
+          "provider": "openstreetmap",
+          "retrieved_at": "2026-09-24",
+          "source_modified_at": "2021-09-17",
+          "url": "https://www.openstreetmap.org/node/7306696316"
+        },
+        "version": 1
+      },
+      {
+        "caveats": [
+          "Town anchor, not the terminal footprint."
+        ],
+        "entity_id": "port:matarani-pe-mri",
+        "entity_label": "Matarani (PE MRI)",
+        "feature_id": "aec2b20a2abb56847f488e6e",
+        "gaps": [
+          "Terminal area and berth used for concentrate export are not established by the dossier."
+        ],
+        "label": "Matarani · approximate port locality",
+        "lat": -17.0007604,
+        "lifecycle": "published",
+        "lon": -72.097831,
+        "precision_class": "port_locality",
+        "precision_text": "approximate port locality",
+        "source": {
+          "api_url": "https://api.openstreetmap.org/api/0.6/node/541993558.json",
+          "attribution": "© OpenStreetMap contributors",
+          "attribution_url": "https://www.openstreetmap.org/copyright",
+          "coordinate_reference": "OSM place node for the town; not the port terminal footprint.",
+          "feature_id": "node/541993558",
+          "feature_name": "Matarani",
+          "feature_type": "place=town",
+          "feature_version": "8",
+          "license": "ODbL-1.0",
+          "license_name": "Open Data Commons Open Database License 1.0",
+          "license_url": "https://opendatacommons.org/licenses/odbl/1-0/",
+          "provider": "openstreetmap",
+          "retrieved_at": "2026-09-24",
+          "source_modified_at": "2026-05-19",
+          "url": "https://www.openstreetmap.org/node/541993558"
+        },
+        "version": 1
+      }
+    ],
+    "legend": "Schematic connections; not surveyed routes.",
+    "links": [
+      {
+        "caveats": [
+          "Schematic endpoint connector; not a surveyed route, alignment or intermediate segment.",
+          "285 km is source-reported (MMG May 2026 investor presentation, page 11), not calculated from the drawn line.",
+          "Reported connectivity does not establish exclusivity or uninterrupted current operation."
+        ],
+        "distance_basis": "source_reported",
+        "distance_source_ref": "excerpt:x-e3a-mmg-investor-2026-05-rail-01",
+        "edge_id": "aa5d3e48412f4a8827aa9559",
+        "evidence_refs": [
+          "excerpt:x-e3a-mmg-investor-2026-05-rail-01"
+        ],
+        "from_entity_id": "facility:pillones-transfer-station",
+        "geometry_basis": "schematic_endpoints",
+        "label": "reported rail connection",
+        "lifecycle": "published",
+        "link_id": "63c66ccce6551f0ddf4b6e24",
+        "mode": "rail",
+        "reported_distance_km": 285,
+        "to_entity_id": "port:matarani-pe-mri",
+        "version": 1
+      },
+      {
+        "caveats": [
+          "Schematic endpoint connector; not a surveyed route, alignment or intermediate segment.",
+          "438 km is source-reported (MMG May 2026 investor presentation, page 11), not calculated from the drawn line.",
+          "Reported connectivity does not establish exclusivity or uninterrupted current operation."
+        ],
+        "distance_basis": "source_reported",
+        "distance_source_ref": "excerpt:x-e3a-mmg-investor-2026-05-road-01",
+        "edge_id": "dc90c6d342eb4d0f1a1152a5",
+        "evidence_refs": [
+          "excerpt:x-e3a-mmg-investor-2026-05-road-01"
+        ],
+        "from_entity_id": "asset:aiddata-site-20",
+        "geometry_basis": "schematic_endpoints",
+        "label": "reported road connection",
+        "lifecycle": "published",
+        "link_id": "ed7780ca37ef3ea20282e869",
+        "mode": "road",
+        "reported_distance_km": 438,
+        "to_entity_id": "facility:pillones-transfer-station",
+        "version": 1
+      }
+    ],
+    "missing": [],
+    "omitted_links": [],
+    "publication_no": 1,
+    "summary": {
+      "features_published": 3,
+      "links_published": 2,
+      "missing_entities": 0,
+      "omitted_links": 0
+    },
+    "what_changed": []
+  },
+  "reason": null,
+  "schema_version": "e4-geography/1.0",
+  "state": "available"
+}
