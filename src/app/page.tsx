@@ -1398,6 +1398,16 @@ export default function Dashboard() {
 
 
 
+      {/* Dossier drawer: anchored to the viewport (root <main>), not to the tool strip,
+          so its header stays on-screen regardless of the strip's transform. */}
+      <AnimatePresence>
+        {showDossiers && !isMobile && (
+          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="absolute right-14 top-1/2 -translate-y-1/2 w-96 max-w-[calc(100vw-4.5rem)] max-h-[calc(100vh-2rem)] flex flex-col z-[240] pointer-events-auto" data-drawer="supply-chain-dossiers">
+            <SupplyChainDossiersPanel />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ── RIGHT TOOL STRIP (desktop only — mobile uses bottom nav) ── */}
       {!isMobile && <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-[250] pointer-events-auto bg-black/40 backdrop-blur-sm p-1 rounded-full border border-white/5">
 
@@ -1412,13 +1422,6 @@ export default function Dashboard() {
             )}
           </button>
           <span className="absolute right-11 top-1/2 -translate-y-1/2 px-2 py-1 text-[9px] font-mono tracking-wider text-white/80 bg-black/80 backdrop-blur-sm rounded whitespace-nowrap opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity pointer-events-none">DOSSIERS</span>
-          <AnimatePresence>
-            {showDossiers && (
-              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="absolute right-12 top-1/2 -translate-y-1/2 w-96">
-                <SupplyChainDossiersPanel />
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
         <div className="relative group">
           <button onClick={() => { setShowIntel(!showIntel); setShowMarkets(false); setShowAlerts(false); setShowBorderIntel(false); setShowThreatLogic(false); setShowDossiers(false); }} className={`relative w-8 h-8 rounded-full flex items-center justify-center transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-white/50 ${showIntel ? 'bg-[var(--cyan-primary)]/20' : 'hover:bg-white/10'}`} title="OSINT Recon — IP lookup, network sweep, geolocation" aria-label="OSINT Recon" aria-expanded={showIntel}>
