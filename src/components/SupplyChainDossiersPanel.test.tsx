@@ -6,7 +6,7 @@
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import SupplyChainDossiersPanel, { DOSSIER_LIST } from './SupplyChainDossiersPanel';
-import { DossierGeographyView } from './DossierGeographyView';
+import { DossierGeographyView, DossierMapAttribution } from './DossierGeographyView';
 import { VectorJudgmentCard } from './VectorJudgmentCard';
 import { GEO_LEGEND, INITIAL_GEO_FEED, OSM_ATTRIBUTION, resolveGeo, type GeoFeedState, type GeoResponse } from '@/lib/geography';
 import { MAGNITUDE_NA, VECTOR_DISCLAIMER, isVulnResponse, type VulnResponse } from '@/lib/vulnerability';
@@ -54,6 +54,23 @@ describe('SupplyChainDossiersPanel', () => {
     expect(html).toContain('data-link="full-dossier"');
     expect(html).toContain('data-toggle="vulnerability"');
     expect(html).toContain('aria-pressed="true"');
+  });
+});
+
+describe('DossierMapAttribution (fixed map-corner credit)', () => {
+  it('renders one compact linked OSM credit + license link for ODbL attribution', () => {
+    const feed = feedOf(FULL);
+    const pub = resolveGeo(feed).publication!;
+    const html = renderToStaticMarkup(<DossierMapAttribution attribution={pub.attribution} />);
+    expect(html).toContain('data-attribution="odbl-map"');
+    expect(html).toContain(`>${OSM_ATTRIBUTION}</a>`);
+    expect(html).toContain('href="https://www.openstreetmap.org/copyright"');
+    expect(html).toContain('href="https://opendatacommons.org/licenses/odbl/1-0/"');
+    expect(html).toContain('whitespace-nowrap');
+  });
+
+  it('renders nothing when no ODbL-licensed anchors are published', () => {
+    expect(renderToStaticMarkup(<DossierMapAttribution attribution={[]} />)).toBe('');
   });
 });
 

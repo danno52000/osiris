@@ -27,6 +27,7 @@ import LiveAlerts from '@/components/LiveAlerts';
 import WorldRemote from '@/components/WorldRemote';
 import ArcGISPanel from '@/components/ArcGISPanel';
 import SupplyChainDossiersPanel from '@/components/SupplyChainDossiersPanel';
+import { DossierMapAttribution } from '@/components/DossierGeographyView';
 import { useDossierGeography } from '@/lib/use-dossier-geography';
 const OsirisMap = dynamic(() => import('@/components/OsirisMap'), { ssr: false });
 const EntityBriefDrawer = dynamic(() => import('@/components/EntityBriefDrawer'));
@@ -1237,6 +1238,15 @@ export default function Dashboard() {
           aircraftAirports={aircraftAirports}
         />
       </ErrorBoundary>
+
+      {/* Fixed map-corner OSM/ODbL credit: shown whenever the dossier overlay draws OSM-derived
+          anchors/links, independent of the scrolling drawer. Sits above the cursor readout and
+          below the map view controls. */}
+      {dossierGeo.overlay && (
+        <div className="absolute bottom-[52px] z-[200] pointer-events-none" style={{ left: isMobile ? '12px' : '72px' }}>
+          <DossierMapAttribution attribution={dossierGeo.overlay.attribution} />
+        </div>
+      )}
 
       {/* ── DIRECTIONS — opens beside the right-hand tool rail ── */}
       <div

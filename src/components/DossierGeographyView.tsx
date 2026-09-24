@@ -10,6 +10,7 @@ import {
   formatCoordinate,
   formatReportedDistance,
   type DossierSelection,
+  type GeoAttribution,
   type GeoFeature,
   type GeoFeedState,
   type GeoLink,
@@ -109,6 +110,25 @@ function LinkCard({ l, byEntity, vuln, onClose }: { l: GeoLink; byEntity: Map<st
           : <span className="text-white/50">No dossier-wide vector loaded.</span>}
       </div>
       <Link href={`${FULL_DOSSIER}#physical-route`} data-link="full-dossier-section" className="font-mono text-[10px] text-[var(--cyan-primary)] underline underline-offset-2">Open in full dossier →</Link>
+    </div>
+  );
+}
+
+/**
+ * Compact ODbL credit for the map corner. Rendered by the page beside the map (outside the
+ * scrolling drawer) whenever OSM-derived anchors/links are drawn, so the required linked
+ * "© OpenStreetMap contributors" credit and license access stay visible while the detailed
+ * attribution/source metadata remains in the drawer.
+ */
+export function DossierMapAttribution({ attribution, className = '' }: { attribution: GeoAttribution[]; className?: string }) {
+  const odbl = attribution.filter((a) => a.license === 'ODbL-1.0');
+  if (odbl.length === 0) return null;
+  const a = odbl[0];
+  return (
+    <div data-attribution="odbl-map" role="contentinfo" aria-label="Map data attribution" className={`pointer-events-auto rounded border border-white/15 bg-black/60 backdrop-blur-sm px-2 py-0.5 font-mono text-[9px] leading-4 text-white/70 whitespace-nowrap ${className}`}>
+      <a href={a.url || OSM_ATTRIBUTION_URL} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-white">{a.text || OSM_ATTRIBUTION}</a>
+      {' · '}
+      <a href={a.license_url} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-white">{a.license_name}</a>
     </div>
   );
 }
