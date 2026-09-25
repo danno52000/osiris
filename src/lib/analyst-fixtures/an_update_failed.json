@@ -1,0 +1,863 @@
+{
+ "checked_at": "2026-09-25T12:30:00+00:00",
+ "currentness": {
+  "eligibility_changed_at": "2026-09-25T12:40:00+00:00",
+  "publication_no": 1
+ },
+ "ddd": {
+  "eligibility_changed_at": null,
+  "eligibility_established_at": "2026-09-24T00:37:52.863795+00:00",
+  "publication_no": 3,
+  "publication_sha256": "3ea2b261bfae1da748afd2d40765d247eac8f43d496fd778c5c87e6e182ec6e6",
+  "reason": null,
+  "state": "available"
+ },
+ "dossier_id": "las-bambas-matarani",
+ "publication": {
+  "attribution": {
+   "author": {
+    "id": "isolated-fixture-author",
+    "type": "fixture"
+   },
+   "fixture": true,
+   "reviewers": [
+    {
+     "id": "isolated-fixture-reviewer",
+     "type": "fixture"
+    },
+    {
+     "id": "isolated-fixture-reviewer",
+     "type": "human"
+    }
+   ]
+  },
+  "candidate_version": 1,
+  "cards": [
+   {
+    "actor_context": {
+     "source_ids": [],
+     "text": "Communities, workers, authorities and transport counterparties are relevant stakeholders. Lawful protest and genuine grievances are not covert operations or evidence of hostile sponsorship."
+    },
+    "applicability_confidence": {
+     "analogue": "MEDIUM",
+     "local": "LOW"
+    },
+    "assumptions": [
+     "Current movement arrangements are materially affected in a stress case.",
+     "Net impairment is measured after effective alternatives, not before them.",
+     "Illustrative durations are not forecasts or historical averages."
+    ],
+    "boundary": "Reported concentrate movement, with a separate conditional input-shortage branch. Not all mine output or Chinese supply.",
+    "branches": [
+     "Absorbed: scheduling flexibility or continuity arrangements avoid material net impairment.",
+     "Delayed: concentrate moves later, with a recovery backlog but no demonstrated permanent production loss.",
+     "Sustained: a separately evidenced input shortage affects operations; do not add this branch to shipment losses without reconciling overlap."
+    ],
+    "card_id": "LB-01",
+    "conditions": [
+     {
+      "frame": "historical",
+      "label": "Observed historically",
+      "source_ids": [
+       "MMG_ROUTE_DIGITAL_2026",
+       "MMG_Q1_2023",
+       "MMG_HISTORY_2022"
+      ],
+      "state": "observed",
+      "text": "An access interruption affected inbound and outbound logistics during the Q1 2023 episode."
+     },
+     {
+      "frame": "scenario",
+      "label": "Assumed in scenario",
+      "source_ids": [],
+      "state": "assumed",
+      "text": "The interruption materially affects the currently used movement service rather than an unrelated route."
+     },
+     {
+      "frame": "current",
+      "label": "Unknown currently",
+      "source_ids": [],
+      "state": "unknown",
+      "text": "Current buffer endurance, usable alternatives, access agreements and recovery arrangements."
+     }
+    ],
+    "countercase": {
+     "source_ids": [],
+     "text": "Continuity agreements, effective substitutes, storage and rescheduling can interrupt propagation. Their current effectiveness is unverified, not assumed absent."
+    },
+    "decisive_gap": {
+     "source_ids": [],
+     "text": "A dated operator-level continuity summary explaining which functions can continue during loss of ordinary transport access and for how long, without disclosing sensitive interference points."
+    },
+    "historical_basis": {
+     "source_ids": [
+      "REUTERS_MATARANI_2019"
+     ],
+     "text": "The Q1 2023 local episode establishes the causal relevance of logistics access and recovery. The 2019 Matarani export interruption supplies broader shared-service context, but does not establish that all affected mines stopped producing."
+    },
+    "hypothesis_class": "contextual_continuity",
+    "legacy_relations": [],
+    "local_anchor": {
+     "source_ids": [
+      "MMG_ROUTE_DIGITAL_2026",
+      "MMG_Q1_2023",
+      "MMG_HISTORY_2022"
+     ],
+     "text": "MMG's Q1 2023 result says protest activity limited inbound and outbound logistics, caused critical-supply shortages, and that removal of roadblocks on 11 March preceded restoration of full capacity and concentrate transport. This is a historical local event, not an assertion of current disruption."
+    },
+    "location_context": {
+     "source_ids": [
+      "MMG_ROUTE_DIGITAL_2026"
+     ],
+     "text": "The reported Las Bambas\u2013Pillones\u2013Matarani chain provides context for the movement function. The historical source does not locate every interruption on that chain, and no precise interference site is inferred."
+    },
+    "magnitude_cases": [
+     {
+      "assumption_note": null,
+      "days": null,
+      "display": "Current evidence does not bound extent and duration",
+      "duration": null,
+      "extent": [],
+      "high": null,
+      "kind": "evidence_baseline",
+      "label": "Current evidence: consequence remains unbounded",
+      "low": null,
+      "null_reason": "No admitted evidence bounds present extent or duration; the preview keeps the evidence-based magnitude unbounded.",
+      "score_label": null
+     },
+     {
+      "assumption_note": "Stress assumption, not a forecast; score recomputed from the pinned matrix.",
+      "days": 7,
+      "display": "Conditional magnitude 3, assuming major impairment for 7 days",
+      "duration": "D2",
+      "extent": [
+       "E3"
+      ],
+      "high": 3,
+      "kind": "stress_assumption",
+      "label": "Illustrative movement stress",
+      "low": 3,
+      "null_reason": null,
+      "score_label": "Material"
+     },
+     {
+      "assumption_note": "Stress assumption, not a forecast; score recomputed from the pinned matrix.",
+      "days": 21,
+      "display": "Conditional magnitude 4, assuming major impairment for 21 days",
+      "duration": "D3",
+      "extent": [
+       "E3"
+      ],
+      "high": 4,
+      "kind": "stress_assumption",
+      "label": "Prolonged movement stress",
+      "low": 4,
+      "null_reason": null,
+      "score_label": "Severe"
+     }
+    ],
+    "magnitude_confidence": "LOW",
+    "mechanism": {
+     "source_ids": [],
+     "text": "Sustained disruption of ordinary access during a social or industrial dispute reduces the availability of the movement service. Dispatch delays can accumulate while production continues. Separately, an interruption to necessary inbound supplies can constrain operating rates after effective buffers cease to absorb it."
+    },
+    "modifiers": [],
+    "not_additive_note": "Cards in one overlap group describe branches of a shared disruption; scores are never summed across cards or cases.",
+    "overlap_group": "physical_continuity",
+    "sequence": [
+     "Access dispute affects the availability of a movement service.",
+     "Dispatch or arrival schedules slip; queues and inventories change.",
+     "Outbound delays may remain shipment delays if storage and rescheduling absorb them.",
+     "Only a demonstrated shortage of a necessary input or a binding storage constraint supports a further operating-rate consequence."
+    ],
+    "source_ids": [
+     "MMG_HISTORY_2022",
+     "MMG_Q1_2023",
+     "MMG_ROUTE_DIGITAL_2026",
+     "REUTERS_MATARANI_2019"
+    ],
+    "stress_cases": 2,
+    "summary": {
+     "source_ids": [],
+     "text": "A dispute can interrupt transport availability. Delayed dispatch, a supply shortage and lost production are different branches, not interchangeable effects."
+    },
+    "taxonomy": [],
+    "title": "Access disputes interrupt movement before output",
+    "transfer_limit": {
+     "source_ids": [],
+     "text": "These historical episodes do not establish present agreements, route exclusivity, spare capacity or inventory endurance. No measured present-day recovery time is available in this bundle."
+    }
+   },
+   {
+    "actor_context": {
+     "source_ids": [],
+     "text": "A malicious third party is hypothetical. The operator's containment decision is a possible response to an incident, not the initiating mechanism or a proxy for attacker difficulty."
+    },
+    "applicability_confidence": {
+     "analogue": "MEDIUM",
+     "local": "LOW"
+    },
+    "assumptions": [
+     "Affected services support the declared function.",
+     "Net functional impairment remains after validated fallback.",
+     "Three days is an illustrative stress duration, not the DP World recovery time applied to Las Bambas."
+    ],
+    "boundary": "Coordination and dispatch functions only. No assumed industrial-control access, named vendor vulnerability or mine-wide shutdown.",
+    "branches": [
+     "Absorbed: validated alternative workflows preserve normal throughput.",
+     "Delayed: coordination slows while data or work records are reconciled.",
+     "Sustained: a constrained fallback plus a recovery backlog prolongs functional impairment; this does not establish physical damage."
+    ],
+    "card_id": "LB-04",
+    "conditions": [
+     {
+      "frame": "current",
+      "label": "Observed currently",
+      "source_ids": [
+       "MMG_ROUTE_DIGITAL_2026"
+      ],
+      "state": "observed",
+      "text": "The operator describes digital functions in the May 2026 presentation."
+     },
+     {
+      "frame": "scenario",
+      "label": "Assumed in scenario",
+      "source_ids": [],
+      "state": "assumed",
+      "text": "An affected information service materially supports the declared coordination function."
+     },
+     {
+      "frame": "current",
+      "label": "Unknown currently",
+      "source_ids": [],
+      "state": "unknown",
+      "text": "The relevant service dependencies, trust-verification steps and ability to continue with validated alternatives."
+     }
+    ],
+    "countercase": {
+     "source_ids": [],
+     "text": "Trusted alternatives, functional separation and capacity to reconcile work without stopping physical throughput can limit consequences. This pass does not verify that they are present or absent."
+    },
+    "decisive_gap": {
+     "source_ids": [],
+     "text": "An authorized, non-sensitive business-continuity description showing how the coordination function continues and how restored information is validated."
+    },
+    "historical_basis": {
+     "source_ids": [
+      "DP_WORLD_2023"
+     ],
+     "text": "DP World reported unauthorized access on 10 November 2023, an Internet disconnection that affected Australian land-side port operations, operations resuming on 13 November and backlog clearance on 20 November. It explicitly found no deployed ransomware. This illustrates continuity consequences, not a local Las Bambas attack path."
+    },
+    "hypothesis_class": "covert_or_criminal_conditional",
+    "legacy_relations": [],
+    "local_anchor": {
+     "source_ids": [
+      "MMG_ROUTE_DIGITAL_2026"
+     ],
+     "text": "MMG's May 2026 presentation discloses digital capabilities. That supports asking about digital continuity; it does not establish the mine's architecture, vendors, external connections, safeguards or cyber weaknesses."
+    },
+    "location_context": {
+     "source_ids": [
+      "MMG_ROUTE_DIGITAL_2026"
+     ],
+     "text": "This is a chain-level business-function hypothesis. No local computer system, equipment installation, access point or facility is identified as exploitable."
+    },
+    "magnitude_cases": [
+     {
+      "assumption_note": null,
+      "days": null,
+      "display": "Current evidence does not bound extent and duration",
+      "duration": null,
+      "extent": [],
+      "high": null,
+      "kind": "evidence_baseline",
+      "label": "Current evidence: consequence remains unbounded",
+      "low": null,
+      "null_reason": "No admitted evidence bounds present extent or duration; the preview keeps the evidence-based magnitude unbounded.",
+      "score_label": null
+     },
+     {
+      "assumption_note": "Stress assumption, not a forecast; score recomputed from the pinned matrix.",
+      "days": 3,
+      "display": "Conditional magnitude 2\u20133, assuming partial to major impairment for 3 days",
+      "duration": "D2",
+      "extent": [
+       "E2",
+       "E3"
+      ],
+      "high": 3,
+      "kind": "stress_assumption",
+      "label": "Illustrative coordination stress",
+      "low": 2,
+      "null_reason": null,
+      "score_label": "Material"
+     }
+    ],
+    "magnitude_confidence": "LOW",
+    "mechanism": {
+     "source_ids": [],
+     "text": "A compromise affecting a business service could make its information unavailable or insufficiently trustworthy for normal coordination. Work relying on that information may need validation or a fallback process. A vendor-origin compromise or ransomware are possible classes, not established local exposure or the classification of the historical analogue."
+    },
+    "modifiers": [],
+    "not_additive_note": "Cards in one overlap group describe branches of a shared disruption; scores are never summed across cards or cases.",
+    "overlap_group": "digital_continuity",
+    "sequence": [
+     "A hypothetical information-integrity or availability concern affects a relevant business service.",
+     "The organization cannot immediately rely on the affected information for ordinary coordination.",
+     "Validation or fallback changes the pace of the declared function, if it lacks sufficient effective capacity.",
+     "Service restoration is followed by reconciliation and backlog clearance; these are separate milestones."
+    ],
+    "source_ids": [
+     "DP_WORLD_2023",
+     "MMG_ROUTE_DIGITAL_2026"
+    ],
+    "stress_cases": 1,
+    "summary": {
+     "source_ids": [],
+     "text": "An integrity or availability incident can make operational information unreliable. Reconciliation and constrained fallback can outlast the technical restoration."
+    },
+    "taxonomy": [
+     {
+      "id": "TV01",
+      "label": "Trusted software and service dependency compromise"
+     },
+     {
+      "id": "TV02",
+      "label": "Ransomware and extortion-related service interruption"
+     }
+    ],
+    "title": "Loss of trust in digital coordination delays work",
+    "transfer_limit": {
+     "source_ids": [],
+     "text": "An Australian container-port network is not a Peruvian mine or its logistics architecture. Do not transfer its incident cause, outage duration, container backlog or affected systems to this dossier."
+    }
+   },
+   {
+    "actor_context": {
+     "source_ids": [],
+     "text": "Courts, regulators and parties exercising lawful rights. The label lawfare requires additional evidence of abusive intent; it is not inferred from an adverse decision."
+    },
+    "applicability_confidence": {
+     "analogue": "MEDIUM",
+     "local": "LOW"
+    },
+    "assumptions": [
+     "A valid restriction covers the explicitly declared essential function.",
+     "No effective relief or substitute authorization changes the assumed 45-day stress case.",
+     "No existing Las Bambas permit flaw is asserted."
+    ],
+    "boundary": "Only the function covered by a valid, effective restriction. No assumption that the entire mine or reported corridor is affected.",
+    "branches": [
+     "No operative impact: a challenge is filed but no effective restriction exists.",
+     "Narrow impact: only a limited activity is affected or relief changes the scope.",
+     "Sustained impact: a declared essential function remains restricted for an explicit assumed period."
+    ],
+    "card_id": "LB-05",
+    "conditions": [
+     {
+      "frame": "current",
+      "label": "Unknown currently",
+      "source_ids": [],
+      "state": "unknown",
+      "text": "A relevant legal authority and valid decision affecting the stated function."
+     },
+     {
+      "frame": "scenario",
+      "label": "Assumed in scenario",
+      "source_ids": [],
+      "state": "assumed",
+      "text": "The restriction is effective, not merely requested, and actually changes permitted operations."
+     },
+     {
+      "frame": "current",
+      "label": "Unknown currently",
+      "source_ids": [],
+      "state": "unknown",
+      "text": "Scope, duration, available relief and whether other authorizations or arrangements remain usable."
+     }
+    ],
+    "countercase": {
+     "source_ids": [],
+     "text": "No effective order, a stay, a narrow remedy or an unaffected authorization may eliminate or reduce the operational consequence."
+    },
+    "decisive_gap": {
+     "source_ids": [],
+     "text": "A dated, authorized legal-status summary of essential permissions and any effective restrictions, rather than a speculative search for legal leverage."
+    },
+    "historical_basis": {
+     "source_ids": [
+      "PANAMA_JUDICIARY_2023"
+     ],
+     "text": "Panama's judiciary announced on 28 November 2023 that its Supreme Court had declared Law 406 unconstitutional in a ruling issued on 27 November. That law approved the Minera Panam\u00e1 concession contract. The official notice by itself does not establish a recovery or mine-closure chronology."
+    },
+    "hypothesis_class": "lawful_institutional",
+    "legacy_relations": [],
+    "local_anchor": {
+     "source_ids": [
+      "PANAMA_JUDICIARY_2023"
+     ],
+     "text": "The dossier concerns a real operating mine and reported logistics chain. This evidence bundle does not establish a deficient permit, pending effective order, vulnerable legal instrument or adverse proceeding at Las Bambas."
+    },
+    "location_context": {
+     "source_ids": [
+      "PANAMA_JUDICIARY_2023"
+     ],
+     "text": "No specific permit, court, parcel or local legal weakness is selected. Geographic relevance alone cannot supply the missing jurisdiction-specific legal evidence."
+    },
+    "magnitude_cases": [
+     {
+      "assumption_note": null,
+      "days": null,
+      "display": "Current evidence does not bound extent and duration",
+      "duration": null,
+      "extent": [],
+      "high": null,
+      "kind": "evidence_baseline",
+      "label": "Current evidence: consequence remains unbounded",
+      "low": null,
+      "null_reason": "No admitted evidence bounds present extent or duration; the preview keeps the evidence-based magnitude unbounded.",
+      "score_label": null
+     },
+     {
+      "assumption_note": "Stress assumption, not a forecast; score recomputed from the pinned matrix.",
+      "days": 45,
+      "display": "Conditional magnitude 5, assuming essential-function impairment for 45 days",
+      "duration": "D4",
+      "extent": [
+       "E4"
+      ],
+      "high": 5,
+      "kind": "stress_assumption",
+      "label": "Illustrative essential-function restriction",
+      "low": 5,
+      "null_reason": null,
+      "score_label": "Critical"
+     }
+    ],
+    "magnitude_confidence": "LOW",
+    "mechanism": {
+     "source_ids": [],
+     "text": "A binding legal or administrative decision can change the scope of an activity that may lawfully continue. The operational effect depends on the actual instrument and any stay, remedy or unaffected authorization. This analysis does not allege manipulation of legal processes or prescribe how to initiate it."
+    },
+    "modifiers": [],
+    "not_additive_note": "Cards in one overlap group describe branches of a shared disruption; scores are never summed across cards or cases.",
+    "overlap_group": "legal_continuity",
+    "sequence": [
+     "An assumed valid instrument takes legal effect.",
+     "Its actual scope changes the activities that may continue.",
+     "Operations adjust only within the affected boundary while unaffected functions may continue.",
+     "Relief, compliance, a narrower remedy or continuing restriction determines the subsequent outcome."
+    ],
+    "source_ids": [
+     "PANAMA_JUDICIARY_2023"
+    ],
+    "stress_cases": 1,
+    "summary": {
+     "source_ids": [],
+     "text": "The mechanism is loss or narrowing of operating authority, not the mere filing of a complaint. Scope, effective date and relief determine the consequence."
+    },
+    "taxonomy": [
+     {
+      "id": "TV09",
+      "label": "Legal, regulatory, and jurisdictional constraints"
+     }
+    ],
+    "title": "An effective legal restriction changes what may operate",
+    "transfer_limit": {
+     "source_ids": [],
+     "text": "This is a different jurisdiction and legal instrument. It provides an analogy about legal authority, not a Peruvian legal conclusion or a finding about Las Bambas."
+    }
+   }
+  ],
+  "chain_context": {
+   "source_ids": [
+    "MMG_ROUTE_DIGITAL_2026",
+    "REUTERS_MATARANI_2019"
+   ],
+   "text": "The reported Las Bambas\u2013Pillones\u2013Matarani connections provide geographical context, not an inventory of vulnerable points (MMG investor presentation, May 2026, slide 11). The historical Matarani export interruption shows shared-service context, but does not establish that every affected mine stopped producing (Reuters, August 2019)."
+  },
+  "contract": "e7-analyst/1.0",
+  "created_at": "2026-09-25T12:20:00+00:00",
+  "ddd": {
+   "created_at": "2026-09-24T00:37:52.863795+00:00",
+   "evidence_cutoff": "2026-09-24T00:37:52.863795+00:00",
+   "evidence_cutoff_basis": "publication_snapshot_created_at",
+   "publication_no": 3,
+   "publication_sha256": "3ea2b261bfae1da748afd2d40765d247eac8f43d496fd778c5c87e6e182ec6e6"
+  },
+  "dispositions": [
+   {
+    "card_ids": [
+     "LB-04"
+    ],
+    "disposition": "conditional_hypothesis",
+    "family_id": "TV01",
+    "label": "Trusted software and service dependency compromise",
+    "reason": "Digital-function context is documented. No named local vendor relationship, compromised dependency or weakness is established.",
+    "source_ids": [
+     "MMG_ROUTE_DIGITAL_2026"
+    ]
+   },
+   {
+    "card_ids": [
+     "LB-04"
+    ],
+    "disposition": "conditional_hypothesis",
+    "family_id": "TV02",
+    "label": "Ransomware and extortion-related service interruption",
+    "reason": "A possible class of service interruption, not a local finding. DP World is a non-ransomware continuity analogue and must not be misclassified.",
+    "source_ids": [
+     "DP_WORLD_2023"
+    ]
+   },
+   {
+    "card_ids": [],
+    "disposition": "research_gap",
+    "family_id": "TV03",
+    "label": "Latent compromise of operational dependencies",
+    "reason": "No admitted local evidence of unauthorized operational access or latent disruption capability. Digital capability is not proof.",
+    "source_ids": []
+   },
+   {
+    "card_ids": [],
+    "disposition": "research_gap",
+    "family_id": "TV04",
+    "label": "Component trust and embedded-access risk",
+    "reason": "No admitted component provenance, unauthorized-functionality or applicable local defect evidence.",
+    "source_ids": []
+   },
+   {
+    "card_ids": [],
+    "disposition": "research_gap",
+    "family_id": "TV05",
+    "label": "Deliberate physical damage and service loss",
+    "reason": "Named infrastructure and historical transport delays do not establish exploitable points or a sabotage mechanism. No site-specific targeting assessment is produced.",
+    "source_ids": [
+     "MMG_ROUTE_DIGITAL_2026"
+    ]
+   },
+   {
+    "card_ids": [],
+    "disposition": "research_gap",
+    "family_id": "TV06",
+    "label": "Maritime service, navigation, and access disruption",
+    "reason": "The port connection is documented; downstream shipping routes and a relevant navigation or maritime-interference exposure are not established.",
+    "source_ids": [
+     "MMG_ROUTE_DIGITAL_2026"
+    ]
+   },
+   {
+    "card_ids": [],
+    "disposition": "research_gap",
+    "family_id": "TV07",
+    "label": "Formal supply, technology, and commercial restrictions",
+    "reason": "Historical supply shortages do not identify a present dependency on a specifically restricted input or technology.",
+    "source_ids": [
+     "MMG_Q1_2023"
+    ]
+   },
+   {
+    "card_ids": [],
+    "disposition": "research_gap",
+    "family_id": "TV08",
+    "label": "Administrative and informal trade friction",
+    "reason": "No case-specific differential customs treatment or informal restriction is established by the admitted evidence.",
+    "source_ids": []
+   },
+   {
+    "card_ids": [
+     "LB-05"
+    ],
+    "disposition": "conditional_hypothesis",
+    "family_id": "TV09",
+    "label": "Legal, regulatory, and jurisdictional constraints",
+    "reason": "A mechanism-level analogy exists, but no local effective restriction or legal defect is established.",
+    "source_ids": [
+     "PANAMA_JUDICIARY_2023"
+    ]
+   },
+   {
+    "card_ids": [],
+    "disposition": "research_gap",
+    "family_id": "TV10",
+    "label": "Control rights and governance dependency",
+    "reason": "Ownership/financing context does not establish hostile intent or the exercise of a specific control right to interrupt service.",
+    "source_ids": []
+   },
+   {
+    "card_ids": [],
+    "disposition": "research_gap",
+    "family_id": "TV11",
+    "label": "Trusted personnel and delegated-authority misuse",
+    "reason": "No admitted local evidence supports a specific personnel-trust abuse. Do not invent individuals or access arrangements.",
+    "source_ids": []
+   },
+   {
+    "card_ids": [],
+    "disposition": "research_gap",
+    "family_id": "TV12",
+    "label": "Criminal loss, fraud, and deliberate interference",
+    "reason": "Documented protest and access disputes are not automatically criminal interference. LB-01 remains explicitly outside the covert/criminal taxonomy.",
+    "source_ids": [
+     "MMG_Q1_2023"
+    ]
+   },
+   {
+    "card_ids": [],
+    "disposition": "research_gap",
+    "family_id": "TV13",
+    "label": "Information integrity and decision distortion",
+    "reason": "No admitted evidence of a deceptive campaign or coordinated false allegations relevant to the dossier. Legitimate grievances are not presumed covert.",
+    "source_ids": []
+   }
+  ],
+  "gaps": [
+   {
+    "source_ids": [
+     "MMG_ROUTE_DIGITAL_2026"
+    ],
+    "text": "Las Bambas: Origin in the reported movement chain. Ask how business functions continue during a transport interruption; do not infer a specific sensitive installation or storage limit."
+   },
+   {
+    "source_ids": [
+     "MMG_ROUTE_DIGITAL_2026"
+    ],
+    "text": "Pillones: Reported road/rail connection context. Ask for a non-sensitive explanation of service continuity and recovery responsibilities; no verified facility footprint or vulnerable point is supplied."
+   },
+   {
+    "source_ids": [
+     "MMG_ROUTE_DIGITAL_2026"
+    ],
+    "text": "Matarani: Reported rail destination/port locality. Ask how an interruption and restart of the relevant service affects scheduling and backlog, without inferring specific equipment, an exclusive terminal dependence or downstream destination."
+   }
+  ],
+  "hypothetical_label": "Analyst continuity narratives: contextual or conditional hypotheses with qualitative enabling conditions. Not an alert, observed incident, forecast or probability.",
+  "origin": "fixture",
+  "policy": {
+   "brief_v1_sha256": "f6cf4440b4dff9e536f691560c52cf60c749a47367146cf8d67076bc0bf785a3",
+   "family_ids": [
+    "TV01",
+    "TV02",
+    "TV03",
+    "TV04",
+    "TV05",
+    "TV06",
+    "TV07",
+    "TV08",
+    "TV09",
+    "TV10",
+    "TV11",
+    "TV12",
+    "TV13"
+   ],
+   "planning_commit": "dec4d7a63bf893e92025456293217651ccf7e627",
+   "policy_version": "analyst/1.0",
+   "preview_cards_sha256": "0c79baf802422368ffbca0710ed5b00dd6c81cf0f0106ee6456298436fb2eef4",
+   "preview_catalog_sha256": "080d5f664695bf4bd18b0282f3c67652c2850ed789414fbfa932cfb467f22a9e",
+   "rubric_sha256": "c358f454188150dd315db5950fe310e9ea7805ebeaba794326438ae41c984c12",
+   "taxonomy_sha256": "2a593de59446017646eadb2f70fcbec6eb2cfbdb4773876b31fe3c0acacba00f"
+  },
+  "publication_no": 1,
+  "sources": [
+   {
+    "applicability": "analogue",
+    "claim_supported": "presidential announcement of mine closure process following ruling",
+    "date_precision": "day",
+    "document_date": "2023-11-28",
+    "does_not_support": [
+     "present Panama status",
+     "Las Bambas legal applicability"
+    ],
+    "locator": "passage not yet located",
+    "paraphrase": "presidential announcement of mine closure process following ruling",
+    "reviewed": true,
+    "rights_class": "open_attribution",
+    "role": "historical_analogue",
+    "source_id": "AP_PANAMA_2023",
+    "transfer_limit": null,
+    "url": "https://apnews.com/article/panama-copper-mine-supreme-court-canadian-629d8a7838f23cc4ed845a1b3c7a2941",
+    "verification": "reviewed_paraphrase"
+   },
+   {
+    "applicability": "analogue",
+    "claim_supported": "10 November incident and protective disconnection; 13 November operations restart; 20 November backlog clearance; no ransomware deployed per operator",
+    "date_precision": "day",
+    "document_date": "2023-11-28",
+    "does_not_support": [
+     "Las Bambas systems or vulnerabilities",
+     "same recovery time at Las Bambas"
+    ],
+    "locator": "passage not yet located",
+    "paraphrase": "10 November incident and protective disconnection; 13 November operations restart; 20 November backlog clearance; no ransomware deployed per operator",
+    "reviewed": true,
+    "rights_class": "open_attribution",
+    "role": "historical_analogue",
+    "source_id": "DP_WORLD_2023",
+    "transfer_limit": null,
+    "url": "https://www.dpworld.com/en/news/releases/australia/media-statement-update-on-cybersecurity-incident",
+    "verification": "reviewed_paraphrase"
+   },
+   {
+    "applicability": "dossier_local",
+    "claim_supported": "2022 transport disruption separate from operational shutdown; historical stockpiles; early 2023 input shortages and recovery",
+    "date_precision": "month",
+    "document_date": "2023-04",
+    "does_not_support": [
+     "present storage endurance",
+     "173 days of full mine shutdown",
+     "all delayed shipments permanently lost"
+    ],
+    "locator": "Las Bambas review pp. 28-29",
+    "paraphrase": "2022 transport disruption separate from operational shutdown; historical stockpiles; early 2023 input shortages and recovery",
+    "reviewed": true,
+    "rights_class": "open_attribution",
+    "role": "local_fact",
+    "source_id": "MMG_HISTORY_2022",
+    "transfer_limit": null,
+    "url": "https://www.mmg.com/content/uploads/2023/04/MMG_2022_AR_LB.pdf",
+    "verification": "reviewed_paraphrase"
+   },
+   {
+    "applicability": "dossier_local",
+    "claim_supported": "critical supply shortages; 11 March 2023 removal of roadblocks and subsequent resumption",
+    "date_precision": null,
+    "document_date": null,
+    "does_not_support": [
+     "present inbound dependency inventory",
+     "hostile sponsorship"
+    ],
+    "locator": "passage not yet located (historical period 2023-Q1; Historical period from text; later page metadata not treated as event date)",
+    "paraphrase": "critical supply shortages; 11 March 2023 removal of roadblocks and subsequent resumption",
+    "reviewed": true,
+    "rights_class": "open_attribution",
+    "role": "local_fact",
+    "source_id": "MMG_Q1_2023",
+    "transfer_limit": null,
+    "url": "https://www.mmg.com/investors/reports-and-presentations/2023-first-quarter-production-result/",
+    "verification": "reviewed_paraphrase"
+   },
+   {
+    "applicability": "dossier_local",
+    "claim_supported": "reported route; disclosed digital functions; dated management resilience claims",
+    "date_precision": "month",
+    "document_date": "2026-05",
+    "does_not_support": [
+     "route exclusivity",
+     "current security weakness",
+     "current uninterrupted operations",
+     "Chinese shipment destination"
+    ],
+    "locator": "slide 11: reported road and rail; slide 13: dated stability statement; slide 17: digital capability; slide 28: social performance",
+    "paraphrase": "reported route; disclosed digital functions; dated management resilience claims",
+    "reviewed": true,
+    "rights_class": "open_attribution",
+    "role": "local_fact",
+    "source_id": "MMG_ROUTE_DIGITAL_2026",
+    "transfer_limit": null,
+    "url": "https://www.mmg.com/content/uploads/2026/05/Presentation-for-Las-Bambas-Investors-trip-in-May-2026.pdf",
+    "verification": "reviewed_paraphrase"
+   },
+   {
+    "applicability": "context",
+    "claim_supported": "temporary precautionary suspension after fatal accident; restart expected from 21 August",
+    "date_precision": "day",
+    "document_date": "2026-08-19",
+    "does_not_support": [
+     "actual restart confirmation",
+     "malicious intent",
+     "future recovery guarantee"
+    ],
+    "locator": "passage not yet located",
+    "paraphrase": "temporary precautionary suspension after fatal accident; restart expected from 21 August",
+    "reviewed": true,
+    "rights_class": "open_attribution",
+    "role": "context",
+    "source_id": "MMG_SAFETY_2026",
+    "transfer_limit": null,
+    "url": "https://www.mmg.com/content/uploads/2026/08/e_2026-08-19_Voluntary-LB-Fatalities.pdf",
+    "verification": "reviewed_paraphrase"
+   },
+   {
+    "applicability": "analogue",
+    "claim_supported": "27 November ruling and 28 November announcement concerning Law 406",
+    "date_precision": "day",
+    "document_date": "2023-11-28",
+    "does_not_support": [
+     "Las Bambas permit defects",
+     "Peruvian legal conclusion",
+     "mine closure chronology by itself"
+    ],
+    "locator": "passage not yet located",
+    "paraphrase": "27 November ruling and 28 November announcement concerning Law 406",
+    "reviewed": true,
+    "rights_class": "open_attribution",
+    "role": "historical_analogue",
+    "source_id": "PANAMA_JUDICIARY_2023",
+    "transfer_limit": null,
+    "url": "https://www.organojudicial.gob.pa/noticias/judiciales/CSJ-declara-inconstitucional-la-Ley-406-de-20-de-octubre-de-2023",
+    "verification": "reviewed_paraphrase"
+   },
+   {
+    "applicability": "context",
+    "claim_supported": "export disruption and restart affecting Las Bambas during separate Tia Maria dispute",
+    "date_precision": "day",
+    "document_date": "2019-08-13",
+    "does_not_support": [
+     "all mines stopped mining throughout the export disruption",
+     "current terminal concentration or capacity"
+    ],
+    "locator": "passage not yet located",
+    "paraphrase": "export disruption and restart affecting Las Bambas during separate Tia Maria dispute",
+    "reviewed": true,
+    "rights_class": "open_attribution",
+    "role": "context",
+    "source_id": "REUTERS_MATARANI_2019",
+    "transfer_limit": null,
+    "url": "https://www.reuters.com/article/business/copper-exports-resume-from-peruvian-port-of-matarani-port-operator-idUSL2N2590TZ/",
+    "verification": "reviewed_paraphrase"
+   },
+   {
+    "applicability": "context",
+    "claim_supported": "reported restart of mine and process plant from 21 August",
+    "date_precision": "day",
+    "document_date": "2026-08-24",
+    "does_not_support": [
+     "independently observed current status",
+     "malicious intent"
+    ],
+    "locator": "passage not yet located",
+    "paraphrase": "reported restart of mine and process plant from 21 August",
+    "reviewed": true,
+    "rights_class": "open_attribution",
+    "role": "context",
+    "source_id": "REUTERS_RESTART_2026",
+    "transfer_limit": null,
+    "url": "https://www.miningweekly.com/article/mmg-confirms-restart-of-operations-at-las-bambas-copper-mine-in-peru-2026-08-24",
+    "verification": "reviewed_paraphrase"
+   }
+  ],
+  "summary": {
+   "by_disposition": {
+    "conditional_hypothesis": 3,
+    "not_applicable": 0,
+    "research_gap": 10,
+    "supported_local": 0
+   },
+   "cards": 3,
+   "families": 13,
+   "sources": 9,
+   "sources_cited": 6,
+   "stress_cases": 4
+  },
+  "takeaway": {
+   "source_ids": [
+    "MMG_Q1_2023"
+   ],
+   "text": "The clearest local historical lesson is that disruption to logistics access can affect both dispatch and necessary inbound supplies, but delayed exports and production loss must be distinguished. MMG's Q1 2023 report describes supply shortages and impaired inbound/outbound logistics, followed by full-capacity operation and resumed concentrate movement after roadblocks were removed on 11 March (MMG Q1 2023). Digital continuity and effective legal restrictions are useful conditional scenarios, but the available evidence does not establish a local cyber weakness or legal defect. They belong in the review as explicit hypotheses, not confirmed vulnerabilities or active-threat alerts."
+  },
+  "what_changed": []
+ },
+ "reason": "update_failed",
+ "schema_version": "e7-analyst/1.0",
+ "state": "stale"
+}

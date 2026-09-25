@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import {
+  DOSSIER_ID,
   describeChange,
   describeReason,
   displayNarrative,
@@ -19,6 +20,8 @@ import {
 import { VulnerabilityView } from '@/components/VulnerabilityView';
 import type { ResolvedVuln, VulnFeedState } from '@/lib/vulnerability';
 import type { ResolvedUw, UwFeedState } from '@/lib/underwriting';
+import { analystReportPath, type AnFeedState, type ResolvedAn } from '@/lib/analyst';
+import { AnalystView } from '@/components/AnalystView';
 import { UnderwritingView } from '@/components/UnderwritingView';
 
 const STATE_STYLE: Record<ViewState, { label: string; cls: string }> = {
@@ -40,6 +43,8 @@ export interface DossierViewProps {
   vulnerability?: { on: boolean; onToggle: (on: boolean) => void; feed: VulnFeedState; resolved: ResolvedVuln };
   /** E5 underwriting case portfolio (opt-in). Omitted = control not rendered. */
   underwriting?: { on: boolean; onToggle: (on: boolean) => void; feed: UwFeedState; resolved: ResolvedUw };
+  /** E7 analyst supplement (default-visible, no toggle). Omitted = section not rendered. */
+  analyst?: { feed: AnFeedState; resolved: ResolvedAn };
 }
 
 function EvidenceButton({ edge, selected, onSelect }: { edge: Edge; selected: boolean; onSelect: (id: string | null) => void }) {
@@ -233,7 +238,7 @@ function RelationshipTable<T extends { edge: Edge }>({
   );
 }
 
-export function DossierView({ feed, resolved, selectedEdgeId, onSelectEdge, vulnerability, underwriting }: DossierViewProps) {
+export function DossierView({ feed, resolved, selectedEdgeId, onSelectEdge, vulnerability, underwriting, analyst }: DossierViewProps) {
   const { view, staleOrigin, body } = resolved;
   const style = STATE_STYLE[view];
   const reasonText = describeReason(body?.reason);
@@ -446,6 +451,25 @@ export function DossierView({ feed, resolved, selectedEdgeId, onSelectEdge, vuln
           </>
         )}
 
+        {analyst && (
+          <section data-section="analyst" aria-labelledby="analyst-heading" className="rounded-lg border border-[#B388FF]/30 p-4 flex flex-col gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 id="analyst-heading" className="text-sm font-semibold text-white">Analyst supplement <span className="text-white/40 font-mono text-[10px]">e7-analyst/1.0</span></h2>
+              <Link href={analystReportPath(DOSSIER_ID)} data-link="analyst-report" className="font-mono text-[11px] text-[var(--cyan-primary)] underline underline-offset-2">Full analyst report →</Link>
+            </div>
+            <p className="text-[11px] text-white/50 max-w-3xl">
+              Continuity narratives bound to the exact dossier publication above: a takeaway, the published narrative cards
+              with their qualitative enabling conditions and every magnitude case labelled beside its score, then the
+              thirteen-family disposition register, the source verification/rights register and the audit trail.
+            </p>
+            <AnalystView dossierId={DOSSIER_ID} feed={analyst.feed} resolved={analyst.resolved} linkToReport />
+          </section>
+        )}
+
+        {(vulnerability || underwriting) && (
+          <details data-section="legacy" className="rounded-lg border border-white/[0.08] p-4 flex flex-col gap-3">
+            <summary className="cursor-pointer text-sm font-semibold text-white/70">Legacy assessments <span className="text-white/40 font-mono text-[10px]">e3b-vulnerability/1.0 · e5-underwriting/1.0 — unchanged, opt-in</span></summary>
+
         {vulnerability && (
           <section data-section="vulnerability" aria-labelledby="vulnerability-heading" className="rounded-lg border border-white/[0.08] p-4 flex flex-col gap-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -486,6 +510,8 @@ export function DossierView({ feed, resolved, selectedEdgeId, onSelectEdge, vuln
               ? <UnderwritingView feed={underwriting.feed} resolved={underwriting.resolved} />
               : <p data-uw-view="off" className="font-mono text-[10px] text-white/40">Underwriting view off — nothing is fetched or shown until switched on.</p>}
           </section>
+        )}
+          </details>
         )}
 
         <footer className="text-[10px] text-white/30 border-t border-white/[0.06] pt-3">
