@@ -45,6 +45,20 @@ export default function AnalystReportClient({ dossierId, title, listed }: Analys
   }, [load]);
 
   const resolved = resolveAn(feed);
+  const hasContent = resolved.view === 'available' || resolved.view === 'stale';
+  const scrolledTo = useRef<string | null>(null);
+
+  // Cards and sources render only after the publication arrives, so the browser's initial hash
+  // jump finds no target; scroll once per hash after content is present (no-op without a hash).
+  useEffect(() => {
+    if (!hasContent) return;
+    const hash = window.location.hash.slice(1);
+    if (!hash || scrolledTo.current === hash) return;
+    const target = document.getElementById(decodeURIComponent(hash));
+    if (!target) return;
+    scrolledTo.current = hash;
+    target.scrollIntoView({ block: 'start' });
+  }, [hasContent]);
   const legacyHref = dossierId === DOSSIER_ID ? `/dossiers/${DOSSIER_ID}` : null;
 
   return (
