@@ -11,6 +11,7 @@ import {
   formatBands,
   formatNullReason,
   formatScore,
+  magnitudeSummary,
   formatUwTimestamp,
   unplottedCases,
   type ResolvedUw,
@@ -128,7 +129,7 @@ function DualAxisChart({ pub, selectedId, onSelect }: { pub: UwPublication; sele
             <ul data-section="uw-unplotted" className="font-mono text-[9px] text-white/60 flex flex-col gap-0.5">
               {unplottedCases(pub).map((c) => (
                 <li key={c.case_id} data-unplotted-case={c.case_id}>
-                  {c.category} · difficulty {formatScore(c.difficulty.low, c.difficulty.high)} · magnitude {formatScore(c.magnitude.low, c.magnitude.high)} — not plotted
+                  {c.category} · difficulty {formatScore(c.difficulty.low, c.difficulty.high)} · <span data-field="magnitude-summary">{c.magnitude.low === null ? `magnitude ${formatScore(c.magnitude.low, c.magnitude.high)}` : magnitudeSummary(c.magnitude)}</span> — not plotted
                 </li>
               ))}
             </ul>
@@ -266,6 +267,11 @@ function CaseCard({ c, open, compact, geographyDrawn, mapHighlight, onToggle, on
           <span data-field="difficulty" data-scored={c.difficulty.low !== null}>difficulty <span className="text-white">{formatScore(c.difficulty.low, c.difficulty.high)}</span> · {c.difficulty.confidence}{c.difficulty.low === null ? ` (${formatNullReason(c.difficulty.null_reason)})` : ''}</span>
           <span data-field="magnitude" data-scored={c.magnitude.low !== null}>magnitude <span className="text-white">{formatScore(c.magnitude.low, c.magnitude.high)}</span> · {c.magnitude.confidence}{c.magnitude.low === null ? ` (${formatNullReason(c.magnitude.null_reason)})` : ''}</span>
         </span>
+        {c.magnitude.low !== null && (
+          <span data-field="magnitude-summary" className="font-mono text-[9px] text-white/90">
+            {magnitudeSummary(c.magnitude)} · {c.magnitude.confidence} confidence · hypothetical, not observed
+          </span>
+        )}
         {c.assumptions.length > 0 && !open && (
           <span className="font-mono text-[9px] text-[#B388FF]/80">{c.assumptions.length} reviewed stress assumption{c.assumptions.length === 1 ? '' : 's'} — assumed, not observed</span>
         )}
@@ -363,9 +369,9 @@ export function UnderwritingView({ feed, resolved, compact = false, onHighlight,
 
           {pub.shared_dependency_groups.length > 0 && (
             <div data-section="uw-shared" className="rounded border border-white/[0.08] p-2 flex flex-col gap-1">
-              <div className="font-mono text-[10px] text-white/70">Shared functional dependencies ({pub.shared_dependency_groups.length}) — disclosed, never summed</div>
+              <div className="font-mono text-[10px] text-white/70">Shared reviewed functional dependencies ({pub.shared_dependency_groups.length}) — disclosed, never summed</div>
               {pub.shared_dependency_groups.map((g, i) => (
-                <div key={i} data-shared-group={i} data-aggregation={g.aggregation} className="text-[9px] text-white/60">
+                <div key={i} data-shared-group={i} data-basis={g.basis} data-aggregation={g.aggregation} className="text-[9px] text-white/60">
                   <span className="font-mono text-white/80">{g.refs.join(', ')}</span> → cases {g.case_ids.map((id) => pub.cases.find((c) => c.case_id === id)?.category ?? id).join(', ')} ({g.case_ids.length}). {g.note}
                 </div>
               ))}

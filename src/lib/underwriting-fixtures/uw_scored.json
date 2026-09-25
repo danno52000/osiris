@@ -695,7 +695,7 @@
     },
     "display": {
      "difficulty": "Materialization difficulty 2\u20133, confidence LOW",
-     "magnitude": "Conditional magnitude 3, assuming Assume major impairment of the declared movement function (extent band E3): the function is largely unavailable for the boundary as declared."
+     "magnitude": "Conditional magnitude 3, assuming major impairment for 7 days"
     },
     "family": "corridor_access",
     "highlight": {
@@ -975,7 +975,7 @@
     },
     "display": {
      "difficulty": "Materialization difficulty 4, confidence MEDIUM",
-     "magnitude": "Conditional magnitude 1\u20135, assuming FIXTURE: assume demanding terminal safeguards and an unbounded extent/duration spread (synthetic)."
+     "magnitude": "Conditional magnitude 1\u20135, assuming localized to essential/system-wide impairment for \u22641 day to >30 days"
     },
     "family": "transfer_terminal_continuity",
     "highlight": {
@@ -1381,52 +1381,14 @@
   "shared_dependency_groups": [
    {
     "aggregation": "not_summed",
-    "case_ids": [
-     "3b61fa1e81aed84cc4856434",
-     "6ece60f1560d6435de251b48",
-     "85703c81840350485ba0cfe9",
-     "ace6290873d5432cdf5d4bee"
-    ],
-    "note": "these cases depend on the same functional dependency; a single initiating event could affect all of them. Their magnitudes describe overlapping potential loss and are not additive.",
-    "refs": [
-     "asset:aiddata-site-20"
-    ]
-   },
-   {
-    "aggregation": "not_summed",
-    "case_ids": [
-     "3b61fa1e81aed84cc4856434",
-     "ace6290873d5432cdf5d4bee"
-    ],
-    "note": "these cases depend on the same functional dependency; a single initiating event could affect all of them. Their magnitudes describe overlapping potential loss and are not additive.",
-    "refs": [
-     "9b92c671fdeaedd3e9cb3cb4",
-     "org:f01-name:minera-las-bambas-s-a-c-minera-las-bambas:a206c8ce4114"
-    ]
-   },
-   {
-    "aggregation": "not_summed",
-    "case_ids": [
-     "6ece60f1560d6435de251b48",
-     "ace6290873d5432cdf5d4bee"
-    ],
-    "note": "these cases depend on the same functional dependency; a single initiating event could affect all of them. Their magnitudes describe overlapping potential loss and are not additive.",
-    "refs": [
-     "6481af1366eafeb1c5bba869",
-     "org:doc:mmg-limited"
-    ]
-   },
-   {
-    "aggregation": "not_summed",
+    "basis": "reviewed_functional_dependency",
     "case_ids": [
      "85703c81840350485ba0cfe9",
      "b9442075b789de2db3654ee0"
     ],
-    "note": "these cases depend on the same functional dependency; a single initiating event could affect all of them. Their magnitudes describe overlapping potential loss and are not additive.",
+    "note": "Each listed case carries a reviewed function-level dependency on the listed route or facility identities, so impairment of that shared dependency could affect each of them. A shared owner, operator, financier or common endpoint is context only and does not form a group. Magnitudes describe overlapping potential loss and are not additive.",
     "refs": [
-     "aa5d3e48412f4a8827aa9559",
-     "facility:pillones-transfer-station",
-     "port:matarani-pe-mri"
+     "aa5d3e48412f4a8827aa9559"
     ]
    }
   ],

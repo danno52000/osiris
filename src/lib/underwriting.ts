@@ -188,9 +188,17 @@ export interface UwCoverage {
   reason: string;
 }
 
+export const SHARED_GROUP_BASIS = 'reviewed_functional_dependency';
+export const SHARED_GROUP_NOTE =
+  'Each listed case carries a reviewed function-level dependency on the listed route or '
+  + 'facility identities, so impairment of that shared dependency could affect each of them. '
+  + 'A shared owner, operator, financier or common endpoint is context only and does not form '
+  + 'a group. Magnitudes describe overlapping potential loss and are not additive.';
+
 export interface UwSharedGroup {
   refs: string[];
   case_ids: string[];
+  basis: typeof SHARED_GROUP_BASIS;
   note: string;
   aggregation: 'not_summed';
 }
@@ -503,7 +511,22 @@ function isCoverage(v: unknown): boolean {
 function isSharedGroup(v: unknown): boolean {
   return isRecord(v) && isStringArray(v.refs) && v.refs.length > 0 && v.refs.every((r) => ID_TOKEN.test(r))
     && isStringArray(v.case_ids) && v.case_ids.length >= 2 && v.case_ids.every((c) => CASE_ID.test(c))
-    && typeof v.note === 'string' && v.aggregation === 'not_summed';
+    && v.basis === SHARED_GROUP_BASIS && v.note === SHARED_GROUP_NOTE && v.aggregation === 'not_summed';
+}
+
+const FUNCTIONAL_DEPENDENCY_BASES = new Set<string>(['documented_fact', 'bounded_inference']);
+
+/** Boundary refs a reviewed `dependency` input (documented fact / bounded inference) cites.
+ *  Context-only boundary refs (owner, operator, financier, common endpoint) and refs of
+ *  `unknown` dependencies are excluded, so they can never justify a shared group. */
+export function functionalDependencyRefs(c: UwCase): Set<string> {
+  const boundary = new Set([...c.boundary.entity_refs, ...c.boundary.edge_refs]);
+  const out = new Set<string>();
+  for (const i of c.inputs) {
+    if (i.kind !== 'dependency' || !FUNCTIONAL_DEPENDENCY_BASES.has(i.basis_kind)) continue;
+    for (const r of i.references) if (boundary.has(r.ref)) out.add(r.ref);
+  }
+  return out;
 }
 
 function isSummary(v: unknown): boolean {
@@ -556,6 +579,12 @@ function isPublication(v: unknown): boolean {
   }
   if (!Array.isArray(v.shared_dependency_groups) || !v.shared_dependency_groups.every(isSharedGroup)) return false;
   if (!(v.shared_dependency_groups as UwSharedGroup[]).every((g) => g.case_ids.every((id) => ids.has(id)))) return false;
+  for (const g of v.shared_dependency_groups as UwSharedGroup[]) {
+    for (const id of g.case_ids) {
+      const deps = functionalDependencyRefs(cases.find((c) => c.case_id === id) as UwCase);
+      if (!g.refs.every((r) => deps.has(r))) return false;
+    }
+  }
   const s = v.summary as UwSummary;
   if (s.cases_published !== cases.length || s.not_published !== (v.not_published as unknown[]).length || s.coverage_entries !== 32) return false;
   if (s.difficulty_scored !== cases.filter((c) => c.difficulty.low !== null).length
@@ -716,6 +745,34 @@ export function formatNullReason(reason: string | null): string {
 
 export function formatBands(bands: string[] | null): string {
   return bands && bands.length > 0 ? bands.join(', ') : 'unbounded';
+}
+
+const EXTENT_LABELS: Record<string, string> = { E1: 'localized', E2: 'partial', E3: 'major', E4: 'essential/system-wide' };
+const DURATION_LABELS: Record<string, string> = { D1: '≤1 day', D2: '>1–7 days', D3: '>7–30 days', D4: '>30 days' };
+
+function span(labels: string[]): string {
+  return labels.length === 1 ? labels[0] : `${labels[0]} to ${labels[labels.length - 1]}`;
+}
+
+/** The conditions a numeric magnitude is conditional on, read from the typed judgment
+ *  (extent band(s) + assumed days, else duration band(s)); e.g.
+ *  "assuming major impairment for 7 days". Null when the magnitude is N/A. */
+export function magnitudeConditions(m: UwMagnitude): string | null {
+  if (m.low === null || !m.extent_bands || m.extent_bands.length === 0 || !m.duration_bands || m.duration_bands.length === 0) return null;
+  const extent = span(m.extent_bands.map((e) => EXTENT_LABELS[e] ?? e));
+  const duration = m.duration_days !== null
+    ? `${m.duration_days} day${m.duration_days === 1 ? '' : 's'}`
+    : span(m.duration_bands.map((d) => DURATION_LABELS[d] ?? d));
+  return `assuming ${extent} impairment for ${duration}`;
+}
+
+/** Default-visible magnitude summary: the score is never shown without its conditions.
+ *  "Conditional magnitude 3, assuming major impairment for 7 days" or
+ *  "Conditional magnitude N/A (<null reason>)". */
+export function magnitudeSummary(m: UwMagnitude): string {
+  if (m.low === null) return `Conditional magnitude N/A (${formatNullReason(m.null_reason)})`;
+  const cond = magnitudeConditions(m);
+  return `Conditional magnitude ${formatScore(m.low, m.high)}${cond ? `, ${cond}` : ''}`;
 }
 
 /** Cases with BOTH numeric axes; the only ones the dual-axis chart may plot. */

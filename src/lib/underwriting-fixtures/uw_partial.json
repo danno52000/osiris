@@ -1038,44 +1038,7 @@
    "rubric_sha256": "56967367b5d8c16a723aa4dfc9ff709a545231a62be20ffd2d0e964b4279e614"
   },
   "publication_no": 1,
-  "shared_dependency_groups": [
-   {
-    "aggregation": "not_summed",
-    "case_ids": [
-     "3b61fa1e81aed84cc4856434",
-     "6ece60f1560d6435de251b48",
-     "ace6290873d5432cdf5d4bee"
-    ],
-    "note": "these cases depend on the same functional dependency; a single initiating event could affect all of them. Their magnitudes describe overlapping potential loss and are not additive.",
-    "refs": [
-     "asset:aiddata-site-20"
-    ]
-   },
-   {
-    "aggregation": "not_summed",
-    "case_ids": [
-     "3b61fa1e81aed84cc4856434",
-     "ace6290873d5432cdf5d4bee"
-    ],
-    "note": "these cases depend on the same functional dependency; a single initiating event could affect all of them. Their magnitudes describe overlapping potential loss and are not additive.",
-    "refs": [
-     "9b92c671fdeaedd3e9cb3cb4",
-     "org:f01-name:minera-las-bambas-s-a-c-minera-las-bambas:a206c8ce4114"
-    ]
-   },
-   {
-    "aggregation": "not_summed",
-    "case_ids": [
-     "6ece60f1560d6435de251b48",
-     "ace6290873d5432cdf5d4bee"
-    ],
-    "note": "these cases depend on the same functional dependency; a single initiating event could affect all of them. Their magnitudes describe overlapping potential loss and are not additive.",
-    "refs": [
-     "6481af1366eafeb1c5bba869",
-     "org:doc:mmg-limited"
-    ]
-   }
-  ],
+  "shared_dependency_groups": [],
   "summary": {
    "assumption_led": 0,
    "both_scored": 0,

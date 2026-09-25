@@ -98,6 +98,37 @@ describe('UnderwritingView', () => {
     expect(html).not.toContain('data-case-detail=');
     expect(html).not.toContain('data-action="clear-highlight"');
   });
+
+  const CORRIDOR_SUMMARY = 'Conditional magnitude 3, assuming major impairment for 7 days';
+
+  it('C2: real corridor conditions (extent + assumed duration) are visible on collapsed compact and full cards and in the unplotted list before any click', () => {
+    for (const compact of [true, false]) {
+      const html = render(feedOf(REAL_PUBLISHED), compact);
+      expect(html).not.toContain('data-case-detail=');
+      // collapsed card summary + unplotted chart list entry = exactly two default-visible copies
+      expect(count(html, new RegExp(CORRIDOR_SUMMARY.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'))).toBe(2);
+      expect(html).toMatch(new RegExp(`data-case="${CORRIDOR_CASE_ID}"[^]*?data-field="magnitude-summary"[^>]*>${CORRIDOR_SUMMARY} · LOW confidence · hypothetical, not observed`));
+      expect(html).toMatch(new RegExp(`data-unplotted-case="${CORRIDOR_CASE_ID}">LOG · difficulty N/A · <span data-field="magnitude-summary">${CORRIDOR_SUMMARY}</span> — not plotted`));
+      // N/A cases never gain a conditional summary (list shows plain N/A), no numeric difficulty anywhere, nothing plotted
+      expect(count(html, /data-field="magnitude-summary">magnitude N\/A<\/span>/g)).toBe(4);
+      expect(count(html, /Conditional magnitude N\/A/g)).toBe(0);
+      expect(count(html, /data-field="difficulty" data-scored="false"/g)).toBe(5);
+      expect(html).toContain('data-plotted="0"');
+      expect(html).not.toContain('Assume major impairment of the declared movement function');
+    }
+  });
+
+  it('C1: exactly one shared group (corridor + terminal on the rail dependency), reviewed-functional-dependency basis, no single-initiating-event claim', () => {
+    const html = render(feedOf(REAL_PUBLISHED));
+    expect(count(html, /data-shared-group="/g)).toBe(1);
+    expect(html).toContain('data-shared-group="0" data-basis="reviewed_functional_dependency" data-aggregation="not_summed"');
+    expect(html).toContain('Shared reviewed functional dependencies (1)');
+    expect(html).toContain('aa5d3e48412f4a8827aa9559</span> → cases LOG, LOG (2).');
+    expect(html).toContain('A shared owner, operator, financier or common endpoint is context only and does not form a group');
+    expect(html).toContain('not additive');
+    expect(html).not.toContain('single initiating event');
+    expect(html).not.toContain('org:doc:mmg-limited</span> →');
+  });
 });
 
 describe('integration surfaces', () => {

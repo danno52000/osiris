@@ -7,14 +7,19 @@ import {
   chartableCases,
   deriveCaseKind,
   formatScore,
+  functionalDependencyRefs,
   highlightFor,
   isUwResponse,
+  magnitudeSummary,
+  SHARED_GROUP_BASIS,
+  SHARED_GROUP_NOTE,
   reduceUwFeed,
   resolveUw,
   unplottedCases,
   uwUnavailableResponse,
   type UwCase,
   type UwResponse,
+  type UwSharedGroup,
 } from './underwriting';
 import { overlayFromPublication, overlayGeoJSON, verifiedHighlight, type GeoResponse } from './geography';
 import geoFull from './geography-fixtures/geo_full.json';
@@ -123,6 +128,50 @@ describe('isUwResponse (pinned Fusion projections)', () => {
     b = clone(REAL_PUBLISHED); b.publication!.cases[0].both_scored = true; expect(isUwResponse(b)).toBe(false);
     b = clone(REAL_PUBLISHED); b.publication!.cases[0].highlight.entity_ids.push('../secret'); expect(isUwResponse(b)).toBe(false);
     b = clone(REAL_PUBLISHED); (b as { publication: unknown }).publication = {}; expect(isUwResponse(b)).toBe(false);
+  });
+
+  it('C1: real groups = one corridor/terminal group on the reviewed rail dependency; context-only MMG/Minera/mine-endpoint groups and legacy shapes are refused', () => {
+    const pub = pubOf(REAL_PUBLISHED);
+    const byId = new Map(pub.cases.map((c) => [c.case_id, c]));
+    const CYBER = '6ece60f1560d6435de251b48', LEGAL = 'ace6290873d5432cdf5d4bee', FINANCE = '3b61fa1e81aed84cc4856434';
+    expect(pub.shared_dependency_groups).toEqual([{
+      refs: ['aa5d3e48412f4a8827aa9559'], case_ids: [CORRIDOR_CASE_ID, TERMINAL_CASE_ID],
+      basis: SHARED_GROUP_BASIS, note: SHARED_GROUP_NOTE, aggregation: 'not_summed',
+    }]);
+    expect(SHARED_GROUP_NOTE).toContain('not additive');
+    expect(SHARED_GROUP_NOTE).not.toContain('single initiating event');
+    expect([...functionalDependencyRefs(byId.get(TERMINAL_CASE_ID)!)]).toEqual(['aa5d3e48412f4a8827aa9559']);
+    expect(functionalDependencyRefs(byId.get(CORRIDOR_CASE_ID)!).has('asset:aiddata-site-20')).toBe(false);
+    // each case's own function-level dependency is retained, but none is shared and none is an owner/operator/mine ref
+    const CONTEXT = ['org:doc:mmg-limited', 'org:f01-name:minera-las-bambas-s-a-c-minera-las-bambas:a206c8ce4114', 'asset:aiddata-site-20'];
+    const deps = [CYBER, LEGAL, FINANCE].map((id) => functionalDependencyRefs(byId.get(id)!));
+    for (const d of deps) for (const ref of CONTEXT) expect(d.has(ref)).toBe(false);
+    for (const ref of CONTEXT) expect(pub.cases.filter((c) => c.boundary.entity_refs.includes(ref)).length).toBeGreaterThanOrEqual(2);
+    expect(deps.flatMap((d, i) => deps.slice(i + 1).flatMap((e) => [...d].filter((r) => e.has(r))))).toEqual([]);
+    const grp = (refs: string[], case_ids: string[]) => ({ refs, case_ids, basis: SHARED_GROUP_BASIS, note: SHARED_GROUP_NOTE, aggregation: 'not_summed' as const } as UwSharedGroup);
+    let b = clone(REAL_PUBLISHED); b.publication!.shared_dependency_groups.push(grp(['org:doc:mmg-limited'], [CYBER, LEGAL])); expect(isUwResponse(b)).toBe(false);
+    b = clone(REAL_PUBLISHED); b.publication!.shared_dependency_groups.push(grp(['org:f01-name:minera-las-bambas-s-a-c-minera-las-bambas:a206c8ce4114'], [FINANCE, LEGAL])); expect(isUwResponse(b)).toBe(false);
+    b = clone(REAL_PUBLISHED); b.publication!.shared_dependency_groups.push(grp(['asset:aiddata-site-20'], [CORRIDOR_CASE_ID, CYBER, LEGAL, FINANCE])); expect(isUwResponse(b)).toBe(false);
+    b = clone(REAL_PUBLISHED); b.publication!.shared_dependency_groups[0].case_ids.push(LEGAL); expect(isUwResponse(b)).toBe(false);
+    b = clone(REAL_PUBLISHED); b.publication!.shared_dependency_groups[0].refs.push('facility:pillones-transfer-station'); expect(isUwResponse(b)).toBe(false);
+    b = clone(REAL_PUBLISHED); (b.publication!.shared_dependency_groups[0] as { basis: string }).basis = 'shared_boundary_overlap'; expect(isUwResponse(b)).toBe(false);
+    b = clone(REAL_PUBLISHED); b.publication!.shared_dependency_groups[0].note = 'These cases depend on the same functional dependency; a single initiating event could affect all of them.'; expect(isUwResponse(b)).toBe(false);
+    b = clone(REAL_PUBLISHED); delete (b.publication!.shared_dependency_groups[0] as { basis?: string }).basis; expect(isUwResponse(b)).toBe(false);
+    b = clone(REAL_PUBLISHED); b.publication!.shared_dependency_groups = []; expect(isUwResponse(b)).toBe(true);
+  });
+
+  it('C2: magnitude summary is derived from typed bands/days, never hardcoded; N/A keeps its reason', () => {
+    const corridor = pubOf(REAL_PUBLISHED).cases.find((c) => c.case_id === CORRIDOR_CASE_ID)!;
+    expect(magnitudeSummary(corridor.magnitude)).toBe('Conditional magnitude 3, assuming major impairment for 7 days');
+    expect(corridor.display.magnitude).toBe(magnitudeSummary(corridor.magnitude));
+    const terminal = pubOf(REAL_PUBLISHED).cases.find((c) => c.case_id === TERMINAL_CASE_ID)!;
+    expect(magnitudeSummary(terminal.magnitude)).toBe(`Conditional magnitude N/A (${terminal.magnitude.null_reason!.replace(/_/g, ' ')})`);
+    expect(magnitudeSummary({ ...corridor.magnitude, low: 3, high: 4, extent_bands: ['E2', 'E3'], duration_bands: ['D3'], duration_days: null }))
+      .toBe('Conditional magnitude 3–4, assuming partial to major impairment for >7–30 days');
+    expect(magnitudeSummary({ ...corridor.magnitude, low: 5, high: 5, extent_bands: ['E4'], duration_bands: ['D4'], duration_days: 45 }))
+      .toBe('Conditional magnitude 5, assuming essential/system-wide impairment for 45 days');
+    expect(magnitudeSummary({ ...corridor.magnitude, low: 1, high: 1, extent_bands: ['E1'], duration_bands: ['D1'], duration_days: 1 }))
+      .toBe('Conditional magnitude 1, assuming localized impairment for 1 day');
   });
 
   it('case kind derivation follows the engine rule: all-unknown cannot become supported', () => {
