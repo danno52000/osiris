@@ -6,8 +6,11 @@ import { DOSSIER_ID, INITIAL_FEED, reduceFeed, resolveView } from '@/lib/dossier
 import { fetchDossierOnce } from '@/app/dossiers/las-bambas-matarani/DossierClient';
 import { INITIAL_VULN_FEED, reduceVulnFeed, resolveVuln } from '@/lib/vulnerability';
 import { fetchVulnerabilityOnce } from '@/lib/vulnerability-client';
-import type { DossierSelection, GeoFeedState, ResolvedGeo } from '@/lib/geography';
+import type { DossierSelection, GeoFeedState, OverlayHighlight, ResolvedGeo } from '@/lib/geography';
+import { INITIAL_UW_FEED, reduceUwFeed, resolveUw, type UwHighlight } from '@/lib/underwriting';
+import { fetchUnderwritingOnce } from '@/lib/underwriting-client';
 import { VulnerabilityView } from './VulnerabilityView';
+import { UnderwritingView } from './UnderwritingView';
 import { VectorJudgmentCard } from './VectorJudgmentCard';
 import { DossierGeographyView } from './DossierGeographyView';
 
@@ -34,17 +37,23 @@ export interface SupplyChainDossiersPanelProps {
     selection: DossierSelection | null;
     onSelectElement: (sel: DossierSelection | null) => void;
     onLocate: () => void;
+    /** E5: emphasise published anchors/links for the open underwriting case; null clears. */
+    onHighlight?: (h: OverlayHighlight | null) => void;
   } | null;
 }
 
 export default function SupplyChainDossiersPanel({ selected, onSelect, geography = null }: SupplyChainDossiersPanelProps) {
   const [vulnOn, setVulnOn] = useState(false);
+  const [uwOn, setUwOn] = useState(false);
   const [feed, dispatch] = useReducer(reduceFeed, INITIAL_FEED);
   const [vulnFeed, dispatchVuln] = useReducer(reduceVulnFeed, INITIAL_VULN_FEED);
+  const [uwFeed, dispatchUw] = useReducer(reduceUwFeed, INITIAL_UW_FEED);
   const gen = useRef(0);
   const vulnGen = useRef(0);
+  const uwGen = useRef(0);
   const inFlight = useRef(false);
   const vulnInFlight = useRef(false);
+  const uwInFlight = useRef(false);
   const mounted = useRef(true);
 
   const load = useCallback(async () => {
@@ -71,6 +80,18 @@ export default function SupplyChainDossiersPanel({ selected, onSelect, geography
     }
   }, []);
 
+  const loadUw = useCallback(async () => {
+    if (uwInFlight.current) return;
+    uwInFlight.current = true;
+    uwGen.current += 1;
+    try {
+      const ev = await fetchUnderwritingOnce(uwGen.current);
+      if (mounted.current) dispatchUw(ev);
+    } finally {
+      uwInFlight.current = false;
+    }
+  }, []);
+
   useEffect(() => {
     mounted.current = true;
     return () => { mounted.current = false; };
@@ -92,6 +113,23 @@ export default function SupplyChainDossiersPanel({ selected, onSelect, geography
     return () => { clearTimeout(first); clearInterval(iv); };
   }, [selected, loadVuln]);
 
+  // Underwriting is fetched only while its view is switched on for a selected dossier; switching
+  // off or changing dossier resets the feed so no case or highlight outlives its selection.
+  useEffect(() => {
+    if (!selected || !uwOn) {
+      dispatchUw({ type: 'reset', generation: uwGen.current });
+      return;
+    }
+    const first = setTimeout(loadUw, 0);
+    const iv = setInterval(loadUw, POLL_MS);
+    return () => { clearTimeout(first); clearInterval(iv); };
+  }, [selected, uwOn, loadUw]);
+
+  const onHighlight = geography?.onHighlight;
+  const handleHighlight = useCallback((h: UwHighlight | null) => {
+    onHighlight?.(h ? { entityIds: h.entity_ids, edgeIds: h.edge_ids } : null);
+  }, [onHighlight]);
+
   const entry = DOSSIER_LIST.find((d) => d.id === selected) ?? null;
   const resolved = resolveView(feed);
   const pub = (resolved.view === 'available' || resolved.view === 'stale') ? resolved.body?.publication ?? null : null;
@@ -99,6 +137,7 @@ export default function SupplyChainDossiersPanel({ selected, onSelect, geography
   const resolvedVuln = resolveVuln(vulnFeed);
   const vulnPub = (resolvedVuln.view === 'available' || resolvedVuln.view === 'stale') ? resolvedVuln.publication : null;
   const geoDrawn = !!geography && (geography.resolved.view === 'available' || geography.resolved.view === 'stale');
+  const resolvedUw = resolveUw(uwFeed);
 
   return (
     <div data-panel="supply-chain-dossiers" className="rounded-lg border border-white/10 bg-black/80 backdrop-blur-md p-3 flex flex-col gap-2 text-[10px] max-h-[70vh] overflow-y-auto">
@@ -117,7 +156,7 @@ export default function SupplyChainDossiersPanel({ selected, onSelect, geography
           <li key={d.id}>
             <button
               type="button"
-              onClick={() => { onSelect(selected === d.id ? null : d.id); setVulnOn(false); }}
+              onClick={() => { onSelect(selected === d.id ? null : d.id); setVulnOn(false); setUwOn(false); }}
               aria-pressed={selected === d.id}
               data-dossier-id={d.id}
               className={`w-full text-left rounded border px-2 py-1.5 transition-colors ${selected === d.id ? 'border-[var(--gold-primary)]/60 bg-[var(--gold-primary)]/10 text-white' : 'border-white/10 text-white/70 hover:bg-white/5'}`}
@@ -170,8 +209,18 @@ export default function SupplyChainDossiersPanel({ selected, onSelect, geography
               <input type="checkbox" checked={vulnOn} onChange={(e) => setVulnOn(e.target.checked)} data-toggle="vulnerability" className="accent-[var(--gold-primary)]" />
               Vulnerability view
             </label>
+            <label className="flex items-center gap-1.5 text-white/70 cursor-pointer select-none">
+              <input type="checkbox" checked={uwOn} onChange={(e) => setUwOn(e.target.checked)} data-toggle="underwriting" className="accent-[#B388FF]" />
+              Underwriting cases
+            </label>
           </div>
           {vulnOn && <VulnerabilityView feed={vulnFeed} resolved={resolvedVuln} compact geographyDrawn={geoDrawn} />}
+          {uwOn && (
+            <section data-section="underwriting" aria-label="Underwriting cases" className="flex flex-col gap-1 border-t border-white/10 pt-2">
+              <span className="font-mono tracking-[0.15em] text-[#B388FF] text-[9px]">UNDERWRITING CASES <span className="text-white/40 tracking-normal">e5-underwriting/1.0</span></span>
+              <UnderwritingView key={selected} feed={uwFeed} resolved={resolvedUw} compact geographyDrawn={geoDrawn} onHighlight={onHighlight ? handleHighlight : undefined} />
+            </section>
+          )}
         </div>
       )}
     </div>

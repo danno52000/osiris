@@ -18,6 +18,8 @@ import {
 } from '@/lib/dossier';
 import { VulnerabilityView } from '@/components/VulnerabilityView';
 import type { ResolvedVuln, VulnFeedState } from '@/lib/vulnerability';
+import type { ResolvedUw, UwFeedState } from '@/lib/underwriting';
+import { UnderwritingView } from '@/components/UnderwritingView';
 
 const STATE_STYLE: Record<ViewState, { label: string; cls: string }> = {
   loading: { label: 'LOADING', cls: 'text-white/50 border-white/20' },
@@ -36,6 +38,8 @@ export interface DossierViewProps {
   onSelectEdge: (edgeId: string | null) => void;
   /** E3B vulnerability view (opt-in). Omitted = control not rendered (e.g. static tests). */
   vulnerability?: { on: boolean; onToggle: (on: boolean) => void; feed: VulnFeedState; resolved: ResolvedVuln };
+  /** E5 underwriting case portfolio (opt-in). Omitted = control not rendered. */
+  underwriting?: { on: boolean; onToggle: (on: boolean) => void; feed: UwFeedState; resolved: ResolvedUw };
 }
 
 function EvidenceButton({ edge, selected, onSelect }: { edge: Edge; selected: boolean; onSelect: (id: string | null) => void }) {
@@ -229,7 +233,7 @@ function RelationshipTable<T extends { edge: Edge }>({
   );
 }
 
-export function DossierView({ feed, resolved, selectedEdgeId, onSelectEdge, vulnerability }: DossierViewProps) {
+export function DossierView({ feed, resolved, selectedEdgeId, onSelectEdge, vulnerability, underwriting }: DossierViewProps) {
   const { view, staleOrigin, body } = resolved;
   const style = STATE_STYLE[view];
   const reasonText = describeReason(body?.reason);
@@ -460,6 +464,27 @@ export function DossierView({ feed, resolved, selectedEdgeId, onSelectEdge, vuln
             {vulnerability.on
               ? <VulnerabilityView feed={vulnerability.feed} resolved={vulnerability.resolved} />
               : <p data-vuln-view="off" className="font-mono text-[10px] text-white/40">Vulnerability view off — nothing is fetched or shown until switched on.</p>}
+          </section>
+        )}
+
+        {underwriting && (
+          <section data-section="underwriting" aria-labelledby="underwriting-heading" className="rounded-lg border border-white/[0.08] p-4 flex flex-col gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 id="underwriting-heading" className="text-sm font-semibold text-white">Underwriting cases <span className="text-white/40 font-mono text-[10px]">e5-underwriting/1.0</span></h2>
+              <label className="flex items-center gap-2 text-[11px] text-white/70 cursor-pointer select-none">
+                <input type="checkbox" checked={underwriting.on} onChange={(e) => underwriting.onToggle(e.target.checked)} data-toggle="underwriting" className="accent-[#B388FF]" />
+                Show underwriting cases
+              </label>
+            </div>
+            <p className="text-[11px] text-white/50 max-w-3xl">
+              Hypothetical functional-disruption cases for continuity underwriting, bound to the exact dossier publication
+              above. Each case carries two independent reviewed judgments — materialization difficulty and conditional
+              magnitude — shown as a point, a range or explicit N/A with its reason. Assumption-led cases rest on labelled
+              stress assumptions, not observed events. Nothing here is a probability, forecast, alert or combined risk.
+            </p>
+            {underwriting.on
+              ? <UnderwritingView feed={underwriting.feed} resolved={underwriting.resolved} />
+              : <p data-uw-view="off" className="font-mono text-[10px] text-white/40">Underwriting view off — nothing is fetched or shown until switched on.</p>}
           </section>
         )}
 

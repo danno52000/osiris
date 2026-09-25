@@ -12,6 +12,8 @@ import {
 } from '@/lib/dossier';
 import { INITIAL_VULN_FEED, reduceVulnFeed, resolveVuln } from '@/lib/vulnerability';
 import { fetchVulnerabilityOnce } from '@/lib/vulnerability-client';
+import { INITIAL_UW_FEED, reduceUwFeed, resolveUw } from '@/lib/underwriting';
+import { fetchUnderwritingOnce } from '@/lib/underwriting-client';
 import { DossierView } from './DossierView';
 
 /**
@@ -62,10 +64,14 @@ export default function DossierClient() {
   const [vulnFeed, dispatchVuln] = useReducer(reduceVulnFeed, INITIAL_VULN_FEED);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [vulnOn, setVulnOn] = useState(false);
+  const [uwFeed, dispatchUw] = useReducer(reduceUwFeed, INITIAL_UW_FEED);
+  const [uwOn, setUwOn] = useState(false);
   const generation = useRef(0);
   const vulnGeneration = useRef(0);
+  const uwGeneration = useRef(0);
   const inFlight = useRef(false);
   const vulnInFlight = useRef(false);
+  const uwInFlight = useRef(false);
   const mounted = useRef(true);
 
   // Serialized: a tick while a request is still in flight is skipped, never overlapped.
@@ -92,6 +98,31 @@ export default function DossierClient() {
       vulnInFlight.current = false;
     }
   }, []);
+
+  const loadUw = useCallback(async () => {
+    if (uwInFlight.current) return;
+    uwInFlight.current = true;
+    uwGeneration.current += 1;
+    try {
+      const event = await fetchUnderwritingOnce(uwGeneration.current);
+      if (mounted.current) dispatchUw(event);
+    } finally {
+      uwInFlight.current = false;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!uwOn) {
+      dispatchUw({ type: 'reset', generation: uwGeneration.current });
+      return;
+    }
+    const first = setTimeout(loadUw, 0);
+    const iv = setInterval(loadUw, POLL_MS);
+    return () => {
+      clearTimeout(first);
+      clearInterval(iv);
+    };
+  }, [uwOn, loadUw]);
 
   useEffect(() => {
     if (!vulnOn) return;
@@ -121,6 +152,7 @@ export default function DossierClient() {
       selectedEdgeId={selectedEdgeId}
       onSelectEdge={setSelectedEdgeId}
       vulnerability={{ on: vulnOn, onToggle: setVulnOn, feed: vulnFeed, resolved: resolveVuln(vulnFeed) }}
+      underwriting={{ on: uwOn, onToggle: setUwOn, feed: uwFeed, resolved: resolveUw(uwFeed) }}
     />
   );
 }

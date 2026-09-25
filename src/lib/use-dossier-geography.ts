@@ -9,6 +9,7 @@ import {
   type DossierOverlay,
   type DossierSelection,
   type GeoFeedState,
+  type OverlayHighlight,
   type ResolvedGeo,
 } from './geography';
 import { fetchGeographyOnce } from './geography-client';
@@ -24,6 +25,9 @@ export interface DossierGeographyController {
   locate: () => void;
   /** Null unless a dossier is selected and geography is available/stale; what the map draws. */
   overlay: DossierOverlay | null;
+  /** Requested E5 case highlight (verified against the publication before drawing). */
+  highlight: OverlayHighlight | null;
+  setHighlight: (h: OverlayHighlight | null) => void;
 }
 
 /**
@@ -35,6 +39,7 @@ export function useDossierGeography(selectedDossier: string | null): DossierGeog
   const [feed, dispatch] = useReducer(reduceGeoFeed, INITIAL_GEO_FEED);
   const [selection, setSelection] = useState<DossierSelection | null>(null);
   const [fitSeq, setFitSeq] = useState(0);
+  const [highlight, setHighlight] = useState<OverlayHighlight | null>(null);
   const gen = useRef(0);
   const inFlight = useRef(false);
   const mounted = useRef(true);
@@ -60,6 +65,7 @@ export function useDossierGeography(selectedDossier: string | null): DossierGeog
     if (!selectedDossier) {
       dispatch({ type: 'reset', generation: gen.current });
       setSelection(null);
+      setHighlight(null);
       setFitSeq(0);
       return;
     }
@@ -84,10 +90,10 @@ export function useDossierGeography(selectedDossier: string | null): DossierGeog
 
   const overlay = useMemo<DossierOverlay | null>(() => {
     if (!selectedDossier || !resolved.publication) return null;
-    return overlayFromPublication(resolved.publication, resolved.view === 'stale', effectiveSelection, fitSeq);
-  }, [selectedDossier, resolved, effectiveSelection, fitSeq]);
+    return overlayFromPublication(resolved.publication, resolved.view === 'stale', effectiveSelection, fitSeq, highlight);
+  }, [selectedDossier, resolved, effectiveSelection, fitSeq, highlight]);
 
   const locate = useCallback(() => setFitSeq((n) => n + 1), []);
 
-  return { feed, resolved, selection: effectiveSelection, select: setSelection, locate, overlay };
+  return { feed, resolved, selection: effectiveSelection, select: setSelection, locate, overlay, highlight, setHighlight };
 }

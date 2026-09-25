@@ -1,0 +1,1357 @@
+{
+ "checked_at": "2026-09-25T12:30:00+00:00",
+ "currentness": {
+  "eligibility_changed_at": "2026-09-25T12:20:00+00:00",
+  "publication_no": 1
+ },
+ "ddd": {
+  "eligibility_changed_at": null,
+  "eligibility_established_at": "2026-09-24T00:37:52.863795+00:00",
+  "publication_no": 3,
+  "publication_sha256": "3ea2b261bfae1da748afd2d40765d247eac8f43d496fd778c5c87e6e182ec6e6",
+  "reason": null,
+  "state": "available"
+ },
+ "dossier_id": "las-bambas-matarani",
+ "publication": {
+  "axes": {
+   "difficulty": "Materialization difficulty: 1 lower barriers \u2026 5 exceptional barriers. Not likelihood.",
+   "independent": true,
+   "magnitude": "Conditional disruption magnitude: 1 limited \u2026 5 critical. Not likelihood.",
+   "not_likelihood": true
+  },
+  "cases": [
+   {
+    "applicability": {
+     "confidence": "UNKNOWN",
+     "currentness_caveat": null,
+     "rationale": "The dependency of the operation on specific digital systems is not evidenced in the accepted publication; only the operator relationship is. The case is retained as a generic conditional function-level question.",
+     "state": "NOT_ASSESSABLE"
+    },
+    "assumption_set_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "assumptions": [],
+    "both_scored": false,
+    "boundary": {
+     "boundary_statement": "generic operational and logistics digital support for the mine and its reported corridor; excludes corporate finance systems and third-party port systems",
+     "edge_refs": [
+      "6481af1366eafeb1c5bba869"
+     ],
+     "entity_refs": [
+      "asset:aiddata-site-20",
+      "org:doc:mmg-limited"
+     ],
+     "first_order": "Coordination of production and dispatch would degrade to whatever manual fallback exists.",
+     "function_key": "operational_digital_support_las_bambas",
+     "function_statement": "Digital systems that support production, dispatch and logistics coordination for the Las Bambas operation.",
+     "limits": [
+      "The accepted DDD does not establish local digital architecture, named systems, network separation or manual fallback.",
+      "No exploit path, targeting or method is described or implied."
+     ],
+     "propagation": [
+      "A digital loss could affect the movement function only through unknown dispatch dependencies."
+     ],
+     "stage": "operating"
+    },
+    "case_id": "6ece60f1560d6435de251b48",
+    "case_kind": "evidence_limited",
+    "catalog_refs": [
+     {
+      "reason": "Capability denied 'access operational and commercial systems' is the initiating functional state of this generic case.",
+      "relation": "primary",
+      "scenario_id": "S24"
+     },
+     {
+      "reason": "Port corporate-network containment ('enter or use port') is a related digital mechanism at the terminal end; not locally established.",
+      "relation": "related",
+      "scenario_id": "S10"
+     },
+     {
+      "reason": "Rail dispatch compromise ('move by rail') is a related digital mechanism on the reported rail leg; not locally established.",
+      "relation": "related",
+      "scenario_id": "S11"
+     },
+     {
+      "reason": "OT setpoint manipulation ('operate safely and on specification') is related to the same operational digital dependency.",
+      "relation": "related",
+      "scenario_id": "S23"
+     },
+     {
+      "reason": "License-expiry shutdown ('operate installed software') is a related non-adversarial digital-availability mechanism.",
+      "relation": "related",
+      "scenario_id": "S07"
+     }
+    ],
+    "category": "CYB",
+    "countercase": [
+     "The operation may run dispatch with limited digital dependency; the case would then have little functional consequence.",
+     "Absence of published architecture is a disclosure gap, not evidence of weakness."
+    ],
+    "difficulty": {
+     "axis": "Materialization difficulty: 1 lower barriers \u2026 5 exceptional barriers. Not likelihood.",
+     "confidence": "UNKNOWN",
+     "high": null,
+     "high_rationale": null,
+     "limited_barriers_basis": null,
+     "low": null,
+     "low_rationale": null,
+     "null_reason": "insufficient_evidence",
+     "rationale": "No basis: the dependency itself is not established, so no prerequisite or barrier can be assessed.",
+     "unknown_bounding_rationale": null
+    },
+    "display": {
+     "difficulty": "Materialization difficulty N/A (insufficient evidence)",
+     "magnitude": "Conditional magnitude N/A (insufficient evidence)"
+    },
+    "family": "cyber_digital_continuity",
+    "highlight": {
+     "edge_ids": [
+      "6481af1366eafeb1c5bba869"
+     ],
+     "entity_ids": [
+      "asset:aiddata-site-20",
+      "org:doc:mmg-limited"
+     ]
+    },
+    "hypothetical_label": "Hypothetical functional-disruption case for continuity underwriting; not an alert, observed incident, forecast or probability.",
+    "initiating_key": "operational_digital_systems_unavailable",
+    "initiating_statement": "Onset of unavailability of operational or logistics digital systems supporting the Las Bambas operation and its concentrate movement function. No named system, architecture, actor or method is asserted.",
+    "inputs": [
+     {
+      "basis_kind": "bounded_inference",
+      "bounding_rationale": null,
+      "controls_state": null,
+      "could_change_band": false,
+      "key": "dep_operator",
+      "kind": "dependency",
+      "rationale": "The operator relationship is documented; that it entails operator-run digital systems is an inference that identifies who would own the dependency, not what the systems are.",
+      "references": [
+       {
+        "note": null,
+        "ref": "6481af1366eafeb1c5bba869",
+        "role": "supports_inference"
+       }
+      ],
+      "statement": "MMG is reported as operator of Las Bambas; operational digital systems are operator-managed by inference only."
+     },
+     {
+      "basis_kind": "unknown",
+      "bounding_rationale": null,
+      "controls_state": null,
+      "could_change_band": true,
+      "key": "pre_digital_dependency",
+      "kind": "prerequisite",
+      "rationale": "No retained document describes dispatch or logistics systems.",
+      "references": [],
+      "statement": "The movement function would have to depend on digital systems whose loss halts dispatch."
+     },
+     {
+      "basis_kind": "unknown",
+      "bounding_rationale": null,
+      "controls_state": "undocumented",
+      "could_change_band": true,
+      "key": "bar_digital_controls",
+      "kind": "barrier",
+      "rationale": "Undocumented; not read as either effective or limited.",
+      "references": [],
+      "statement": "Segmentation, redundancy or manual fallback that would impede loss of the digital support function."
+     }
+    ],
+    "legacy_refs": [],
+    "lifecycle": "published",
+    "magnitude": {
+     "axis": "Conditional disruption magnitude: 1 limited \u2026 5 critical. Not likelihood.",
+     "confidence": "UNKNOWN",
+     "duration_bands": null,
+     "duration_days": null,
+     "duration_rationale": null,
+     "extent_bands": null,
+     "extent_rationale": null,
+     "high": null,
+     "low": null,
+     "null_reason": "insufficient_evidence",
+     "rationale": "No extent or duration can be bounded without an established digital dependency; N/A rather than a placeholder."
+    },
+    "prior_case_id": null,
+    "related_cases": [],
+    "resilience": {
+     "known_buffers": [],
+     "recovery_conditions": [],
+     "reducers": [],
+     "unknown_fallback": [
+      "Manual fallback for dispatch and coordination is not evidenced."
+     ]
+    },
+    "secondary_category": "DAT",
+    "title": "Cyber/digital continuity: unavailability of digital systems the operation and its movement function depend on",
+    "unknowns": [
+     {
+      "evidence_needed": "Operator disclosure of operational technology and logistics systems at a public level of detail.",
+      "key": "unk_architecture",
+      "pivotal": true,
+      "references": [],
+      "statement": "Which digital systems the operation and dispatch depend on and how they are separated."
+     },
+     {
+      "evidence_needed": "Published continuity arrangements.",
+      "key": "unk_fallback",
+      "pivotal": true,
+      "references": [
+       {
+        "note": null,
+        "ref": "gap:recovery_unknown",
+        "role": "gap_reference"
+       }
+      ],
+      "statement": "Whether manual dispatch fallback exists."
+     }
+    ],
+    "version": 1
+   },
+   {
+    "applicability": {
+     "confidence": "UNKNOWN",
+     "currentness_caveat": null,
+     "rationale": "Historical lender relationships are documented; whether any remains a current dependency is not. The case is a dependency-currency question, not an exposure.",
+     "state": "NOT_ASSESSABLE"
+    },
+    "assumption_set_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "assumptions": [],
+    "both_scored": false,
+    "boundary": {
+     "boundary_statement": "current financing, payment, insurance and offtake dependencies of the operator; excludes historical commitments that are not shown to be outstanding",
+     "edge_refs": [
+      "9b92c671fdeaedd3e9cb3cb4",
+      "d0d3b60d59fb1871c1ddb44b",
+      "1fa46b7555281db118918a69"
+     ],
+     "entity_refs": [
+      "asset:aiddata-site-20",
+      "org:f01-name:minera-las-bambas-s-a-c-minera-las-bambas:a206c8ce4114",
+      "org:f01-name:bank-of-china-boc:a85b9ae34bc6",
+      "org:f01-name:industrial-and-commercial-bank-of-china-icbc:d6d9585ba0e7"
+     ],
+     "first_order": "Working-capital or sales continuity would depend on substitute arrangements that are unknown.",
+     "function_key": "financing_and_commercial_support_las_bambas",
+     "function_statement": "Financing and commercial arrangements that fund and sell the output of the Las Bambas operation.",
+     "limits": [
+      "Accepted evidence contains historical financing relationships (AidData loan events and contributions); it does not establish current debt outstanding, payment concentration, insurance dependency, buyer acceptance or offtake.",
+      "Loans and commitments are not treated as current liabilities or payments."
+     ],
+     "propagation": [
+      "Effects on physical movement are indirect and not assessed."
+     ],
+     "stage": "operating"
+    },
+    "case_id": "3b61fa1e81aed84cc4856434",
+    "case_kind": "evidence_limited",
+    "catalog_refs": [
+     {
+      "reason": "Capability denied 'receive payment' is the closest catalog mechanism for a current commercial dependency; whether one exists is the question posed.",
+      "relation": "primary",
+      "scenario_id": "S17"
+     },
+     {
+      "reason": "Marine-insurance de-risking ('obtain insurance') is related; no insurance dependency is evidenced.",
+      "relation": "related",
+      "scenario_id": "S16"
+     },
+     {
+      "reason": "Auditor and exchange cascade ('retain audit and listing') is related to the documented parent/operator identities only.",
+      "relation": "related",
+      "scenario_id": "S18"
+     },
+     {
+      "reason": "Strategic quality rejection ('sell contracted product') is related; offtake is an explicit DDD gap.",
+      "relation": "related",
+      "scenario_id": "S19"
+     },
+     {
+      "reason": "Strategic market flooding ('preserve economic viability') is related and not locally established.",
+      "relation": "related",
+      "scenario_id": "S27"
+     },
+     {
+      "reason": "Treatment-charge squeeze ('find economic processing') is related and not locally established.",
+      "relation": "related",
+      "scenario_id": "S28"
+     }
+    ],
+    "category": "FIN",
+    "countercase": [
+     "Documented facilities may be fully repaid; the historical relationship would then carry no current exposure.",
+     "A diversified lender group (multiple named banks) would reduce single-lender dependency, if the facilities were current."
+    ],
+    "difficulty": {
+     "axis": "Materialization difficulty: 1 lower barriers \u2026 5 exceptional barriers. Not likelihood.",
+     "confidence": "UNKNOWN",
+     "high": null,
+     "high_rationale": null,
+     "limited_barriers_basis": null,
+     "low": null,
+     "low_rationale": null,
+     "null_reason": "insufficient_evidence",
+     "rationale": "The dependency whose loss would initiate the case is not established; no prerequisite or barrier is assessable.",
+     "unknown_bounding_rationale": null
+    },
+    "display": {
+     "difficulty": "Materialization difficulty N/A (insufficient evidence)",
+     "magnitude": "Conditional magnitude N/A (insufficient evidence)"
+    },
+    "family": "financial_commercial_continuity",
+    "highlight": {
+     "edge_ids": [
+      "9b92c671fdeaedd3e9cb3cb4",
+      "d0d3b60d59fb1871c1ddb44b",
+      "1fa46b7555281db118918a69"
+     ],
+     "entity_ids": [
+      "asset:aiddata-site-20",
+      "org:f01-name:minera-las-bambas-s-a-c-minera-las-bambas:a206c8ce4114",
+      "org:f01-name:bank-of-china-boc:a85b9ae34bc6",
+      "org:f01-name:industrial-and-commercial-bank-of-china-icbc:d6d9585ba0e7"
+     ]
+    },
+    "hypothetical_label": "Hypothetical functional-disruption case for continuity underwriting; not an alert, observed incident, forecast or probability.",
+    "initiating_key": "current_financing_or_offtake_unavailable",
+    "initiating_statement": "Onset of unavailability of a current financing facility, payment channel, insurance cover or offtake arrangement the operation depends on. Whether any such current dependency exists is the question the case poses; none is asserted.",
+    "inputs": [
+     {
+      "basis_kind": "documented_fact",
+      "bounding_rationale": null,
+      "controls_state": null,
+      "could_change_band": false,
+      "key": "dep_historical_financing",
+      "kind": "dependency",
+      "rationale": "AidData records document commitments and revolving facilities as recorded events; the documented fact is the historical relationship, not an outstanding balance.",
+      "references": [
+       {
+        "note": "Bank of China finances edge (documented)",
+        "ref": "d0d3b60d59fb1871c1ddb44b",
+        "role": "supports_fact"
+       },
+       {
+        "note": "ICBC finances edge (documented)",
+        "ref": "1fa46b7555281db118918a69",
+        "role": "supports_fact"
+       }
+      ],
+      "statement": "Historical financing relationships between named lenders and the operator are documented (AidData loan events)."
+     },
+     {
+      "basis_kind": "unknown",
+      "bounding_rationale": null,
+      "controls_state": null,
+      "could_change_band": true,
+      "key": "pre_current_dependency",
+      "kind": "prerequisite",
+      "rationale": "Currency of any financing relationship and existence of offtake arrangements are not evidenced.",
+      "references": [
+       {
+        "note": null,
+        "ref": "gap:offtake_unknown",
+        "role": "gap_reference"
+       }
+      ],
+      "statement": "A currently outstanding facility, payment channel, insurance cover or offtake would have to exist for its loss to be a functional state."
+     }
+    ],
+    "legacy_refs": [],
+    "lifecycle": "published",
+    "magnitude": {
+     "axis": "Conditional disruption magnitude: 1 limited \u2026 5 critical. Not likelihood.",
+     "confidence": "UNKNOWN",
+     "duration_bands": null,
+     "duration_days": null,
+     "duration_rationale": null,
+     "extent_bands": null,
+     "extent_rationale": null,
+     "high": null,
+     "low": null,
+     "null_reason": "insufficient_evidence",
+     "rationale": "Without a current dependency, extent and duration cannot be bounded; N/A."
+    },
+    "prior_case_id": null,
+    "related_cases": [],
+    "resilience": {
+     "known_buffers": [],
+     "recovery_conditions": [],
+     "reducers": [],
+     "unknown_fallback": [
+      "Substitute financing or buyers are unknown."
+     ]
+    },
+    "secondary_category": "COM",
+    "title": "Financial/commercial continuity: loss of a current financing or commercial dependency of the operation",
+    "unknowns": [
+     {
+      "evidence_needed": "Operator or parent financial statements naming current facilities.",
+      "key": "unk_current_debt",
+      "pivotal": true,
+      "references": [],
+      "statement": "Whether any documented facility remains outstanding or has been refinanced."
+     },
+     {
+      "evidence_needed": "Published offtake or sales disclosures.",
+      "key": "unk_offtake",
+      "pivotal": true,
+      "references": [
+       {
+        "note": null,
+        "ref": "gap:offtake_unknown",
+        "role": "gap_reference"
+       }
+      ],
+      "statement": "Buyers/destinations of Las Bambas concentrate and any offtake dependency."
+     }
+    ],
+    "version": 1
+   },
+   {
+    "applicability": {
+     "confidence": "UNKNOWN",
+     "currentness_caveat": null,
+     "rationale": "The parties who would hold authorizations are documented; the authorizations themselves are not. The case is a generic conditional function-level question until a permit or proceeding is evidenced.",
+     "state": "NOT_ASSESSABLE"
+    },
+    "assumption_set_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "assumptions": [],
+    "both_scored": false,
+    "boundary": {
+     "boundary_statement": "generic operating and transport authorizations held by the operator or owner; excludes concessionaire and port authorizations held by third parties",
+     "edge_refs": [
+      "6481af1366eafeb1c5bba869",
+      "9b92c671fdeaedd3e9cb3cb4"
+     ],
+     "entity_refs": [
+      "asset:aiddata-site-20",
+      "org:doc:mmg-limited",
+      "org:f01-name:minera-las-bambas-s-a-c-minera-las-bambas:a206c8ce4114"
+     ],
+     "first_order": "Production or movement would have to pause until the authorization is restored or substituted.",
+     "function_key": "authorized_operation_las_bambas",
+     "function_statement": "Legally authorized operation of the Las Bambas mine and of its reported concentrate movement.",
+     "limits": [
+      "Accepted evidence establishes operator/owner identities only; no specific permit, authority, proceeding or procedural protection is in the dossier.",
+      "No legal claim is made or implied about any party."
+     ],
+     "propagation": [
+      "Any effect on the movement function depends on which authorization is affected, which is unknown."
+     ],
+     "stage": "operating"
+    },
+    "case_id": "ace6290873d5432cdf5d4bee",
+    "case_kind": "evidence_limited",
+    "catalog_refs": [
+     {
+      "reason": "Capability denied 'retain permits' is the initiating functional state; no specific permit is evidenced.",
+      "relation": "primary",
+      "scenario_id": "S02"
+     },
+     {
+      "reason": "Concession pressure ('hold legal title') is related; ownership identities are documented, title status is not.",
+      "relation": "related",
+      "scenario_id": "S01"
+     },
+     {
+      "reason": "Selective customs hold ('clear customs') is a related regulatory mechanism for the movement function; not evidenced.",
+      "relation": "related",
+      "scenario_id": "S14"
+     },
+     {
+      "reason": "Injunction campaign ('retain social and legal license') is related; no proceeding is in evidence and none is claimed.",
+      "relation": "related",
+      "scenario_id": "S26"
+     }
+    ],
+    "category": "LEG",
+    "countercase": [
+     "Authorizations may be layered so that loss of one does not halt the bounded function.",
+     "No accepted evidence indicates any current legal or regulatory action affecting the operation."
+    ],
+    "difficulty": {
+     "axis": "Materialization difficulty: 1 lower barriers \u2026 5 exceptional barriers. Not likelihood.",
+     "confidence": "UNKNOWN",
+     "high": null,
+     "high_rationale": null,
+     "limited_barriers_basis": null,
+     "low": null,
+     "low_rationale": null,
+     "null_reason": "insufficient_evidence",
+     "rationale": "No specific authorization is identified; prerequisites and barriers cannot be assessed.",
+     "unknown_bounding_rationale": null
+    },
+    "display": {
+     "difficulty": "Materialization difficulty N/A (insufficient evidence)",
+     "magnitude": "Conditional magnitude N/A (insufficient evidence)"
+    },
+    "family": "legal_regulatory_continuity",
+    "highlight": {
+     "edge_ids": [
+      "6481af1366eafeb1c5bba869",
+      "9b92c671fdeaedd3e9cb3cb4"
+     ],
+     "entity_ids": [
+      "asset:aiddata-site-20",
+      "org:doc:mmg-limited",
+      "org:f01-name:minera-las-bambas-s-a-c-minera-las-bambas:a206c8ce4114"
+     ]
+    },
+    "hypothetical_label": "Hypothetical functional-disruption case for continuity underwriting; not an alert, observed incident, forecast or probability.",
+    "initiating_key": "operating_authorization_unavailable",
+    "initiating_statement": "Onset of loss or suspension of a legal authorization, permit or regulatory standing that the Las Bambas operation or its reported corridor movement depends on. No specific permit, authority, proceeding or claim is asserted.",
+    "inputs": [
+     {
+      "basis_kind": "documented_fact",
+      "bounding_rationale": null,
+      "controls_state": null,
+      "could_change_band": false,
+      "key": "dep_operator_identity",
+      "kind": "dependency",
+      "rationale": "AidData operator/owner record and the MMG document-based operates edge.",
+      "references": [
+       {
+        "note": null,
+        "ref": "9b92c671fdeaedd3e9cb3cb4",
+        "role": "supports_fact"
+       },
+       {
+        "note": null,
+        "ref": "excerpt:x-e3a-mmg-page-operator-01",
+        "role": "supports_fact"
+       }
+      ],
+      "statement": "Minera Las Bambas S.A.C. is documented as operator/owner and MMG as reported operator of the asset."
+     },
+     {
+      "basis_kind": "unknown",
+      "bounding_rationale": null,
+      "controls_state": null,
+      "could_change_band": true,
+      "key": "pre_specific_authorization",
+      "kind": "prerequisite",
+      "rationale": "No permit, authority or proceeding is in the accepted evidence.",
+      "references": [],
+      "statement": "A specific authorization would have to be identified whose loss halts the bounded function."
+     },
+     {
+      "basis_kind": "unknown",
+      "bounding_rationale": null,
+      "controls_state": "undocumented",
+      "could_change_band": true,
+      "key": "bar_procedural_protection",
+      "kind": "barrier",
+      "rationale": "Undocumented in the dossier; not inferred from jurisdiction stereotypes.",
+      "references": [],
+      "statement": "Procedural protections (notice, appeal, cure periods) that would impede an abrupt loss of authorization."
+     }
+    ],
+    "legacy_refs": [],
+    "lifecycle": "published",
+    "magnitude": {
+     "axis": "Conditional disruption magnitude: 1 limited \u2026 5 critical. Not likelihood.",
+     "confidence": "UNKNOWN",
+     "duration_bands": null,
+     "duration_days": null,
+     "duration_rationale": null,
+     "extent_bands": null,
+     "extent_rationale": null,
+     "high": null,
+     "low": null,
+     "null_reason": "insufficient_evidence",
+     "rationale": "Extent depends on which authorization is affected and duration on proceedings not in evidence; N/A."
+    },
+    "prior_case_id": null,
+    "related_cases": [],
+    "resilience": {
+     "known_buffers": [],
+     "recovery_conditions": [
+      "Restoration or substitution of the affected authorization; timelines unknown."
+     ],
+     "reducers": [],
+     "unknown_fallback": []
+    },
+    "secondary_category": null,
+    "title": "Legal/regulatory continuity: loss of an authorization or standing the operation or its movement function depends on",
+    "unknowns": [
+     {
+      "evidence_needed": "Official permit registers or operator disclosures.",
+      "key": "unk_permits",
+      "pivotal": true,
+      "references": [],
+      "statement": "Which permits and authorizations the operation and corridor movement depend on and their status."
+     }
+    ],
+    "version": 1
+   },
+   {
+    "applicability": {
+     "confidence": "LOW",
+     "currentness_caveat": "Reported arrangement as of the May 2026 investor presentation and the 2025 OSITRAN report; no automatic refresh; current continuous use is not evidenced.",
+     "rationale": "The function exists in the accepted DDD as two reported transports_to edges (investor presentation May 2026 road and rail excerpts, OSITRAN Pillones\u2013Islay report). Whether the corridor is currently the sole or continuous route is not established, so the case is conditional on the reported arrangement applying as described.",
+     "state": "CONDITIONAL_SCENARIO"
+    },
+    "assumption_set_sha256": "db8c6d75f6ea76738be162cea5be4bf1bd55501a0f7e4569a931e336fe3a39d9",
+    "assumptions": [
+     {
+      "affects": [
+       "magnitude"
+      ],
+      "basis_kind": "stress_assumption",
+      "key": "stress_extent_e3",
+      "rationale": "Orchestrator-supplied continuity-planning stress input from the v1.0 brief. It is an assumption for underwriting, not an observed outage, forecast, attack claim or operational approval.",
+      "references": [
+       {
+        "note": "the reported function the assumption is applied to",
+        "ref": "excerpt:x-e3a-mmg-investor-2026-05-road-01",
+        "role": "context_for_assumption"
+       }
+      ],
+      "statement": "Assume major impairment of the declared movement function (extent band E3): the function is largely unavailable for the boundary as declared."
+     },
+     {
+      "affects": [
+       "magnitude"
+      ],
+      "basis_kind": "stress_assumption",
+      "key": "stress_duration_d2",
+      "rationale": "Orchestrator-supplied continuity-planning duration; not a measured recovery period. Seven days sits at the D2 upper boundary by the exact rubric banding.",
+      "references": [
+       {
+        "note": "recovery arrangements are not published; the duration is assumed, not derived",
+        "ref": "gap:recovery_unknown",
+        "role": "gap_reference"
+       }
+      ],
+      "statement": "Assume the impairment lasts seven days (duration band D2, >1\u20137 days)."
+     }
+    ],
+    "both_scored": false,
+    "boundary": {
+     "boundary_statement": "reported road leg Las Bambas to Pillones and reported rail leg Pillones to Matarani; excludes mine production, port shipping and downstream buyers",
+     "edge_refs": [
+      "dc90c6d342eb4d0f1a1152a5",
+      "aa5d3e48412f4a8827aa9559"
+     ],
+     "entity_refs": [
+      "asset:aiddata-site-20",
+      "facility:pillones-transfer-station",
+      "port:matarani-pe-mri"
+     ],
+     "first_order": "Concentrate cannot move from the mine to the port along the reported corridor for the duration of the functional loss.",
+     "function_key": "concentrate_movement_las_bambas_pillones_matarani",
+     "function_statement": "Movement of Las Bambas concentrate to Matarani via the reported road leg to Pillones and the reported rail leg to Matarani.",
+     "limits": [
+      "Accepted evidence supports a reported transport relationship only; it does not establish exclusivity of the corridor.",
+      "Per-leg volumes, current continuous use, alternatives, recovery arrangements and controls are not established.",
+      "No route segment is asserted as physically connected beyond the reported edges."
+     ],
+     "propagation": [
+      "Site storage and shipment scheduling are exposed only if the loss outlasts unknown buffers.",
+      "Downstream commercial effects are out of boundary and not assessed."
+     ],
+     "stage": "operating"
+    },
+    "case_id": "85703c81840350485ba0cfe9",
+    "case_kind": "assumption_led",
+    "catalog_refs": [
+     {
+      "reason": "Capability denied 'access land and corridor' is the initiating functional state; the catalog title is a category label and attributes nothing.",
+      "relation": "primary",
+      "scenario_id": "S03"
+     },
+     {
+      "reason": "Related only ('move securely'); the title is a catalog category, not an attribution to any actor.",
+      "relation": "related",
+      "scenario_id": "S30"
+     }
+    ],
+    "category": "LOG",
+    "countercase": [
+     "If substitutes or storage buffers exist, a seven-day impairment may produce little shipment loss; the magnitude 3 would then overstate consequence.",
+     "If the corridor is not currently the operative route, the case does not apply as bounded.",
+     "The accepted evidence reports arrangements only; it attributes no intent, funding or disruption to any community or other actor."
+    ],
+    "difficulty": {
+     "axis": "Materialization difficulty: 1 lower barriers \u2026 5 exceptional barriers. Not likelihood.",
+     "confidence": "UNKNOWN",
+     "high": null,
+     "high_rationale": null,
+     "limited_barriers_basis": null,
+     "low": null,
+     "low_rationale": null,
+     "null_reason": "unbounded_pivotal_unknowns",
+     "rationale": "No numeric materialization difficulty is assigned. Pivotal prerequisites and barriers for the initiating state are unresolved unknowns (corridor exclusivity, continuity controls) and no reviewer-authored stress assumption addresses difficulty. Undocumented controls do not imply lower barriers.",
+     "unknown_bounding_rationale": null
+    },
+    "display": {
+     "difficulty": "Materialization difficulty N/A (unbounded pivotal unknowns)",
+     "magnitude": "Conditional magnitude 3, assuming major impairment for 7 days"
+    },
+    "family": "corridor_access",
+    "highlight": {
+     "edge_ids": [
+      "dc90c6d342eb4d0f1a1152a5",
+      "aa5d3e48412f4a8827aa9559"
+     ],
+     "entity_ids": [
+      "asset:aiddata-site-20",
+      "facility:pillones-transfer-station",
+      "port:matarani-pe-mri"
+     ]
+    },
+    "hypothetical_label": "Hypothetical functional-disruption case for continuity underwriting; not an alert, observed incident, forecast or probability.",
+    "initiating_key": "corridor_service_unavailable",
+    "initiating_statement": "Onset of unavailability of the reported concentrate movement function from Las Bambas via Pillones to Matarani (road leg and/or rail leg). No cause, actor, current incident or method is asserted; the case is defined by the functional state only.",
+    "inputs": [
+     {
+      "basis_kind": "documented_fact",
+      "bounding_rationale": null,
+      "controls_state": null,
+      "could_change_band": false,
+      "key": "dep_road_leg",
+      "kind": "dependency",
+      "rationale": "A retained investor-presentation excerpt reports the road leg; the DDD edge is reported-category, so the fact documented is the report, not measured flow.",
+      "references": [
+       {
+        "note": "reported road leg",
+        "ref": "excerpt:x-e3a-mmg-investor-2026-05-road-01",
+        "role": "supports_fact"
+       },
+       {
+        "note": "DDD transports_to edge (reported)",
+        "ref": "dc90c6d342eb4d0f1a1152a5",
+        "role": "supports_fact"
+       }
+      ],
+      "statement": "Reported road movement of concentrate from Las Bambas to the Pillones transfer station."
+     },
+     {
+      "basis_kind": "documented_fact",
+      "bounding_rationale": null,
+      "controls_state": null,
+      "could_change_band": false,
+      "key": "dep_rail_leg",
+      "kind": "dependency",
+      "rationale": "A retained investor-presentation excerpt and the OSITRAN Pillones\u2013Islay report describe the rail leg; again the documented fact is the report.",
+      "references": [
+       {
+        "note": null,
+        "ref": "excerpt:x-e3a-mmg-investor-2026-05-rail-01",
+        "role": "supports_fact"
+       },
+       {
+        "note": null,
+        "ref": "excerpt:x-e3a-ositran-fso-pillones-islay-2025",
+        "role": "supports_fact"
+       },
+       {
+        "note": "DDD transports_to edge (reported)",
+        "ref": "aa5d3e48412f4a8827aa9559",
+        "role": "supports_fact"
+       }
+      ],
+      "statement": "Reported rail movement of concentrate from Pillones to Matarani."
+     },
+     {
+      "basis_kind": "unknown",
+      "bounding_rationale": null,
+      "controls_state": null,
+      "could_change_band": true,
+      "key": "pre_single_corridor",
+      "kind": "prerequisite",
+      "rationale": "Exclusivity and current continuous use of the corridor are not established by accepted evidence.",
+      "references": [
+       {
+        "note": null,
+        "ref": "gap:alternatives_unknown",
+        "role": "gap_reference"
+       }
+      ],
+      "statement": "For the functional state to arise from a single event, the reported corridor would have to be the operative route at the time."
+     },
+     {
+      "basis_kind": "unknown",
+      "bounding_rationale": null,
+      "controls_state": "undocumented",
+      "could_change_band": true,
+      "key": "bar_corridor_controls",
+      "kind": "barrier",
+      "rationale": "No retained document describes corridor continuity controls; undocumented is not assessed-limited and is not read as easy materialization.",
+      "references": [
+       {
+        "note": null,
+        "ref": "gap:recovery_unknown",
+        "role": "gap_reference"
+       }
+      ],
+      "statement": "Operator, concessionaire or regulator arrangements that would impede loss of the movement function."
+     }
+    ],
+    "legacy_refs": [],
+    "lifecycle": "published",
+    "magnitude": {
+     "axis": "Conditional disruption magnitude: 1 limited \u2026 5 critical. Not likelihood.",
+     "confidence": "LOW",
+     "duration_bands": [
+      "D2"
+     ],
+     "duration_days": 7,
+     "duration_rationale": "Seven assumed days band to D2 by the exact >1\u20137 day rule; no recovery period is measured or published.",
+     "extent_bands": [
+      "E3"
+     ],
+     "extent_rationale": "E3 is the assumed major-impairment band from the stress input; accepted evidence does not measure the share of the function that would be lost.",
+     "high": 3,
+     "low": 3,
+     "null_reason": null,
+     "rationale": "Conditional magnitude 3 is the exact rubric matrix outcome for E3 \u00d7 D2. It is conditional on the two stated stress assumptions and on the corridor applying as reported; it is not expected loss and not an observed incident."
+    },
+    "prior_case_id": null,
+    "related_cases": [
+     "b9442075b789de2db3654ee0"
+    ],
+    "resilience": {
+     "known_buffers": [],
+     "recovery_conditions": [
+      "Recovery/alternative-routing arrangements are not published in the retained documents (S32 modifier: not established)."
+     ],
+     "reducers": [
+      "Any substitute route, storage buffer or shipment rescheduling would reduce the conditional magnitude; none is evidenced."
+     ],
+     "unknown_fallback": [
+      "Alternative transfer stations or ports are not evidenced; absence of evidence is not evidence of absence.",
+      "Site or port-side concentrate storage buffers are not published."
+     ]
+    },
+    "secondary_category": null,
+    "title": "Corridor access: reported Las Bambas\u2013Pillones\u2013Matarani movement function becomes unavailable",
+    "unknowns": [
+     {
+      "evidence_needed": "Operator or regulator statement of routing arrangements and any alternative transfer point or port in use.",
+      "key": "unk_exclusivity",
+      "pivotal": true,
+      "references": [
+       {
+        "note": null,
+        "ref": "gap:alternatives_unknown",
+        "role": "gap_reference"
+       }
+      ],
+      "statement": "Whether the reported corridor is the sole route for Las Bambas concentrate."
+     },
+     {
+      "evidence_needed": "Dated per-leg tonnage or movement records.",
+      "key": "unk_volumes",
+      "pivotal": true,
+      "references": [
+       {
+        "note": "a port-level share figure is not a per-leg volume",
+        "ref": "excerpt:x-e3a-ositran-matarani-share-2025",
+        "role": "context_for_assumption"
+       }
+      ],
+      "statement": "Per-leg volumes and current continuous use of each leg."
+     },
+     {
+      "evidence_needed": "Published continuity or contingency arrangements.",
+      "key": "unk_recovery",
+      "pivotal": true,
+      "references": [
+       {
+        "note": null,
+        "ref": "gap:recovery_unknown",
+        "role": "gap_reference"
+       }
+      ],
+      "statement": "Recovery and alternative-routing arrangements after a corridor disruption."
+     }
+    ],
+    "version": 1
+   },
+   {
+    "applicability": {
+     "confidence": "LOW",
+     "currentness_caveat": "Reported arrangement per the 2025 OSITRAN report and May 2026 investor presentation; facility status is not evidenced.",
+     "rationale": "The transfer and handling functions are implied by the reported rail edge and the OSITRAN Pillones\u2013Islay report; the specific facilities and their capacity are not established, so the case is conditional.",
+     "state": "CONDITIONAL_SCENARIO"
+    },
+    "assumption_set_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "assumptions": [],
+    "both_scored": false,
+    "boundary": {
+     "boundary_statement": "reported transfer at Pillones and handling at Matarani on the reported rail leg; excludes the road leg, mine production and shipping",
+     "edge_refs": [
+      "aa5d3e48412f4a8827aa9559"
+     ],
+     "entity_refs": [
+      "facility:pillones-transfer-station",
+      "port:matarani-pe-mri"
+     ],
+     "first_order": "Concentrate arriving by road could not be transferred to rail, or arriving by rail could not be handled at the port, for the duration of the loss.",
+     "function_key": "concentrate_transfer_and_terminal_handling_pillones_matarani",
+     "function_statement": "Transfer of concentrate from road to rail at the reported Pillones station and handling at the Matarani port.",
+     "limits": [
+      "The DDD anchors are station/town vicinity references, not verified facility footprints.",
+      "Terminal capacity, storage and alternatives are unknown; the corridor magnitude is not copied here."
+     ],
+     "propagation": [
+      "The corridor-access case shares the rail edge; a single transfer or terminal event could affect both functions."
+     ],
+     "stage": "operating"
+    },
+    "case_id": "b9442075b789de2db3654ee0",
+    "case_kind": "evidence_limited",
+    "catalog_refs": [
+     {
+      "reason": "Shiploader service denial ('load vessel') is the initiating handling-function mechanism at the terminal end.",
+      "relation": "primary",
+      "scenario_id": "S12"
+     },
+     {
+      "reason": "Pilot/tug/carrier refusal ('book and sail vessel') is related shipping-side; outside the boundary's handling function.",
+      "relation": "related",
+      "scenario_id": "S13"
+     },
+     {
+      "reason": "Selective customs hold ('clear customs') is related at the port; not evidenced.",
+      "relation": "related",
+      "scenario_id": "S14"
+     },
+     {
+      "reason": "Port corporate-network containment ('enter or use port') is a related digital mechanism; not evidenced.",
+      "relation": "related",
+      "scenario_id": "S10"
+     }
+    ],
+    "category": "LOG",
+    "countercase": [
+     "Port-side storage or alternative berths could absorb a short handling loss; none is evidenced either way.",
+     "The Matarani share figure in evidence is a port-level statistic, not a statement of dependency on one terminal."
+    ],
+    "difficulty": {
+     "axis": "Materialization difficulty: 1 lower barriers \u2026 5 exceptional barriers. Not likelihood.",
+     "confidence": "UNKNOWN",
+     "high": null,
+     "high_rationale": null,
+     "limited_barriers_basis": null,
+     "low": null,
+     "low_rationale": null,
+     "null_reason": "unbounded_pivotal_unknowns",
+     "rationale": "Pivotal prerequisites and barriers are unresolved unknowns; no stress assumption addresses difficulty.",
+     "unknown_bounding_rationale": null
+    },
+    "display": {
+     "difficulty": "Materialization difficulty N/A (unbounded pivotal unknowns)",
+     "magnitude": "Conditional magnitude N/A (not assessed)"
+    },
+    "family": "transfer_terminal_continuity",
+    "highlight": {
+     "edge_ids": [
+      "aa5d3e48412f4a8827aa9559"
+     ],
+     "entity_ids": [
+      "facility:pillones-transfer-station",
+      "port:matarani-pe-mri"
+     ]
+    },
+    "hypothetical_label": "Hypothetical functional-disruption case for continuity underwriting; not an alert, observed incident, forecast or probability.",
+    "initiating_key": "transfer_or_terminal_handling_unavailable",
+    "initiating_statement": "Onset of unavailability of concentrate transfer at the reported Pillones station or handling at Matarani. No facility footprint, capacity, cause or actor is asserted.",
+    "inputs": [
+     {
+      "basis_kind": "bounded_inference",
+      "bounding_rationale": null,
+      "controls_state": null,
+      "could_change_band": false,
+      "key": "dep_rail_edge",
+      "kind": "dependency",
+      "rationale": "The rail edge and OSITRAN report are documented; that they entail specific transfer/handling facilities is an inference bounded to function, not footprint.",
+      "references": [
+       {
+        "note": null,
+        "ref": "aa5d3e48412f4a8827aa9559",
+        "role": "supports_inference"
+       },
+       {
+        "note": null,
+        "ref": "excerpt:x-e3a-ositran-fso-pillones-islay-2025",
+        "role": "supports_inference"
+       }
+      ],
+      "statement": "Reported rail movement from Pillones to Matarani implies a transfer function at Pillones and a handling function at Matarani."
+     },
+     {
+      "basis_kind": "unknown",
+      "bounding_rationale": null,
+      "controls_state": null,
+      "could_change_band": true,
+      "key": "pre_single_transfer_point",
+      "kind": "prerequisite",
+      "rationale": "Alternatives are an explicit DDD gap.",
+      "references": [
+       {
+        "note": null,
+        "ref": "gap:alternatives_unknown",
+        "role": "gap_reference"
+       }
+      ],
+      "statement": "For a single event to remove the function, Pillones or Matarani would have to be the sole transfer or handling point in use."
+     },
+     {
+      "basis_kind": "unknown",
+      "bounding_rationale": null,
+      "controls_state": "undocumented",
+      "could_change_band": true,
+      "key": "bar_terminal_controls",
+      "kind": "barrier",
+      "rationale": "Undocumented; not read as limited.",
+      "references": [],
+      "statement": "Concessionaire or port-operator arrangements that would impede loss of the handling function."
+     }
+    ],
+    "legacy_refs": [],
+    "lifecycle": "published",
+    "magnitude": {
+     "axis": "Conditional disruption magnitude: 1 limited \u2026 5 critical. Not likelihood.",
+     "confidence": "UNKNOWN",
+     "duration_bands": null,
+     "duration_days": null,
+     "duration_rationale": null,
+     "extent_bands": null,
+     "extent_rationale": null,
+     "high": null,
+     "low": null,
+     "null_reason": "not_assessed",
+     "rationale": "No separately supplied extent/duration input exists for the transfer/terminal function; the corridor stress input is not copied. N/A."
+    },
+    "prior_case_id": null,
+    "related_cases": [
+     "85703c81840350485ba0cfe9"
+    ],
+    "resilience": {
+     "known_buffers": [],
+     "recovery_conditions": [
+      "Recovery arrangements are not published (S32 modifier: not established)."
+     ],
+     "reducers": [],
+     "unknown_fallback": [
+      "Alternative transfer stations or ports are not evidenced."
+     ]
+    },
+    "secondary_category": null,
+    "title": "Transfer/terminal continuity: unavailability of the reported Pillones transfer or Matarani handling function",
+    "unknowns": [
+     {
+      "evidence_needed": "Concessionaire or regulator capacity and storage disclosures.",
+      "key": "unk_capacity_storage",
+      "pivotal": true,
+      "references": [
+       {
+        "note": null,
+        "ref": "gap:alternatives_unknown",
+        "role": "gap_reference"
+       }
+      ],
+      "statement": "Terminal and transfer capacity, storage and alternatives."
+     },
+     {
+      "evidence_needed": "Operator or concessionaire facility disclosure.",
+      "key": "unk_facility_identity",
+      "pivotal": true,
+      "references": [],
+      "statement": "Verified facility footprints behind the station/town vicinity anchors."
+     }
+    ],
+    "version": 1
+   }
+  ],
+  "contract": "e5-uw-1.0",
+  "coverage": [
+   {
+    "case_ids": [
+     "ace6290873d5432cdf5d4bee"
+    ],
+    "disposition": "considered",
+    "reason": "Concession pressure ('hold legal title') is related; ownership identities are documented, title status is not.",
+    "scenario_id": "S01"
+   },
+   {
+    "case_ids": [
+     "ace6290873d5432cdf5d4bee"
+    ],
+    "disposition": "mapped",
+    "reason": "Capability denied 'retain permits' is the initiating functional state; no specific permit is evidenced.",
+    "scenario_id": "S02"
+   },
+   {
+    "case_ids": [
+     "85703c81840350485ba0cfe9"
+    ],
+    "disposition": "mapped",
+    "reason": "Capability denied 'access land and corridor' is the initiating functional state; the catalog title is a category label and attributes nothing.",
+    "scenario_id": "S03"
+   },
+   {
+    "case_ids": [],
+    "disposition": "not_established",
+    "reason": "no published pilot case maps this mechanism; not established from accepted evidence",
+    "scenario_id": "S04"
+   },
+   {
+    "case_ids": [],
+    "disposition": "not_established",
+    "reason": "no published pilot case maps this mechanism; not established from accepted evidence",
+    "scenario_id": "S05"
+   },
+   {
+    "case_ids": [],
+    "disposition": "not_established",
+    "reason": "no published pilot case maps this mechanism; not established from accepted evidence",
+    "scenario_id": "S06"
+   },
+   {
+    "case_ids": [
+     "6ece60f1560d6435de251b48"
+    ],
+    "disposition": "considered",
+    "reason": "License-expiry shutdown ('operate installed software') is a related non-adversarial digital-availability mechanism.",
+    "scenario_id": "S07"
+   },
+   {
+    "case_ids": [],
+    "disposition": "not_established",
+    "reason": "no published pilot case maps this mechanism; not established from accepted evidence",
+    "scenario_id": "S08"
+   },
+   {
+    "case_ids": [],
+    "disposition": "not_established",
+    "reason": "no published pilot case maps this mechanism; not established from accepted evidence",
+    "scenario_id": "S09"
+   },
+   {
+    "case_ids": [
+     "6ece60f1560d6435de251b48",
+     "b9442075b789de2db3654ee0"
+    ],
+    "disposition": "considered",
+    "reason": "Port corporate-network containment ('enter or use port') is a related digital mechanism at the terminal end; not locally established.; Port corporate-network containment ('enter or use port') is a related digital mechanism; not evidenced.",
+    "scenario_id": "S10"
+   },
+   {
+    "case_ids": [
+     "6ece60f1560d6435de251b48"
+    ],
+    "disposition": "considered",
+    "reason": "Rail dispatch compromise ('move by rail') is a related digital mechanism on the reported rail leg; not locally established.",
+    "scenario_id": "S11"
+   },
+   {
+    "case_ids": [
+     "b9442075b789de2db3654ee0"
+    ],
+    "disposition": "mapped",
+    "reason": "Shiploader service denial ('load vessel') is the initiating handling-function mechanism at the terminal end.",
+    "scenario_id": "S12"
+   },
+   {
+    "case_ids": [
+     "b9442075b789de2db3654ee0"
+    ],
+    "disposition": "considered",
+    "reason": "Pilot/tug/carrier refusal ('book and sail vessel') is related shipping-side; outside the boundary's handling function.",
+    "scenario_id": "S13"
+   },
+   {
+    "case_ids": [
+     "ace6290873d5432cdf5d4bee",
+     "b9442075b789de2db3654ee0"
+    ],
+    "disposition": "considered",
+    "reason": "Selective customs hold ('clear customs') is a related regulatory mechanism for the movement function; not evidenced.; Selective customs hold ('clear customs') is related at the port; not evidenced.",
+    "scenario_id": "S14"
+   },
+   {
+    "case_ids": [],
+    "disposition": "not_established",
+    "reason": "no published pilot case maps this mechanism; not established from accepted evidence",
+    "scenario_id": "S15"
+   },
+   {
+    "case_ids": [
+     "3b61fa1e81aed84cc4856434"
+    ],
+    "disposition": "considered",
+    "reason": "Marine-insurance de-risking ('obtain insurance') is related; no insurance dependency is evidenced.",
+    "scenario_id": "S16"
+   },
+   {
+    "case_ids": [
+     "3b61fa1e81aed84cc4856434"
+    ],
+    "disposition": "mapped",
+    "reason": "Capability denied 'receive payment' is the closest catalog mechanism for a current commercial dependency; whether one exists is the question posed.",
+    "scenario_id": "S17"
+   },
+   {
+    "case_ids": [
+     "3b61fa1e81aed84cc4856434"
+    ],
+    "disposition": "considered",
+    "reason": "Auditor and exchange cascade ('retain audit and listing') is related to the documented parent/operator identities only.",
+    "scenario_id": "S18"
+   },
+   {
+    "case_ids": [
+     "3b61fa1e81aed84cc4856434"
+    ],
+    "disposition": "considered",
+    "reason": "Strategic quality rejection ('sell contracted product') is related; offtake is an explicit DDD gap.",
+    "scenario_id": "S19"
+   },
+   {
+    "case_ids": [],
+    "disposition": "not_established",
+    "reason": "no published pilot case maps this mechanism; not established from accepted evidence",
+    "scenario_id": "S20"
+   },
+   {
+    "case_ids": [],
+    "disposition": "not_established",
+    "reason": "no published pilot case maps this mechanism; not established from accepted evidence",
+    "scenario_id": "S21"
+   },
+   {
+    "case_ids": [],
+    "disposition": "not_established",
+    "reason": "no published pilot case maps this mechanism; not established from accepted evidence",
+    "scenario_id": "S22"
+   },
+   {
+    "case_ids": [
+     "6ece60f1560d6435de251b48"
+    ],
+    "disposition": "considered",
+    "reason": "OT setpoint manipulation ('operate safely and on specification') is related to the same operational digital dependency.",
+    "scenario_id": "S23"
+   },
+   {
+    "case_ids": [
+     "6ece60f1560d6435de251b48"
+    ],
+    "disposition": "mapped",
+    "reason": "Capability denied 'access operational and commercial systems' is the initiating functional state of this generic case.",
+    "scenario_id": "S24"
+   },
+   {
+    "case_ids": [],
+    "disposition": "not_established",
+    "reason": "no published pilot case maps this mechanism; not established from accepted evidence",
+    "scenario_id": "S25"
+   },
+   {
+    "case_ids": [
+     "ace6290873d5432cdf5d4bee"
+    ],
+    "disposition": "considered",
+    "reason": "Injunction campaign ('retain social and legal license') is related; no proceeding is in evidence and none is claimed.",
+    "scenario_id": "S26"
+   },
+   {
+    "case_ids": [
+     "3b61fa1e81aed84cc4856434"
+    ],
+    "disposition": "considered",
+    "reason": "Strategic market flooding ('preserve economic viability') is related and not locally established.",
+    "scenario_id": "S27"
+   },
+   {
+    "case_ids": [
+     "3b61fa1e81aed84cc4856434"
+    ],
+    "disposition": "considered",
+    "reason": "Treatment-charge squeeze ('find economic processing') is related and not locally established.",
+    "scenario_id": "S28"
+   },
+   {
+    "case_ids": [],
+    "disposition": "not_established",
+    "reason": "no published pilot case maps this mechanism; not established from accepted evidence",
+    "scenario_id": "S29"
+   },
+   {
+    "case_ids": [
+     "85703c81840350485ba0cfe9"
+    ],
+    "disposition": "considered",
+    "reason": "Related only ('move securely'); the title is a catalog category, not an attribution to any actor.",
+    "scenario_id": "S30"
+   },
+   {
+    "case_ids": [],
+    "disposition": "not_established",
+    "reason": "no published pilot case maps this mechanism; not established from accepted evidence",
+    "scenario_id": "S31"
+   },
+   {
+    "case_ids": [],
+    "disposition": "modifier",
+    "reason": "recovery/resilience modifier: qualifies case resilience, never an initiating case or a score",
+    "scenario_id": "S32"
+   }
+  ],
+  "created_at": "2026-09-25T12:20:00+00:00",
+  "ddd": {
+   "created_at": "2026-09-24T00:37:52.863795+00:00",
+   "evidence_cutoff": "2026-09-24T00:37:52.863795+00:00",
+   "evidence_cutoff_basis": "publication_snapshot_created_at",
+   "publication_no": 3,
+   "publication_sha256": "3ea2b261bfae1da748afd2d40765d247eac8f43d496fd778c5c87e6e182ec6e6"
+  },
+  "hypothetical_label": "Hypothetical functional-disruption case for continuity underwriting; not an alert, observed incident, forecast or probability.",
+  "not_published": [],
+  "ordering": {
+   "note": "Cases are ordered by category code then stable case id. The order is not a ranking and encodes no likelihood, severity or target attractiveness.",
+   "ranked": false,
+   "rule": "category_code_then_case_id"
+  },
+  "policy": {
+   "brief_v01_sha256": "1979cd1a1e0b91007ecccf67b024fddc52a3408f06adf2ce0a137ef3ff180038",
+   "brief_v1_sha256": "9e41ae2c92c2669e9d6fec149fa77e3285f40b45c3c17385817d2ca14320cda7",
+   "catalog_sha256": "9550eba17a570ae708fe728a76c80b04998438c622cc317a69eafe62f3daa8f6",
+   "planning_commit": "de0bb3ff856774d972689d5fe1b7f5380e4ed462",
+   "policy_version": "underwriting/1.0",
+   "rubric_sha256": "56967367b5d8c16a723aa4dfc9ff709a545231a62be20ffd2d0e964b4279e614"
+  },
+  "publication_no": 1,
+  "shared_dependency_groups": [
+   {
+    "aggregation": "not_summed",
+    "basis": "reviewed_functional_dependency",
+    "case_ids": [
+     "85703c81840350485ba0cfe9",
+     "b9442075b789de2db3654ee0"
+    ],
+    "note": "Each listed case carries a reviewed function-level dependency on the listed route or facility identities, so impairment of that shared dependency could affect each of them. A shared owner, operator, financier or common endpoint is context only and does not form a group. Magnitudes describe overlapping potential loss and are not additive.",
+    "refs": [
+     "aa5d3e48412f4a8827aa9559"
+    ]
+   }
+  ],
+  "summary": {
+   "assumption_led": 1,
+   "both_scored": 0,
+   "cases_published": 5,
+   "coverage_entries": 32,
+   "difficulty_scored": 0,
+   "evidence_limited": 4,
+   "evidence_supported": 0,
+   "magnitude_scored": 1,
+   "not_published": 0
+  },
+  "what_changed": []
+ },
+ "reason": null,
+ "schema_version": "e5-underwriting/1.0",
+ "state": "available"
+}

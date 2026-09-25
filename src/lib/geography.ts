@@ -455,9 +455,29 @@ export interface DossierOverlay {
   selected: DossierSelection | null;
   /** Increment to request one fit; the map fits once per distinct value, never on re-render. */
   fitSeq: number;
+  /**
+   * Published entity/edge ids to emphasise for the selected underwriting case (E5). Only ids the
+   * publication itself serves ever draw; unknown ids are dropped, nothing is added or moved.
+   */
+  highlight: OverlayHighlight | null;
 }
 
-export function overlayFromPublication(pub: GeoPublication, stale: boolean, selected: DossierSelection | null, fitSeq: number): DossierOverlay {
+export interface OverlayHighlight {
+  entityIds: string[];
+  edgeIds: string[];
+}
+
+/** Keep only highlight ids the publication actually serves; null when nothing survives. */
+export function verifiedHighlight(pub: Pick<GeoPublication, 'features' | 'links'>, wanted: OverlayHighlight | null): OverlayHighlight | null {
+  if (!wanted) return null;
+  const entities = new Set(pub.features.map((f) => f.entity_id));
+  const edges = new Set(pub.links.map((l) => l.edge_id));
+  const entityIds = wanted.entityIds.filter((id) => entities.has(id));
+  const edgeIds = wanted.edgeIds.filter((id) => edges.has(id));
+  return entityIds.length + edgeIds.length > 0 ? { entityIds, edgeIds } : null;
+}
+
+export function overlayFromPublication(pub: GeoPublication, stale: boolean, selected: DossierSelection | null, fitSeq: number, highlight: OverlayHighlight | null = null): DossierOverlay {
   return {
     dossierId: DOSSIER_ID,
     publicationNo: pub.publication_no,
@@ -468,6 +488,7 @@ export function overlayFromPublication(pub: GeoPublication, stale: boolean, sele
     attribution: pub.attribution,
     selected,
     fitSeq,
+    highlight: verifiedHighlight(pub, highlight),
   };
 }
 
@@ -480,9 +501,11 @@ export interface OverlayGeoJSON {
  * Points are the published anchors; each line is exactly the two published endpoints
  * (a straight schematic connector) — no intermediate vertices, no snapping.
  */
-export function overlayGeoJSON(overlay: Pick<DossierOverlay, 'features' | 'links' | 'selected'>): OverlayGeoJSON {
+export function overlayGeoJSON(overlay: Pick<DossierOverlay, 'features' | 'links' | 'selected'> & Partial<Pick<DossierOverlay, 'highlight'>>): OverlayGeoJSON {
   const byEntity = new Map(overlay.features.map((f) => [f.entity_id, f]));
   const sel = overlay.selected;
+  const hlEntities = new Set(overlay.highlight?.entityIds ?? []);
+  const hlEdges = new Set(overlay.highlight?.edgeIds ?? []);
   const points: GeoJSON.Feature<GeoJSON.Point>[] = overlay.features.map((f) => ({
     type: 'Feature',
     id: f.feature_id,
@@ -493,6 +516,7 @@ export function overlayGeoJSON(overlay: Pick<DossierOverlay, 'features' | 'links
       label: f.label,
       precision_text: f.precision_text,
       selected: sel?.kind === 'feature' && sel.id === f.feature_id,
+      highlighted: hlEntities.has(f.entity_id),
     },
   }));
   const lines: GeoJSON.Feature<GeoJSON.LineString>[] = [];
@@ -510,6 +534,7 @@ export function overlayGeoJSON(overlay: Pick<DossierOverlay, 'features' | 'links
         mode: l.mode,
         label: l.label,
         selected: sel?.kind === 'link' && sel.id === l.link_id,
+        highlighted: hlEdges.has(l.edge_id),
       },
     });
   }

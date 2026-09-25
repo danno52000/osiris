@@ -1431,6 +1431,7 @@ export default function Dashboard() {
                 selection: dossierGeo.selection,
                 onSelectElement: dossierGeo.select,
                 onLocate: dossierGeo.locate,
+                onHighlight: dossierGeo.setHighlight,
               } : null}
             />
           </motion.div>
