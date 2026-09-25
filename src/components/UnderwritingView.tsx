@@ -113,7 +113,10 @@ function DualAxisChart({ pub, selectedId, onSelect }: { pub: UwPublication; sele
             );
           })}
           {plotted.length === 0 && (
-            <text data-chart-empty x={PAD_L + 2.5 * CELL} y={PAD_T + 2.5 * CELL} textAnchor="middle" fontSize={9} fill="rgba(255,255,255,0.7)" fontFamily="monospace">{CHART_EMPTY_TEXT}</text>
+            <text data-chart-empty x={PAD_L + 2.5 * CELL} y={PAD_T + 2.5 * CELL - 5} textAnchor="middle" fontSize={8} fill="rgba(255,255,255,0.7)" fontFamily="monospace">
+              <tspan x={PAD_L + 2.5 * CELL}>No cases currently</tspan>
+              <tspan x={PAD_L + 2.5 * CELL} dy={11}>have both scores</tspan>
+            </text>
           )}
         </svg>
         <div className="flex flex-col gap-1 min-w-[140px] flex-1">
