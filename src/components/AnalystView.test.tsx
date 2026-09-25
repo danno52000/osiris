@@ -115,6 +115,7 @@ describe('integration surfaces', () => {
     expect(html.indexOf('data-toggle="vulnerability"')).toBeGreaterThan(html.indexOf('data-section="legacy"'));
     expect(html.indexOf('data-toggle="underwriting"')).toBeGreaterThan(html.indexOf('data-section="legacy"'));
     expect(html).not.toContain('data-toggle="analyst"');
+    expect(html).not.toContain('data-banner="vector-unavailable"');
   });
 
   it('full page: analyst section rendered when the prop is present, before the collapsed legacy block', () => {

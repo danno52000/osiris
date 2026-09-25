@@ -227,13 +227,6 @@ export default function SupplyChainDossiersPanel({ selected, onSelect, geography
             </p>
           )}
 
-          {!vulnOn && <VectorJudgmentCard publication={vulnPub} compact brief />}
-          {!vulnPub && resolvedVuln.view !== 'loading' && (
-            <p data-banner="vector-unavailable" className="font-mono text-[9px] text-white/50">
-              Magnitude / vector summary not shown: vulnerability assessment {resolvedVuln.view.replace('_', ' ')} (reason code: {vulnFeed.fetchError ?? resolvedVuln.body?.reason ?? 'unknown'}).
-            </p>
-          )}
-
           <section data-section="analyst" aria-label="Analyst supplement" className="flex flex-col gap-1 border-t border-white/10 pt-2">
             <div className="flex items-baseline justify-between gap-2">
               <span className="font-mono tracking-[0.15em] text-[#B388FF] text-[9px]">ANALYST SUPPLEMENT <span className="text-white/40 tracking-normal">e7-analyst/1.0</span></span>
@@ -257,6 +250,12 @@ export default function SupplyChainDossiersPanel({ selected, onSelect, geography
                 Underwriting cases
               </label>
             </div>
+            {!vulnOn && <VectorJudgmentCard publication={vulnPub} compact brief />}
+            {!vulnPub && resolvedVuln.view !== 'loading' && (
+              <p data-banner="vector-unavailable" className="font-mono text-[9px] text-white/50">
+                Magnitude / vector summary not shown: vulnerability assessment {resolvedVuln.view.replace('_', ' ')} (reason code: {vulnFeed.fetchError ?? resolvedVuln.body?.reason ?? 'unknown'}).
+              </p>
+            )}
             {vulnOn && <VulnerabilityView feed={vulnFeed} resolved={resolvedVuln} compact geographyDrawn={geoDrawn} />}
             {uwOn && (
               <section data-section="underwriting" aria-label="Underwriting cases" className="flex flex-col gap-1 border-t border-white/10 pt-2 mt-1">
