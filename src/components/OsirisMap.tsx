@@ -3075,7 +3075,7 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
         layout: { 'line-cap': 'butt', 'line-join': 'miter' },
         paint: {
           'line-color': ['match', ['get', 'mode'], 'rail', '#7FD1FF', '#F2C15A'],
-          'line-width': ['case', ['boolean', ['get', 'selected'], false], 3.2, 2],
+          'line-width': ['case', ['boolean', ['get', 'highlighted'], false], 4.2, ['boolean', ['get', 'selected'], false], 3.2, 2],
           'line-dasharray': [2.5, 2],
           'line-opacity': 0.95,
         },
@@ -3100,11 +3100,11 @@ function OsirisMap({ data, activeLayers, onEntityClick, onMouseCoords, onRightCl
       map.addLayer({
         id: 'dossier-point', type: 'circle', source: SRC_PTS,
         paint: {
-          'circle-radius': ['case', ['boolean', ['get', 'selected'], false], 8, 6],
+          'circle-radius': ['case', ['boolean', ['get', 'highlighted'], false], 9, ['boolean', ['get', 'selected'], false], 8, 6],
           'circle-color': '#FFFFFF',
           'circle-opacity': 0.92,
-          'circle-stroke-width': ['case', ['boolean', ['get', 'selected'], false], 3, 2],
-          'circle-stroke-color': '#F2C15A',
+          'circle-stroke-width': ['case', ['boolean', ['get', 'highlighted'], false], 4, ['boolean', ['get', 'selected'], false], 3, 2],
+          'circle-stroke-color': ['case', ['boolean', ['get', 'highlighted'], false], '#B388FF', '#F2C15A'],
         },
       });
     }
