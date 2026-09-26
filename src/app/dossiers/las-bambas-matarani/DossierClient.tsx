@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import {
+  DOSSIER_ID,
   INITIAL_FEED,
   PROXY_PATH,
   isDossierResponse,
@@ -14,6 +15,8 @@ import { INITIAL_VULN_FEED, reduceVulnFeed, resolveVuln } from '@/lib/vulnerabil
 import { fetchVulnerabilityOnce } from '@/lib/vulnerability-client';
 import { INITIAL_UW_FEED, reduceUwFeed, resolveUw } from '@/lib/underwriting';
 import { fetchUnderwritingOnce } from '@/lib/underwriting-client';
+import { INITIAL_AN_FEED, reduceAnFeed, resolveAn } from '@/lib/analyst';
+import { fetchAnalystOnce } from '@/lib/analyst-client';
 import { DossierView } from './DossierView';
 
 /**
@@ -66,6 +69,9 @@ export default function DossierClient() {
   const [vulnOn, setVulnOn] = useState(false);
   const [uwFeed, dispatchUw] = useReducer(reduceUwFeed, INITIAL_UW_FEED);
   const [uwOn, setUwOn] = useState(false);
+  const [anFeed, dispatchAn] = useReducer(reduceAnFeed, INITIAL_AN_FEED);
+  const anGeneration = useRef(0);
+  const anInFlight = useRef(false);
   const generation = useRef(0);
   const vulnGeneration = useRef(0);
   const uwGeneration = useRef(0);
@@ -111,6 +117,28 @@ export default function DossierClient() {
     }
   }, []);
 
+  const loadAn = useCallback(async () => {
+    if (anInFlight.current) return;
+    anInFlight.current = true;
+    anGeneration.current += 1;
+    try {
+      const event = await fetchAnalystOnce(DOSSIER_ID, anGeneration.current);
+      if (mounted.current) dispatchAn(event);
+    } finally {
+      anInFlight.current = false;
+    }
+  }, []);
+
+  // The analyst pyramid is default-visible on the full page: no toggle, polled like the dossier.
+  useEffect(() => {
+    const first = setTimeout(loadAn, 0);
+    const iv = setInterval(loadAn, POLL_MS);
+    return () => {
+      clearTimeout(first);
+      clearInterval(iv);
+    };
+  }, [loadAn]);
+
   useEffect(() => {
     if (!uwOn) {
       dispatchUw({ type: 'reset', generation: uwGeneration.current });
@@ -153,6 +181,7 @@ export default function DossierClient() {
       onSelectEdge={setSelectedEdgeId}
       vulnerability={{ on: vulnOn, onToggle: setVulnOn, feed: vulnFeed, resolved: resolveVuln(vulnFeed) }}
       underwriting={{ on: uwOn, onToggle: setUwOn, feed: uwFeed, resolved: resolveUw(uwFeed) }}
+      analyst={{ feed: anFeed, resolved: resolveAn(anFeed) }}
     />
   );
 }

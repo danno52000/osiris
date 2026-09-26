@@ -1,0 +1,20 @@
+{
+ "checked_at": "2026-09-25T12:30:00+00:00",
+ "currentness": {
+  "eligibility_changed_at": "2026-09-25T12:30:00+00:00",
+  "publication_no": null
+ },
+ "ddd": {
+  "eligibility_changed_at": null,
+  "eligibility_established_at": "2026-09-24T00:37:52.863795+00:00",
+  "publication_no": 3,
+  "publication_sha256": "3ea2b261bfae1da748afd2d40765d247eac8f43d496fd778c5c87e6e182ec6e6",
+  "reason": null,
+  "state": "available"
+ },
+ "dossier_id": "las-bambas-matarani",
+ "publication": null,
+ "reason": "eligibility_withdrawn",
+ "schema_version": "e7-analyst/1.0",
+ "state": "withdrawn"
+}

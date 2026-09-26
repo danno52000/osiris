@@ -9,6 +9,9 @@ import { fetchVulnerabilityOnce } from '@/lib/vulnerability-client';
 import type { DossierSelection, GeoFeedState, OverlayHighlight, ResolvedGeo } from '@/lib/geography';
 import { INITIAL_UW_FEED, reduceUwFeed, resolveUw, type UwHighlight } from '@/lib/underwriting';
 import { fetchUnderwritingOnce } from '@/lib/underwriting-client';
+import { INITIAL_AN_FEED, reduceAnFeed, resolveAn, analystReportPath } from '@/lib/analyst';
+import { fetchAnalystOnce } from '@/lib/analyst-client';
+import { AnalystView } from './AnalystView';
 import { VulnerabilityView } from './VulnerabilityView';
 import { UnderwritingView } from './UnderwritingView';
 import { VectorJudgmentCard } from './VectorJudgmentCard';
@@ -17,9 +20,10 @@ import { DossierGeographyView } from './DossierGeographyView';
 /**
  * Right-rail "Supply Chain Dossiers" control: a one-entry list of bounded GIDEON dossiers,
  * the selected dossier's read-only state, the geography section (lifecycle, Locate, anchor /
- * link list and cards), the magnitude + hypothetical-vector summary, a link to the full page
- * and an opt-in full vulnerability view. Selection and geography are owned by the page so the
- * map overlay and this panel read the same state; the panel never geocodes or invents geometry.
+ * link list and cards), the magnitude + hypothetical-vector summary, the default-visible E7
+ * analyst pyramid, a link to the full page and the legacy E3B/E5 views behind collapsed controls.
+ * Selection and geography are owned by the page so the map overlay and this panel read the same
+ * state; the panel never geocodes or invents geometry.
  */
 
 export const DOSSIER_LIST: ReadonlyArray<{ id: string; title: string; href: string }> = [
@@ -48,6 +52,9 @@ export default function SupplyChainDossiersPanel({ selected, onSelect, geography
   const [feed, dispatch] = useReducer(reduceFeed, INITIAL_FEED);
   const [vulnFeed, dispatchVuln] = useReducer(reduceVulnFeed, INITIAL_VULN_FEED);
   const [uwFeed, dispatchUw] = useReducer(reduceUwFeed, INITIAL_UW_FEED);
+  const [anFeed, dispatchAn] = useReducer(reduceAnFeed, INITIAL_AN_FEED);
+  const anGen = useRef(0);
+  const anInFlight = useRef(false);
   const gen = useRef(0);
   const vulnGen = useRef(0);
   const uwGen = useRef(0);
@@ -92,10 +99,33 @@ export default function SupplyChainDossiersPanel({ selected, onSelect, geography
     }
   }, []);
 
+  const loadAn = useCallback(async (dossierId: string) => {
+    if (anInFlight.current) return;
+    anInFlight.current = true;
+    anGen.current += 1;
+    try {
+      const ev = await fetchAnalystOnce(dossierId, anGen.current);
+      if (mounted.current) dispatchAn(ev);
+    } finally {
+      anInFlight.current = false;
+    }
+  }, []);
+
   useEffect(() => {
     mounted.current = true;
     return () => { mounted.current = false; };
   }, []);
+
+  // The analyst pyramid is default-visible: fetched for the requested dossier id whenever one is
+  // selected (no toggle); deselection or a dossier change resets the feed so nothing outlives it.
+  useEffect(() => {
+    dispatchAn({ type: 'reset', generation: anGen.current });
+    if (!selected) return;
+    const run = () => loadAn(selected);
+    const first = setTimeout(run, 0);
+    const iv = setInterval(run, POLL_MS);
+    return () => { clearTimeout(first); clearInterval(iv); };
+  }, [selected, loadAn]);
 
   useEffect(() => {
     if (!selected) return;
@@ -138,6 +168,7 @@ export default function SupplyChainDossiersPanel({ selected, onSelect, geography
   const vulnPub = (resolvedVuln.view === 'available' || resolvedVuln.view === 'stale') ? resolvedVuln.publication : null;
   const geoDrawn = !!geography && (geography.resolved.view === 'available' || geography.resolved.view === 'stale');
   const resolvedUw = resolveUw(uwFeed);
+  const resolvedAn = resolveAn(anFeed);
 
   return (
     <div data-panel="supply-chain-dossiers" className="rounded-lg border border-white/10 bg-black/80 backdrop-blur-md p-3 flex flex-col gap-2 text-[10px] max-h-[70vh] overflow-y-auto">
@@ -196,31 +227,43 @@ export default function SupplyChainDossiersPanel({ selected, onSelect, geography
             </p>
           )}
 
-          {!vulnOn && <VectorJudgmentCard publication={vulnPub} compact brief />}
-          {!vulnPub && resolvedVuln.view !== 'loading' && (
-            <p data-banner="vector-unavailable" className="font-mono text-[9px] text-white/50">
-              Magnitude / vector summary not shown: vulnerability assessment {resolvedVuln.view.replace('_', ' ')} (reason code: {vulnFeed.fetchError ?? resolvedVuln.body?.reason ?? 'unknown'}).
-            </p>
-          )}
+          <section data-section="analyst" aria-label="Analyst supplement" className="flex flex-col gap-1 border-t border-white/10 pt-2">
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="font-mono tracking-[0.15em] text-[#B388FF] text-[9px]">ANALYST SUPPLEMENT <span className="text-white/40 tracking-normal">e7-analyst/1.0</span></span>
+              <Link href={analystReportPath(entry.id)} data-link="analyst-report" className="font-mono text-[9px] text-[var(--cyan-primary)] underline underline-offset-2">Full report →</Link>
+            </div>
+            <AnalystView key={selected} dossierId={entry.id} feed={anFeed} resolved={resolvedAn} compact linkToReport />
+          </section>
 
           <div className="flex items-center gap-3">
             <Link href={entry.href} data-link="full-dossier" className="font-mono text-[10px] text-[var(--cyan-primary)] underline underline-offset-2">Open full dossier →</Link>
-            <label className="flex items-center gap-1.5 text-white/70 cursor-pointer select-none ml-auto">
-              <input type="checkbox" checked={vulnOn} onChange={(e) => setVulnOn(e.target.checked)} data-toggle="vulnerability" className="accent-[var(--gold-primary)]" />
-              Vulnerability view
-            </label>
-            <label className="flex items-center gap-1.5 text-white/70 cursor-pointer select-none">
-              <input type="checkbox" checked={uwOn} onChange={(e) => setUwOn(e.target.checked)} data-toggle="underwriting" className="accent-[#B388FF]" />
-              Underwriting cases
-            </label>
           </div>
-          {vulnOn && <VulnerabilityView feed={vulnFeed} resolved={resolvedVuln} compact geographyDrawn={geoDrawn} />}
-          {uwOn && (
-            <section data-section="underwriting" aria-label="Underwriting cases" className="flex flex-col gap-1 border-t border-white/10 pt-2">
-              <span className="font-mono tracking-[0.15em] text-[#B388FF] text-[9px]">UNDERWRITING CASES <span className="text-white/40 tracking-normal">e5-underwriting/1.0</span></span>
-              <UnderwritingView key={selected} feed={uwFeed} resolved={resolvedUw} compact geographyDrawn={geoDrawn} onHighlight={onHighlight ? handleHighlight : undefined} />
-            </section>
-          )}
+          <details data-section="legacy" className="border-t border-white/10 pt-2">
+            <summary className="cursor-pointer font-mono text-[9px] tracking-[0.15em] text-white/50">LEGACY ASSESSMENTS <span className="tracking-normal text-white/35">e3b-vulnerability/1.0 · e5-underwriting/1.0 (unchanged)</span></summary>
+            <div className="mt-1 flex items-center gap-3">
+              <label className="flex items-center gap-1.5 text-white/70 cursor-pointer select-none">
+                <input type="checkbox" checked={vulnOn} onChange={(e) => setVulnOn(e.target.checked)} data-toggle="vulnerability" className="accent-[var(--gold-primary)]" />
+                Vulnerability view
+              </label>
+              <label className="flex items-center gap-1.5 text-white/70 cursor-pointer select-none">
+                <input type="checkbox" checked={uwOn} onChange={(e) => setUwOn(e.target.checked)} data-toggle="underwriting" className="accent-[#B388FF]" />
+                Underwriting cases
+              </label>
+            </div>
+            {!vulnOn && <VectorJudgmentCard publication={vulnPub} compact brief />}
+            {!vulnPub && resolvedVuln.view !== 'loading' && (
+              <p data-banner="vector-unavailable" className="font-mono text-[9px] text-white/50">
+                Magnitude / vector summary not shown: vulnerability assessment {resolvedVuln.view.replace('_', ' ')} (reason code: {vulnFeed.fetchError ?? resolvedVuln.body?.reason ?? 'unknown'}).
+              </p>
+            )}
+            {vulnOn && <VulnerabilityView feed={vulnFeed} resolved={resolvedVuln} compact geographyDrawn={geoDrawn} />}
+            {uwOn && (
+              <section data-section="underwriting" aria-label="Underwriting cases" className="flex flex-col gap-1 border-t border-white/10 pt-2 mt-1">
+                <span className="font-mono tracking-[0.15em] text-[#B388FF] text-[9px]">UNDERWRITING CASES <span className="text-white/40 tracking-normal">e5-underwriting/1.0</span></span>
+                <UnderwritingView key={selected} feed={uwFeed} resolved={resolvedUw} compact geographyDrawn={geoDrawn} onHighlight={onHighlight ? handleHighlight : undefined} />
+              </section>
+            )}
+          </details>
         </div>
       )}
     </div>
