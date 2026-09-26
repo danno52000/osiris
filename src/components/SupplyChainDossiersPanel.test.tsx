@@ -29,7 +29,7 @@ describe('SupplyChainDossiersPanel', () => {
   it('lists exactly the one bounded dossier with no selection by default and draws nothing', () => {
     const html = renderToStaticMarkup(<SupplyChainDossiersPanel selected={null} onSelect={noop} />);
     expect(DOSSIER_LIST).toHaveLength(1);
-    expect(DOSSIER_LIST[0]).toMatchObject({ id: 'las-bambas-matarani', href: '/dossiers/las-bambas-matarani' });
+    expect(DOSSIER_LIST[0]).toMatchObject({ id: 'las-bambas-matarani', fullDossierHref: '/dossiers/las-bambas-matarani', listed: true });
     expect(html).toContain('SUPPLY CHAIN DOSSIERS');
     expect(html).toContain('Nothing is drawn until then');
     expect((html.match(/data-dossier-id="/g) ?? []).length).toBe(1);
@@ -54,6 +54,32 @@ describe('SupplyChainDossiersPanel', () => {
     expect(html).toContain('data-link="full-dossier"');
     expect(html).toContain('data-toggle="vulnerability"');
     expect(html).toContain('aria-pressed="true"');
+    expect(html).toContain('data-section="legacy"');
+  });
+
+  it('E8 Toromocho selected (unlisted by default): per-dossier prose, analyst section, no legacy E3B/E5 controls, no full-DDD link, no Las Bambas wording', () => {
+    const feed = feedOf(null, 'browser_fetch_failed');
+    const html = renderToStaticMarkup(
+      <SupplyChainDossiersPanel
+        selected="toromocho"
+        onSelect={noop}
+        geography={{ feed, resolved: resolveGeo(feed), selection: null, onSelectElement: noop, onLocate: noop }}
+      />,
+    );
+    expect(DOSSIER_LIST.map((d) => d.id)).toEqual(['las-bambas-matarani']);
+    expect(html).toContain('data-dossier-id="toromocho"');
+    expect(html).toContain('Toromocho');
+    expect(html).toContain('data-section="analyst"');
+    expect(html).not.toContain('data-section="legacy"');
+    expect(html).not.toContain('data-toggle="vulnerability"');
+    expect(html).not.toContain('data-toggle="underwriting"');
+    expect(html).not.toContain('data-link="full-dossier"');
+    const selectedSection = html.slice(html.indexOf('data-section="selected-dossier"'));
+    expect(selectedSection).not.toContain('Pillones');
+    expect(selectedSection).not.toContain('Matarani');
+    expect(selectedSection).not.toContain('las-bambas');
+    expect(selectedSection).toContain('unlisted · not released');
+    expect(selectedSection).toContain('No route, port or corridor is inferred');
   });
 });
 

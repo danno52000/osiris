@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import Link from 'next/link';
-import { DOSSIER_ID, INITIAL_FEED, reduceFeed, resolveView } from '@/lib/dossier';
-import { fetchDossierOnce } from '@/app/dossiers/las-bambas-matarani/DossierClient';
+import { INITIAL_FEED, reduceFeed, resolveView } from '@/lib/dossier';
+import { fetchDossierOnce } from '@/lib/dossier-client';
+import { dossierRegistryEntry, rosterDossiers, type DossierRegistryEntry } from '@/lib/dossier-registry';
 import { INITIAL_VULN_FEED, reduceVulnFeed, resolveVuln } from '@/lib/vulnerability';
 import { fetchVulnerabilityOnce } from '@/lib/vulnerability-client';
 import type { DossierSelection, GeoFeedState, OverlayHighlight, ResolvedGeo } from '@/lib/geography';
@@ -18,17 +19,18 @@ import { VectorJudgmentCard } from './VectorJudgmentCard';
 import { DossierGeographyView } from './DossierGeographyView';
 
 /**
- * Right-rail "Supply Chain Dossiers" control: a one-entry list of bounded GIDEON dossiers,
- * the selected dossier's read-only state, the geography section (lifecycle, Locate, anchor /
- * link list and cards), the magnitude + hypothetical-vector summary, the default-visible E7
- * analyst pyramid, a link to the full page and the legacy E3B/E5 views behind collapsed controls.
- * Selection and geography are owned by the page so the map overlay and this panel read the same
- * state; the panel never geocodes or invents geometry.
+ * Right-rail "Supply Chain Dossiers" control: the finite registry roster of bounded GIDEON
+ * dossiers (Las Bambas by default), the selected dossier's read-only DDD state, the geography
+ * section (lifecycle, Locate, anchor / link list and cards), the default-visible E7 analyst
+ * pyramid and — only for dossiers that have them — a link to the full legacy page and the legacy
+ * E3B/E5 views behind collapsed controls. Every fetch is for the selected id; changing or clearing
+ * the selection resets every feed so nothing from the previous dossier (including a late answer)
+ * survives, and no legacy Las Bambas endpoint is requested for another dossier. Selection and
+ * geography are owned by the page so the map overlay and this panel read the same state; the
+ * panel never geocodes or invents geometry.
  */
 
-export const DOSSIER_LIST: ReadonlyArray<{ id: string; title: string; href: string }> = [
-  { id: DOSSIER_ID, title: 'Las Bambas – Pillones – Matarani', href: `/dossiers/${DOSSIER_ID}` },
-];
+export const DOSSIER_LIST: ReadonlyArray<DossierRegistryEntry> = rosterDossiers();
 
 const POLL_MS = 60_000;
 
@@ -63,12 +65,12 @@ export default function SupplyChainDossiersPanel({ selected, onSelect, geography
   const uwInFlight = useRef(false);
   const mounted = useRef(true);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (dossierId: string) => {
     if (inFlight.current) return;
     inFlight.current = true;
     gen.current += 1;
     try {
-      const ev = await fetchDossierOnce(gen.current);
+      const ev = await fetchDossierOnce(dossierId, gen.current);
       if (mounted.current) dispatch(ev);
     } finally {
       inFlight.current = false;
@@ -127,40 +129,50 @@ export default function SupplyChainDossiersPanel({ selected, onSelect, geography
     return () => { clearTimeout(first); clearInterval(iv); };
   }, [selected, loadAn]);
 
+  const entry = dossierRegistryEntry(selected);
+  const legacy = !!entry && entry.legacyAssessments;
+
+  // DDD state is fetched for the requested id only; deselection or a dossier change resets the
+  // feed (and outdates any in-flight answer) so the previous dossier never shows under the new id.
   useEffect(() => {
+    dispatch({ type: 'reset', generation: gen.current });
     if (!selected) return;
-    const first = setTimeout(load, 0);
-    const iv = setInterval(load, POLL_MS);
+    const run = () => load(selected);
+    const first = setTimeout(run, 0);
+    const iv = setInterval(run, POLL_MS);
     return () => { clearTimeout(first); clearInterval(iv); };
   }, [selected, load]);
 
-  // The magnitude/vector summary needs the vulnerability publication whenever a dossier is
-  // selected; the checkbox only expands the full matrix view.
+  // The magnitude/vector summary needs the vulnerability publication whenever a dossier with
+  // legacy assessments (Las Bambas) is selected; the checkbox only expands the full matrix view.
+  // No legacy endpoint is requested for any other dossier.
   useEffect(() => {
-    if (!selected) return;
+    if (!selected || !legacy) {
+      dispatchVuln({ type: 'reset', generation: vulnGen.current });
+      return;
+    }
     const first = setTimeout(loadVuln, 0);
     const iv = setInterval(loadVuln, POLL_MS);
     return () => { clearTimeout(first); clearInterval(iv); };
-  }, [selected, loadVuln]);
+  }, [selected, legacy, loadVuln]);
 
-  // Underwriting is fetched only while its view is switched on for a selected dossier; switching
-  // off or changing dossier resets the feed so no case or highlight outlives its selection.
+  // Underwriting is fetched only while its view is switched on for a selected legacy dossier;
+  // switching off or changing dossier resets the feed so no case or highlight outlives its selection.
   useEffect(() => {
-    if (!selected || !uwOn) {
+    if (!selected || !legacy || !uwOn) {
       dispatchUw({ type: 'reset', generation: uwGen.current });
       return;
     }
     const first = setTimeout(loadUw, 0);
     const iv = setInterval(loadUw, POLL_MS);
     return () => { clearTimeout(first); clearInterval(iv); };
-  }, [selected, uwOn, loadUw]);
+  }, [selected, legacy, uwOn, loadUw]);
 
   const onHighlight = geography?.onHighlight;
   const handleHighlight = useCallback((h: UwHighlight | null) => {
     onHighlight?.(h ? { entityIds: h.entity_ids, edgeIds: h.edge_ids } : null);
   }, [onHighlight]);
 
-  const entry = DOSSIER_LIST.find((d) => d.id === selected) ?? null;
   const resolved = resolveView(feed);
   const pub = (resolved.view === 'available' || resolved.view === 'stale') ? resolved.body?.publication ?? null : null;
   const cur = resolved.body?.currentness ?? null;
@@ -174,7 +186,7 @@ export default function SupplyChainDossiersPanel({ selected, onSelect, geography
     <div data-panel="supply-chain-dossiers" className="rounded-lg border border-white/10 bg-black/80 backdrop-blur-md p-3 flex flex-col gap-2 text-[10px] max-h-[70vh] overflow-y-auto">
       <div className="flex items-baseline justify-between">
         <span className="font-mono tracking-[0.2em] text-[var(--gold-primary)] text-[10px]">SUPPLY CHAIN DOSSIERS</span>
-        <span className="font-mono text-white/40">{DOSSIER_LIST.length} dossier</span>
+        <span className="font-mono text-white/40">{DOSSIER_LIST.length} {DOSSIER_LIST.length === 1 ? 'dossier' : 'dossiers'}</span>
       </div>
       <p role="note" data-banner="list-view" className="font-mono text-[9px] text-white/50">
         {selected
@@ -193,14 +205,18 @@ export default function SupplyChainDossiersPanel({ selected, onSelect, geography
               className={`w-full text-left rounded border px-2 py-1.5 transition-colors ${selected === d.id ? 'border-[var(--gold-primary)]/60 bg-[var(--gold-primary)]/10 text-white' : 'border-white/10 text-white/70 hover:bg-white/5'}`}
             >
               <div className="font-semibold">{d.title}</div>
-              <div className="font-mono text-[9px] text-white/40">{d.id} · copper concentrate corridor (Peru)</div>
+              <div className="font-mono text-[9px] text-white/40">{d.id} · {d.subtitle}</div>
             </button>
           </li>
         ))}
       </ul>
 
       {entry && (
-        <div data-section="selected-dossier" className="flex flex-col gap-2 border-t border-white/10 pt-2">
+        <div data-section="selected-dossier" data-dossier-id={entry.id} className="flex flex-col gap-2 border-t border-white/10 pt-2">
+          <div data-field="selected-title" className="font-mono text-[9px] text-white/60">
+            <span className="font-semibold text-white/80">{entry.title}</span>
+            {!entry.listed && <span className="ml-2 text-[#FFB300]/80">unlisted · not released</span>}
+          </div>
           <div data-view-state={resolved.view} className="font-mono text-[10px] flex flex-wrap gap-x-3 gap-y-0.5">
             <span className="font-bold tracking-widest">{resolved.view.toUpperCase().replace('_', ' ')}</span>
             {pub && cur && (
@@ -223,7 +239,7 @@ export default function SupplyChainDossiersPanel({ selected, onSelect, geography
           )}
           {!geoDrawn && geography && geography.resolved.view !== 'loading' && (
             <p role="note" data-banner="text-connectivity" className="font-mono text-[9px] text-white/50">
-              Reported connectivity (road to Pillones, rail to Matarani) remains readable in the full dossier; nothing is drawn while geography is not available.
+              {entry.connectivityNote ?? 'No route, port or corridor is inferred for this dossier; nothing is drawn while geography is not available.'}
             </p>
           )}
 
@@ -235,9 +251,12 @@ export default function SupplyChainDossiersPanel({ selected, onSelect, geography
             <AnalystView key={selected} dossierId={entry.id} feed={anFeed} resolved={resolvedAn} compact linkToReport />
           </section>
 
-          <div className="flex items-center gap-3">
-            <Link href={entry.href} data-link="full-dossier" className="font-mono text-[10px] text-[var(--cyan-primary)] underline underline-offset-2">Open full dossier →</Link>
-          </div>
+          {entry.fullDossierHref && (
+            <div className="flex items-center gap-3">
+              <Link href={entry.fullDossierHref} data-link="full-dossier" className="font-mono text-[10px] text-[var(--cyan-primary)] underline underline-offset-2">Open full dossier →</Link>
+            </div>
+          )}
+          {legacy && (
           <details data-section="legacy" className="border-t border-white/10 pt-2">
             <summary className="cursor-pointer font-mono text-[9px] tracking-[0.15em] text-white/50">LEGACY ASSESSMENTS <span className="tracking-normal text-white/35">e3b-vulnerability/1.0 · e5-underwriting/1.0 (unchanged)</span></summary>
             <div className="mt-1 flex items-center gap-3">
@@ -264,6 +283,7 @@ export default function SupplyChainDossiersPanel({ selected, onSelect, geography
               </section>
             )}
           </details>
+          )}
         </div>
       )}
     </div>

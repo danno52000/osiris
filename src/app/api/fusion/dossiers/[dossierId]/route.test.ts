@@ -3,6 +3,8 @@ import { DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT } from './route';
 import { PROXY_PATH } from '@/lib/dossier';
 import { AVAILABLE, STALE_FAILED, stateOnly } from '@/lib/dossier.test-fixture';
 
+const LB = 'las-bambas-matarani';
+const ctx = (dossierId: string = LB) => ({ params: Promise.resolve({ dossierId }) });
 let ipCounter = 0;
 function request(query = ''): Request {
   ipCounter += 1;
@@ -32,7 +34,7 @@ describe('GET /api/fusion/dossiers/las-bambas-matarani', () => {
 
   it('forwards an available dossier verbatim, no-store, to the literal sidecar dossier route', async () => {
     fetchMock.mockResolvedValue(sidecar(200, AVAILABLE));
-    const res = await GET(request());
+    const res = await GET(request(), ctx());
     expect(res.status).toBe(200);
     expect(res.headers.get('cache-control')).toBe('no-store');
     const body = await res.json();
@@ -48,7 +50,7 @@ describe('GET /api/fusion/dossiers/las-bambas-matarani', () => {
 
   it('forwards a stale dossier with its reason and retained publication', async () => {
     fetchMock.mockResolvedValue(sidecar(200, STALE_FAILED));
-    const body = await (await GET(request())).json();
+    const body = await (await GET(request(), ctx())).json();
     expect(body.state).toBe('stale');
     expect(body.reason).toBe('latest_attempt_failed');
     expect(body.publication.publication_no).toBe(1);
@@ -63,7 +65,7 @@ describe('GET /api/fusion/dossiers/las-bambas-matarani', () => {
     ['unavailable', 'feature_disabled', 503],
   ] as const)('passes through the %s/%s state-only body with status %i', async (state, reason, status) => {
     fetchMock.mockResolvedValue(sidecar(status, stateOnly(state, reason)));
-    const res = await GET(request());
+    const res = await GET(request(), ctx());
     expect(res.status).toBe(status);
     const body = await res.json();
     expect(body.state).toBe(state);
@@ -75,7 +77,7 @@ describe('GET /api/fusion/dossiers/las-bambas-matarani', () => {
   it('rejects client query parameters (audience/publication/history/path) without contacting the sidecar', async () => {
     fetchMock.mockResolvedValue(sidecar(200, AVAILABLE));
     for (const q of ['?audience=internal', '?publication=1', '?history=1', '?path=..%2F']) {
-      const res = await GET(request(q));
+      const res = await GET(request(q), ctx());
       expect(res.status).toBe(400);
       const body = await res.json();
       expect(body.state).toBe('unavailable');
@@ -87,7 +89,7 @@ describe('GET /api/fusion/dossiers/las-bambas-matarani', () => {
 
   it('reports 503 unavailable + degraded when the sidecar cannot be reached, without leaking the error', async () => {
     fetchMock.mockRejectedValue(new Error('ECONNREFUSED 10.9.9.9:8080 secret-host'));
-    const res = await GET(request());
+    const res = await GET(request(), ctx());
     expect(res.status).toBe(503);
     expect(res.headers.get('cache-control')).toBe('no-store');
     const body = await res.json();
@@ -100,29 +102,29 @@ describe('GET /api/fusion/dossiers/las-bambas-matarani', () => {
 
   it('reports unavailable + degraded on malformed, foreign-schema or unexpected sidecar answers', async () => {
     fetchMock.mockResolvedValue(sidecar(200, { hello: 'world' }));
-    let res = await GET(request());
+    let res = await GET(request(), ctx());
     expect(res.status).toBe(503);
     expect((await res.json()).degraded).toBe(true);
 
     // status/state disagreement is outside the contract
     fetchMock.mockResolvedValue(sidecar(200, stateOnly('unavailable', 'publication_missing')));
-    res = await GET(request());
+    res = await GET(request(), ctx());
     expect(res.status).toBe(503);
     expect((await res.json()).degraded).toBe(true);
     fetchMock.mockResolvedValue(sidecar(503, AVAILABLE));
-    expect((await GET(request())).status).toBe(503);
-    expect((await (await GET(request())).json()).degraded).toBe(true);
+    expect((await GET(request(), ctx())).status).toBe(503);
+    expect((await (await GET(request(), ctx())).json()).degraded).toBe(true);
     fetchMock.mockResolvedValue(sidecar(200, { ...AVAILABLE, state: 'internal' }));
-    expect((await (await GET(request())).json()).degraded).toBe(true);
+    expect((await (await GET(request(), ctx())).json()).degraded).toBe(true);
 
     fetchMock.mockResolvedValue(sidecar(200, { ...AVAILABLE, schema_version: 'e2-dossier/2.0' }));
-    expect((await (await GET(request())).json()).degraded).toBe(true);
+    expect((await (await GET(request(), ctx())).json()).degraded).toBe(true);
 
     fetchMock.mockResolvedValue(sidecar(200, { ...AVAILABLE, dossier_id: 'other-dossier' }));
-    expect((await (await GET(request())).json()).degraded).toBe(true);
+    expect((await (await GET(request(), ctx())).json()).degraded).toBe(true);
 
     fetchMock.mockResolvedValue(sidecar(500, { detail: 'boom' }));
-    const body = await (await GET(request())).json();
+    const body = await (await GET(request(), ctx())).json();
     expect(body.state).toBe('unavailable');
     expect(body.degraded).toBe(true);
   });
@@ -148,7 +150,7 @@ describe('GET /api/fusion/dossiers/las-bambas-matarani', () => {
     ];
     for (const body of malformed) {
       fetchMock.mockResolvedValue(sidecar(200, body));
-      const res = await GET(request());
+      const res = await GET(request(), ctx());
       expect(res.status, JSON.stringify(body).slice(0, 120)).toBe(503);
       expect(res.headers.get('cache-control')).toBe('no-store');
       const out = await res.json();
@@ -161,12 +163,12 @@ describe('GET /api/fusion/dossiers/las-bambas-matarani', () => {
     }
     // a well-formed answer immediately afterwards is forwarded again (no sticky failure)
     fetchMock.mockResolvedValue(sidecar(200, AVAILABLE));
-    expect((await GET(request())).status).toBe(200);
+    expect((await GET(request(), ctx())).status).toBe(200);
   });
 
   it('answers 404 unavailable when the sidecar has no dossier route', async () => {
     fetchMock.mockResolvedValue(sidecar(404, { detail: 'Not Found' }));
-    const res = await GET(request());
+    const res = await GET(request(), ctx());
     expect(res.status).toBe(404);
     const body = await res.json();
     expect(body.state).toBe('unavailable');
@@ -178,10 +180,10 @@ describe('GET /api/fusion/dossiers/las-bambas-matarani', () => {
     const ip = '10.98.0.1';
     const mk = () => new Request(`http://osiris.test${PROXY_PATH}`, { headers: { 'x-forwarded-for': ip } });
     for (let i = 0; i < 60; i += 1) {
-      expect((await GET(mk())).status).toBe(200);
+      expect((await GET(mk(), ctx())).status).toBe(200);
     }
     const calls = fetchMock.mock.calls.length;
-    const res = await GET(mk());
+    const res = await GET(mk(), ctx());
     expect(res.status).toBe(429);
     expect(res.headers.get('cache-control')).toBe('no-store');
     expect((await res.json()).reason).toBe('rate_limited');
@@ -205,11 +207,11 @@ describe('GET /api/fusion/dossiers/las-bambas-matarani', () => {
 
   it('sets Cache-Control: no-store on every status (200, 400, 404, 503)', async () => {
     fetchMock.mockResolvedValue(sidecar(200, AVAILABLE));
-    expect((await GET(request())).headers.get('cache-control')).toBe('no-store');
-    expect((await GET(request('?history=1'))).headers.get('cache-control')).toBe('no-store');
+    expect((await GET(request(), ctx())).headers.get('cache-control')).toBe('no-store');
+    expect((await GET(request('?history=1'), ctx())).headers.get('cache-control')).toBe('no-store');
     fetchMock.mockResolvedValue(sidecar(404, { detail: 'Not Found' }));
-    expect((await GET(request())).headers.get('cache-control')).toBe('no-store');
+    expect((await GET(request(), ctx())).headers.get('cache-control')).toBe('no-store');
     fetchMock.mockResolvedValue(sidecar(503, stateOnly('unavailable', 'feature_disabled')));
-    expect((await GET(request())).headers.get('cache-control')).toBe('no-store');
+    expect((await GET(request(), ctx())).headers.get('cache-control')).toBe('no-store');
   });
 });

@@ -177,14 +177,14 @@ describe('fetchGeographyOnce', () => {
   const json = (body: unknown) => Promise.resolve(new Response(JSON.stringify(body), { status: 200 }));
 
   it('accepts a contract-valid body and rejects malformed / non-JSON / network / timeout without throwing', async () => {
-    expect(await fetchGeographyOnce(1, () => json(GEO_FULL))).toMatchObject({ type: 'response', generation: 1 });
+    expect(await fetchGeographyOnce('las-bambas-matarani', 1, () => json(GEO_FULL))).toMatchObject({ type: 'response', generation: 1 });
     const bad = cloneGeo(GEO_FULL); bad.publication!.features.pop();
-    expect(await fetchGeographyOnce(2, () => json(bad))).toMatchObject({ type: 'failure', reason: 'browser_response_malformed' });
-    expect(await fetchGeographyOnce(3, () => Promise.resolve(new Response('<html>', { status: 503 })))).toMatchObject({ type: 'failure', reason: 'browser_response_malformed' });
-    expect(await fetchGeographyOnce(4, () => Promise.reject(new TypeError('net')))).toMatchObject({ type: 'failure', reason: 'browser_fetch_failed' });
+    expect(await fetchGeographyOnce('las-bambas-matarani', 2, () => json(bad))).toMatchObject({ type: 'failure', reason: 'browser_response_malformed' });
+    expect(await fetchGeographyOnce('las-bambas-matarani', 3, () => Promise.resolve(new Response('<html>', { status: 503 })))).toMatchObject({ type: 'failure', reason: 'browser_response_malformed' });
+    expect(await fetchGeographyOnce('las-bambas-matarani', 4, () => Promise.reject(new TypeError('net')))).toMatchObject({ type: 'failure', reason: 'browser_fetch_failed' });
     vi.useFakeTimers();
     const hung: typeof fetch = (_u, init) => new Promise((_r, rej) => init?.signal?.addEventListener('abort', () => rej(Object.assign(new Error('a'), { name: 'AbortError' }))));
-    const p = fetchGeographyOnce(5, hung, 50);
+    const p = fetchGeographyOnce('las-bambas-matarani', 5, hung, 50);
     vi.advanceTimersByTime(60);
     expect(await p).toMatchObject({ type: 'failure', reason: 'browser_fetch_timeout' });
     vi.useRealTimers();
