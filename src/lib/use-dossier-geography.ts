@@ -42,18 +42,18 @@ export function useDossierGeography(selectedDossier: string | null): DossierGeog
   const [fitSeq, setFitSeq] = useState(0);
   const [highlight, setHighlight] = useState<OverlayHighlight | null>(null);
   const gen = useRef(0);
-  const inFlight = useRef(false);
+  const inFlight = useRef<string | null>(null);
   const mounted = useRef(true);
 
   const load = useCallback(async (dossierId: string) => {
-    if (inFlight.current) return;
-    inFlight.current = true;
+    if (inFlight.current === dossierId) return;
+    inFlight.current = dossierId;
     gen.current += 1;
     try {
       const ev = await fetchGeographyOnce(dossierId, gen.current);
       if (mounted.current) dispatch(ev);
     } finally {
-      inFlight.current = false;
+      if (inFlight.current === dossierId) inFlight.current = null;
     }
   }, []);
 

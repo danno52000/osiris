@@ -56,24 +56,24 @@ export default function SupplyChainDossiersPanel({ selected, onSelect, geography
   const [uwFeed, dispatchUw] = useReducer(reduceUwFeed, INITIAL_UW_FEED);
   const [anFeed, dispatchAn] = useReducer(reduceAnFeed, INITIAL_AN_FEED);
   const anGen = useRef(0);
-  const anInFlight = useRef(false);
+  const anInFlight = useRef<string | null>(null);
   const gen = useRef(0);
   const vulnGen = useRef(0);
   const uwGen = useRef(0);
-  const inFlight = useRef(false);
+  const inFlight = useRef<string | null>(null);
   const vulnInFlight = useRef(false);
   const uwInFlight = useRef(false);
   const mounted = useRef(true);
 
   const load = useCallback(async (dossierId: string) => {
-    if (inFlight.current) return;
-    inFlight.current = true;
+    if (inFlight.current === dossierId) return;
+    inFlight.current = dossierId;
     gen.current += 1;
     try {
       const ev = await fetchDossierOnce(dossierId, gen.current);
       if (mounted.current) dispatch(ev);
     } finally {
-      inFlight.current = false;
+      if (inFlight.current === dossierId) inFlight.current = null;
     }
   }, []);
 
@@ -102,14 +102,14 @@ export default function SupplyChainDossiersPanel({ selected, onSelect, geography
   }, []);
 
   const loadAn = useCallback(async (dossierId: string) => {
-    if (anInFlight.current) return;
-    anInFlight.current = true;
+    if (anInFlight.current === dossierId) return;
+    anInFlight.current = dossierId;
     anGen.current += 1;
     try {
       const ev = await fetchAnalystOnce(dossierId, anGen.current);
       if (mounted.current) dispatchAn(ev);
     } finally {
-      anInFlight.current = false;
+      if (anInFlight.current === dossierId) anInFlight.current = null;
     }
   }, []);
 
