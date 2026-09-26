@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { DOSSIER_ID } from '@/lib/dossier';
+import { analystReportPath } from '@/lib/analyst';
+import { dossierRegistryEntry, type DossierRegistryEntry } from '@/lib/dossier-registry';
 import {
   OSM_ATTRIBUTION,
   OSM_ATTRIBUTION_URL,
@@ -34,7 +35,36 @@ const STATE_STYLE: Record<GeoViewState, { label: string; cls: string }> = {
   unavailable: { label: 'GEOGRAPHY UNAVAILABLE', cls: 'text-[#FF5722] border-[#FF5722]/50' },
 };
 
-const FULL_DOSSIER = `/dossiers/${DOSSIER_ID}`;
+/**
+ * Click-through for a card, derived from the published dossier identity (the geography body's
+ * `dossier_id`), never from a constant: the registry's full legacy DDD page when one exists,
+ * otherwise the dossier's own analyst report; no link at all for an unregistered id.
+ */
+export function cardClickThrough(dossierId: string | null | undefined): { href: string; label: string; kind: 'full-dossier' | 'analyst-report' } | null {
+  const entry = dossierRegistryEntry(dossierId);
+  if (!entry) return null;
+  if (entry.fullDossierHref) return { href: `${entry.fullDossierHref}#physical-route`, label: 'Open in full dossier →', kind: 'full-dossier' };
+  return { href: analystReportPath(entry.id), label: 'Open analyst report →', kind: 'analyst-report' };
+}
+
+function CardLink({ dossierId }: { dossierId: string | null | undefined }) {
+  const target = cardClickThrough(dossierId);
+  if (!target) return null;
+  return <Link href={target.href} data-link="full-dossier-section" data-link-kind={target.kind} className="font-mono text-[10px] text-[var(--cyan-primary)] underline underline-offset-2">{target.label}</Link>;
+}
+
+/** Dossier-wide vector context is a legacy (E3B) Las Bambas judgment; other dossiers have none. */
+function ElementVector({ entry, vuln }: { entry: DossierRegistryEntry | null; vuln: VulnPublication | null }) {
+  if (!entry?.legacyAssessments && !vuln?.vector_judgment) return null;
+  return (
+    <div className="border-t border-white/10 pt-1.5" data-field="element-vector">
+      <span className="text-white/40">Element-specific assessment:</span> not assessed for this element.{' '}
+      {vuln?.vector_judgment
+        ? <span className="text-white/70">Dossier-wide context only: {vuln.vector_judgment.primary_type} · {vuln.vector_judgment.primary_label} ({vuln.vector_judgment.confidence} prioritisation confidence); magnitude N/A.</span>
+        : <span className="text-white/50">No dossier-wide vector loaded.</span>}
+    </div>
+  );
+}
 
 export interface DossierGeographyViewProps {
   feed: GeoFeedState;
@@ -56,7 +86,8 @@ function SourceLine({ f }: { f: GeoFeature }) {
   );
 }
 
-function FeatureCard({ f, vuln, onClose }: { f: GeoFeature; vuln: VulnPublication | null; onClose: () => void }) {
+function FeatureCard({ f, dossierId, vuln, onClose }: { f: GeoFeature; dossierId: string | null; vuln: VulnPublication | null; onClose: () => void }) {
+  const entry = dossierRegistryEntry(dossierId);
   return (
     <div data-card="feature" data-feature-id={f.feature_id} role="region" aria-label={`Details for ${f.entity_label}`} className="rounded border border-[var(--gold-primary)]/50 bg-white/[0.03] p-2 flex flex-col gap-1.5">
       <div className="flex items-start justify-between gap-2">
@@ -66,7 +97,12 @@ function FeatureCard({ f, vuln, onClose }: { f: GeoFeature; vuln: VulnPublicatio
         </div>
         <button type="button" onClick={onClose} className="text-white/50 hover:text-white font-mono text-[10px]" aria-label="Close card">✕</button>
       </div>
-      <p><span className="text-white/40">Role:</span> {featureRole(f.entity_id)}. <span className="text-white/40">Why it matters:</span> the dossier&apos;s reported concentrate chain depends on this node; a disruption here is the kind of corridor-access event the dossier-wide vector describes.</p>
+      <p>
+        <span className="text-white/40">Role:</span> {featureRole(f.entity_id)}. <span className="text-white/40">Why it matters:</span>{' '}
+        {entry?.legacyAssessments
+          ? <>the dossier&apos;s reported concentrate chain depends on this node; a disruption here is the kind of corridor-access event the dossier-wide vector describes.</>
+          : <span data-field="contextual-anchor">a contextual anchor for the dossier&apos;s reported asset; no route dependency or vector judgment is inferred from this point.</span>}
+      </p>
       <p className="font-mono text-[9px]" data-field="precision">
         <span className="text-[#FFB74D]">{f.precision_text}</span> · {formatCoordinate(f)} (approximate, not a survey)
       </p>
@@ -74,18 +110,14 @@ function FeatureCard({ f, vuln, onClose }: { f: GeoFeature; vuln: VulnPublicatio
       <p className="text-white/60"><span className="text-white/40">Reported fact:</span> a mapped {f.source.feature_type} named &ldquo;{f.source.feature_name}&rdquo; exists at this anchor. <span className="text-white/40">Analyst inference:</span> its association with {f.entity_label} is approximate context, not a verified facility footprint.</p>
       {f.caveats.length > 0 && <ul className="text-[#FFB74D]/90 list-disc pl-4" data-field="caveats">{f.caveats.map((c, i) => <li key={i}>{c}</li>)}</ul>}
       {f.gaps.length > 0 && <ul className="text-white/55 list-disc pl-4" data-field="gaps">{f.gaps.map((c, i) => <li key={i}>{c}</li>)}</ul>}
-      <div className="border-t border-white/10 pt-1.5" data-field="element-vector">
-        <span className="text-white/40">Element-specific assessment:</span> not assessed for this element.{' '}
-        {vuln?.vector_judgment
-          ? <span className="text-white/70">Dossier-wide context only: {vuln.vector_judgment.primary_type} · {vuln.vector_judgment.primary_label} ({vuln.vector_judgment.confidence} prioritisation confidence); magnitude N/A.</span>
-          : <span className="text-white/50">No dossier-wide vector loaded.</span>}
-      </div>
-      <Link href={`${FULL_DOSSIER}#physical-route`} data-link="full-dossier-section" className="font-mono text-[10px] text-[var(--cyan-primary)] underline underline-offset-2">Open in full dossier →</Link>
+      <ElementVector entry={entry} vuln={vuln} />
+      <CardLink dossierId={dossierId} />
     </div>
   );
 }
 
-function LinkCard({ l, byEntity, vuln, onClose }: { l: GeoLink; byEntity: Map<string, GeoFeature>; vuln: VulnPublication | null; onClose: () => void }) {
+function LinkCard({ l, byEntity, dossierId, vuln, onClose }: { l: GeoLink; byEntity: Map<string, GeoFeature>; dossierId: string | null; vuln: VulnPublication | null; onClose: () => void }) {
+  const entry = dossierRegistryEntry(dossierId);
   const from = byEntity.get(l.from_entity_id);
   const to = byEntity.get(l.to_entity_id);
   return (
@@ -98,18 +130,18 @@ function LinkCard({ l, byEntity, vuln, onClose }: { l: GeoLink; byEntity: Map<st
         <button type="button" onClick={onClose} className="text-white/50 hover:text-white font-mono text-[10px]" aria-label="Close card">✕</button>
       </div>
       <p className="font-mono text-[10px]" data-field="endpoints">{from?.entity_label ?? l.from_entity_id} → {to?.entity_label ?? l.to_entity_id}</p>
-      <p><span className="text-white/40">Role:</span> reported {l.mode} leg of the concentrate movement. <span className="text-white/40">Why it matters:</span> the dossier&apos;s only documented export path runs over this reported connection; whether alternatives exist is unknown.</p>
+      <p>
+        <span className="text-white/40">Role:</span> reported {l.mode} connection. <span className="text-white/40">Why it matters:</span>{' '}
+        {entry?.legacyAssessments
+          ? <>the dossier&apos;s only documented export path runs over this reported connection; whether alternatives exist is unknown.</>
+          : <>the accepted source reports this connection; no route dependency, exclusivity or destination is inferred from it.</>}
+      </p>
       <p className="font-mono text-[9px] text-white/60" data-field="distance">distance: {formatReportedDistance(l)} — not calculated from the drawn line</p>
       <p className="font-mono text-[9px] text-white/55" data-field="evidence">evidence: {l.evidence_refs.join(', ')}</p>
       <p className="text-white/60"><span className="text-white/40">Reported fact:</span> the accepted source names a {l.mode} connection between these endpoints. <span className="text-white/40">Analyst inference:</span> none — the dashed line is a schematic endpoint connector, not route geometry, exclusivity or current uninterrupted operation.</p>
       {l.caveats.length > 0 && <ul className="text-[#FFB74D]/90 list-disc pl-4" data-field="caveats">{l.caveats.map((c, i) => <li key={i}>{c}</li>)}</ul>}
-      <div className="border-t border-white/10 pt-1.5" data-field="element-vector">
-        <span className="text-white/40">Element-specific assessment:</span> not assessed for this element.{' '}
-        {vuln?.vector_judgment
-          ? <span className="text-white/70">Dossier-wide context only: {vuln.vector_judgment.primary_type} · {vuln.vector_judgment.primary_label} ({vuln.vector_judgment.confidence} prioritisation confidence); magnitude N/A.</span>
-          : <span className="text-white/50">No dossier-wide vector loaded.</span>}
-      </div>
-      <Link href={`${FULL_DOSSIER}#physical-route`} data-link="full-dossier-section" className="font-mono text-[10px] text-[var(--cyan-primary)] underline underline-offset-2">Open in full dossier →</Link>
+      <ElementVector entry={entry} vuln={vuln} />
+      <CardLink dossierId={dossierId} />
     </div>
   );
 }
@@ -208,8 +240,8 @@ export function DossierGeographyView({ feed, resolved, selection, onSelect, onLo
             </ul>
           )}
 
-          {selFeature && <FeatureCard f={selFeature} vuln={vulnPublication} onClose={() => onSelect(null)} />}
-          {selLink && <LinkCard l={selLink} byEntity={byEntity} vuln={vulnPublication} onClose={() => onSelect(null)} />}
+          {selFeature && <FeatureCard f={selFeature} dossierId={body?.dossier_id ?? null} vuln={vulnPublication} onClose={() => onSelect(null)} />}
+          {selLink && <LinkCard l={selLink} byEntity={byEntity} dossierId={body?.dossier_id ?? null} vuln={vulnPublication} onClose={() => onSelect(null)} />}
 
           {odbl.length > 0 && (
             <p data-attribution="odbl" className="font-mono text-[9px] text-white/50">

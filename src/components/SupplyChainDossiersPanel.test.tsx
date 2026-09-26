@@ -163,6 +163,46 @@ describe('DossierGeographyView', () => {
     expect(html).toContain('schematic endpoint connector');
   });
 
+  it('two-dossier click-through: cards derive their link from the published dossier id, never a constant', () => {
+    // E8 correction 1 (geography addendum). Conformance fixture only: the Las Bambas geography
+    // body retagged as `toromocho` stands in for a real Toromocho anchor; no Toromocho geometry
+    // or judgment is asserted.
+    const feature = FULL.publication!.features[0];
+    const render = (body: GeoResponse, selection: { kind: 'feature' | 'link'; id: string }) => {
+      const feed = feedOf(body);
+      return renderToStaticMarkup(
+        <DossierGeographyView feed={feed} resolved={resolveGeo(feed)} selection={selection} onSelect={noop} onLocate={noop} vulnPublication={null} />,
+      );
+    };
+
+    const lb = render(FULL, { kind: 'feature', id: feature.feature_id });
+    expect(lb).toContain('data-link="full-dossier-section" data-link-kind="full-dossier"');
+    expect(lb).toContain('href="/dossiers/las-bambas-matarani#physical-route"');
+    expect(lb).toContain('corridor-access event');
+    expect(lb).toContain('data-field="element-vector"');
+
+    const toro = render({ ...FULL, dossier_id: 'toromocho' }, { kind: 'feature', id: feature.feature_id });
+    expect(toro).toContain(`data-card="feature" data-feature-id="${feature.feature_id}"`);
+    expect(toro).toContain('data-link="full-dossier-section" data-link-kind="analyst-report"');
+    expect(toro).toContain('href="/dossiers/toromocho/analyst"');
+    expect(toro).not.toContain('/dossiers/las-bambas-matarani');
+    expect(toro).toContain('data-field="contextual-anchor"');
+    expect(toro).not.toContain('corridor');
+    expect(toro).not.toContain('data-field="element-vector"');
+    expect(toro).not.toContain('dossier-wide vector');
+
+    const rail = FULL.publication!.links.find((l) => l.mode === 'rail')!;
+    const toroLink = render({ ...FULL, dossier_id: 'toromocho' }, { kind: 'link', id: rail.link_id });
+    expect(toroLink).toContain('href="/dossiers/toromocho/analyst"');
+    expect(toroLink).not.toContain('/dossiers/las-bambas-matarani');
+    expect(toroLink).not.toContain('only documented export path');
+
+    // Unregistered id: no click-through is invented.
+    const unknown = render({ ...FULL, dossier_id: 'not-a-registered-dossier' }, { kind: 'feature', id: feature.feature_id });
+    expect(unknown).toContain('data-card="feature"');
+    expect(unknown).not.toContain('data-link="full-dossier-section"');
+  });
+
   it('partial: missing Pillones yields explicit gaps, remaining anchors, no links needing it', () => {
     const feed = feedOf(PARTIAL);
     const html = renderToStaticMarkup(

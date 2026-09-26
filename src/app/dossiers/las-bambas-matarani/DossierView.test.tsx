@@ -65,6 +65,34 @@ const next = (prev: FeedState, event: Ungenerated<FeedEvent>, generation = prev.
   reduceFeed(prev, { ...event, generation } as FeedEvent);
 
 describe('dossier grouping', () => {
+  it('renders a reported accounting parent apart from equity ownership (E8 correction 1, fixture only)', () => {
+    const own = PUBLICATION.edges.find((e) => e.predicate === 'owns_equity')!;
+    const parentEdge = {
+      ...own, id: 'f1x7ure0000000000000parent', predicate: 'has_accounting_parent' as const,
+      object: 'org:f01-name:citic-group-corporation:fixture0001',
+      value: { parent_type: 'State-owned Company' }, temporal: { as_of: 'dataset release' },
+    };
+    const body: DossierResponse = {
+      ...AVAILABLE,
+      publication: {
+        ...PUBLICATION,
+        entities: [...PUBLICATION.entities, { id: parentEdge.object, version: 1, kind: 'organization', label: 'CITIC Group Corporation', resolution: 'as_named_by_source', sources: ['F01'], evidence: own.evidence }],
+        edges: [...PUBLICATION.edges, parentEdge],
+      },
+    };
+    const html = render(fed(body), T2);
+    expect(html).toContain('data-section="accounting-parents"');
+    expect(html).toContain('data-predicate="has_accounting_parent"');
+    expect(html).toContain('Reported accounting parent');
+    expect(html).toContain('CITIC Group Corporation');
+    expect(html).toContain('not a control, guarantee or ownership-share statement');
+    // Ownership table is unchanged and the parent is never shown as an equity share.
+    expect((html.match(/data-predicate="owns_equity"/g) ?? []).length).toBe(1);
+    expect(html).not.toContain('CITIC Group Corporation</td><td class="py-1 pr-3 text-white/80 font-mono">');
+    // Without the edge, the section is absent (Las Bambas positive control).
+    expect(render(fed(AVAILABLE), T2)).not.toContain('data-section="accounting-parents"');
+  });
+
   it('separates ownership, operator, finance, role and physical relationships', () => {
     const g = groupPublication(PUBLICATION);
     expect(g.ownership.map((r) => [r.holder, r.share])).toEqual([['CITIC Metal Co. Ltd.', '15 %']]);

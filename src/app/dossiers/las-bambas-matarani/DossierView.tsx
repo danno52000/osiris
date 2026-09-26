@@ -356,6 +356,19 @@ export function DossierView({ feed, resolved, selectedEdgeId, onSelectEdge, vuln
                 { key: 'asof', label: 'As of', render: (r) => r.asOf },
               ]}
             />
+            {grouped.accountingParents.length > 0 && (
+              <RelationshipTable
+                title="Reported accounting parent of equity holders (dataset label, not a control, guarantee or ownership-share statement)" section="accounting-parents" rows={grouped.accountingParents}
+                empty="No published accounting-parent relationships."
+                selectedEdgeId={selectedEdgeId} onSelectEdge={onSelectEdge}
+                columns={[
+                  { key: 'holder', label: 'Equity holder', render: (r) => r.holder },
+                  { key: 'parent', label: 'Reported accounting parent', render: (r) => r.parent },
+                  { key: 'type', label: 'Parent type', render: (r) => r.parentType },
+                  { key: 'asof', label: 'As of', render: (r) => r.asOf },
+                ]}
+              />
+            )}
             <RelationshipTable
               title="Operator" section="operators" rows={grouped.operators}
               empty="No published operator relationship."
