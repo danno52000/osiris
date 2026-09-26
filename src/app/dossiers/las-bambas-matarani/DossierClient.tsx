@@ -4,13 +4,11 @@ import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import {
   DOSSIER_ID,
   INITIAL_FEED,
-  PROXY_PATH,
-  isDossierResponse,
   reduceFeed,
   resolveView,
-  type BrowserFailure,
   type FeedEvent,
 } from '@/lib/dossier';
+import { REQUEST_TIMEOUT_MS, fetchDossierOnce as fetchDossierOnceFor } from '@/lib/dossier-client';
 import { INITIAL_VULN_FEED, reduceVulnFeed, resolveVuln } from '@/lib/vulnerability';
 import { fetchVulnerabilityOnce } from '@/lib/vulnerability-client';
 import { INITIAL_UW_FEED, reduceUwFeed, resolveUw } from '@/lib/underwriting';
@@ -25,41 +23,15 @@ import { DossierView } from './DossierView';
  * refresh source evidence or run the E1 engine (no automatic dossier refresh is configured).
  */
 export const POLL_MS = 60_000;
-/** Browser-side request deadline; a hung proxy renders state-only unavailable, not old claims. */
-export const REQUEST_TIMEOUT_MS = 10_000;
+export { REQUEST_TIMEOUT_MS };
 
-/**
- * One bounded request: never rejects; returns the event for the reducer. `generation` is
- * the monotonic number of this request so a late answer can never overwrite a newer one.
- */
-export async function fetchDossierOnce(
+/** This page is the Las Bambas legacy full-DDD page: the shared client bound to that one id. */
+export function fetchDossierOnce(
   generation: number,
   fetchImpl: typeof fetch = fetch,
   timeoutMs: number = REQUEST_TIMEOUT_MS,
 ): Promise<FeedEvent> {
-  const at = () => new Date().toISOString();
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const res = await fetchImpl(PROXY_PATH, { cache: 'no-store', signal: controller.signal });
-    let body: unknown;
-    try {
-      body = await res.json();
-    } catch {
-      return { type: 'failure', reason: 'browser_response_malformed', at: at(), generation };
-    }
-    // Same bounded contract guard as the proxy: a body that is not the rendered shape
-    // (e.g. `available` with `publication: {}`) never enters the feed or the view.
-    if (!isDossierResponse(body)) {
-      return { type: 'failure', reason: 'browser_response_malformed', at: at(), generation };
-    }
-    return { type: 'response', body, at: at(), generation };
-  } catch (e) {
-    const reason: BrowserFailure = e instanceof Error && e.name === 'AbortError' ? 'browser_fetch_timeout' : 'browser_fetch_failed';
-    return { type: 'failure', reason, at: at(), generation };
-  } finally {
-    clearTimeout(timer);
-  }
+  return fetchDossierOnceFor(DOSSIER_ID, generation, fetchImpl, timeoutMs);
 }
 
 export default function DossierClient() {

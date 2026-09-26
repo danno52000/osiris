@@ -7,6 +7,7 @@
  */
 
 import { DOSSIER_ID } from './dossier';
+import { DOSSIER_ID_TOKEN } from './dossier-registry';
 
 export const GEO_SCHEMA_VERSION = 'e4-geography/1.0';
 export const GEO_CONTRACT = 'e4-geo-1.0';
@@ -155,10 +156,10 @@ export interface GeoResponse {
 export const GEO_PROXY_UNAVAILABLE_REASON = 'sidecar_unreachable';
 export const GEO_CONTRACT_INVALID_REASON = 'sidecar_contract_invalid';
 
-export function geoUnavailableResponse(reason: string): GeoResponse {
+export function geoUnavailableResponse(reason: string, dossierId: string | null = DOSSIER_ID): GeoResponse {
   return {
     schema_version: GEO_SCHEMA_VERSION,
-    dossier_id: DOSSIER_ID,
+    dossier_id: dossierId,
     state: 'unavailable',
     reason,
     checked_at: new Date().toISOString(),
@@ -313,11 +314,12 @@ function isDdd(v: unknown): v is GeoDddBinding {
  * binding equals the DDD actually read by the sidecar; state-only answers carry no
  * publication. Anything else is never stored, drawn or rendered.
  */
-export function isGeoResponse(body: unknown): body is GeoResponse {
+export function isGeoResponse(body: unknown, expectedDossierId: string = DOSSIER_ID): body is GeoResponse {
   if (!isRecord(body)) return false;
   if (body.schema_version !== GEO_SCHEMA_VERSION) return false;
   if (typeof body.state !== 'string' || !STATES.has(body.state)) return false;
-  if (body.dossier_id !== null && body.dossier_id !== DOSSIER_ID) return false;
+  if (body.dossier_id !== null && (typeof body.dossier_id !== 'string' || !DOSSIER_ID_TOKEN.test(body.dossier_id))) return false;
+  if (body.dossier_id !== null && body.dossier_id !== expectedDossierId) return false;
   if (!isNullableString(body.reason) || typeof body.checked_at !== 'string') return false;
   if (body.degraded !== undefined && typeof body.degraded !== 'boolean') return false;
   if (body.ddd !== null && !isDdd(body.ddd)) return false;
@@ -477,9 +479,9 @@ export function verifiedHighlight(pub: Pick<GeoPublication, 'features' | 'links'
   return entityIds.length + edgeIds.length > 0 ? { entityIds, edgeIds } : null;
 }
 
-export function overlayFromPublication(pub: GeoPublication, stale: boolean, selected: DossierSelection | null, fitSeq: number, highlight: OverlayHighlight | null = null): DossierOverlay {
+export function overlayFromPublication(pub: GeoPublication, stale: boolean, selected: DossierSelection | null, fitSeq: number, highlight: OverlayHighlight | null = null, dossierId: string = DOSSIER_ID): DossierOverlay {
   return {
-    dossierId: DOSSIER_ID,
+    dossierId,
     publicationNo: pub.publication_no,
     stale,
     features: pub.features,

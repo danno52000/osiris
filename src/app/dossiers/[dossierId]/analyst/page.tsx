@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { analystRegistryEntry } from '@/lib/analyst';
+import { isDossierListed } from '@/lib/dossier-registry';
 import AnalystReportClient from './AnalystReportClient';
 
 /**
@@ -30,5 +31,5 @@ export default async function AnalystReportPage({ params }: { params: Params }) 
   const { dossierId } = await params;
   const entry = analystRegistryEntry(dossierId);
   if (!entry) notFound();
-  return <AnalystReportClient dossierId={entry.id} title={entry.title} listed={entry.listed} />;
+  return <AnalystReportClient dossierId={entry.id} title={entry.title} listed={isDossierListed(entry.id)} />;
 }

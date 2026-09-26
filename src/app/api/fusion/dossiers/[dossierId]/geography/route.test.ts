@@ -3,6 +3,8 @@ import { DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT } from './route';
 import { GEO_PROXY_PATH } from '@/lib/geography';
 import { GEO_FULL, GEO_PARTIAL, GEO_WITHDRAWN, cloneGeo, geoStateOnly } from '@/lib/geography.test-fixture';
 
+const LB = 'las-bambas-matarani';
+const ctx = (dossierId: string = LB) => ({ params: Promise.resolve({ dossierId }) });
 let ipCounter = 0;
 function request(query = ''): Request {
   ipCounter += 1;
@@ -19,7 +21,7 @@ describe('GET /api/fusion/dossiers/las-bambas-matarani/geography', () => {
 
   it('forwards the full publication verbatim, no-store, to the literal sidecar geography route', async () => {
     fetchMock.mockResolvedValue(sidecar(200, GEO_FULL));
-    const res = await GET(request());
+    const res = await GET(request(), ctx());
     expect(res.status).toBe(200);
     expect(res.headers.get('cache-control')).toBe('no-store');
     const body = await res.json();
@@ -34,7 +36,7 @@ describe('GET /api/fusion/dossiers/las-bambas-matarani/geography', () => {
 
   it('forwards the partial publication (Pillones missing, both links omitted) verbatim', async () => {
     fetchMock.mockResolvedValue(sidecar(200, GEO_PARTIAL));
-    const body = await (await GET(request())).json();
+    const body = await (await GET(request(), ctx())).json();
     expect(body).toEqual(GEO_PARTIAL);
     expect(body.publication.features).toHaveLength(2);
     expect(body.publication.links).toHaveLength(0);
@@ -50,26 +52,26 @@ describe('GET /api/fusion/dossiers/las-bambas-matarani/geography', () => {
     ['unavailable', 'publication_unsupported', 503],
   ] as const)('passes through %s/%s state-only with status %i', async (state, reason, status) => {
     fetchMock.mockResolvedValue(sidecar(status, geoStateOnly(state, reason)));
-    const res = await GET(request());
+    const res = await GET(request(), ctx());
     expect(res.status).toBe(status);
     expect(await res.json()).toMatchObject({ state, reason, publication: null });
   });
 
   it('forwards the pinned withdrawn fixture', async () => {
     fetchMock.mockResolvedValue(sidecar(200, GEO_WITHDRAWN));
-    expect(await (await GET(request())).json()).toEqual(GEO_WITHDRAWN);
+    expect(await (await GET(request(), ctx())).json()).toEqual(GEO_WITHDRAWN);
   });
 
   it('stale same-DDD update_failed is forwarded with its retained publication', async () => {
     fetchMock.mockResolvedValue(sidecar(200, { ...GEO_FULL, state: 'stale', reason: 'update_failed' }));
-    const body = await (await GET(request())).json();
+    const body = await (await GET(request(), ctx())).json();
     expect(body.state).toBe('stale');
     expect(body.publication.publication_no).toBe(1);
   });
 
   it('rejects query parameters without contacting the sidecar', async () => {
     for (const q of ['?bbox=1', '?publication=1', '?entity=x']) {
-      const res = await GET(request(q));
+      const res = await GET(request(q), ctx());
       expect(res.status).toBe(400);
       expect((await res.json()).reason).toBe('query_parameters_rejected');
     }
@@ -96,7 +98,7 @@ describe('GET /api/fusion/dossiers/las-bambas-matarani/geography', () => {
     for (const mutate of cases) {
       const b = cloneGeo(GEO_FULL); mutate(b);
       fetchMock.mockResolvedValue(sidecar(200, b));
-      const res = await GET(request());
+      const res = await GET(request(), ctx());
       expect(res.status).toBe(503);
       const body = await res.json();
       expect(body).toMatchObject({ state: 'unavailable', reason: 'sidecar_contract_invalid', publication: null, degraded: true });
@@ -106,24 +108,24 @@ describe('GET /api/fusion/dossiers/las-bambas-matarani/geography', () => {
 
   it('status/state disagreement is contract-invalid', async () => {
     fetchMock.mockResolvedValue(sidecar(503, GEO_FULL));
-    expect((await (await GET(request())).json()).reason).toBe('sidecar_contract_invalid');
+    expect((await (await GET(request(), ctx())).json()).reason).toBe('sidecar_contract_invalid');
     fetchMock.mockResolvedValue(sidecar(200, geoStateOnly('unavailable', 'feature_disabled')));
-    expect((await (await GET(request())).json()).reason).toBe('sidecar_contract_invalid');
+    expect((await (await GET(request(), ctx())).json()).reason).toBe('sidecar_contract_invalid');
   });
 
   it('sidecar 404 -> geography_route_missing; other statuses/network/non-JSON -> 503 sidecar_unreachable', async () => {
     fetchMock.mockResolvedValue(new Response('nf', { status: 404 }));
-    let res = await GET(request());
+    let res = await GET(request(), ctx());
     expect(res.status).toBe(404);
     expect((await res.json()).reason).toBe('geography_route_missing');
     fetchMock.mockResolvedValue(new Response('x', { status: 500 }));
-    expect((await (await GET(request())).json()).reason).toBe('sidecar_unreachable');
+    expect((await (await GET(request(), ctx())).json()).reason).toBe('sidecar_unreachable');
     fetchMock.mockRejectedValue(new Error('ECONNREFUSED'));
-    res = await GET(request());
+    res = await GET(request(), ctx());
     expect(res.status).toBe(503);
     expect((await res.json()).reason).toBe('sidecar_unreachable');
     fetchMock.mockResolvedValue(new Response('<html>', { status: 200 }));
-    expect((await (await GET(request())).json()).reason).toBe('sidecar_unreachable');
+    expect((await (await GET(request(), ctx())).json()).reason).toBe('sidecar_unreachable');
   });
 
   it('non-GET methods are 405 with Allow: GET and no-store', async () => {

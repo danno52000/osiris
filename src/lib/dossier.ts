@@ -8,7 +8,9 @@
  * and formats it. Nothing here calls a model or joins demo data.
  */
 
-export const DOSSIER_ID = 'las-bambas-matarani';
+import { DOSSIER_ID_TOKEN, LAS_BAMBAS_ID } from './dossier-registry';
+
+export const DOSSIER_ID = LAS_BAMBAS_ID;
 export const SCHEMA_VERSION = 'e2-dossier/1.0';
 
 export type DossierState = 'available' | 'stale' | 'not_published' | 'withdrawn' | 'unavailable';
@@ -18,6 +20,7 @@ export const PROXY_PATH = '/api/fusion/dossiers/las-bambas-matarani';
 /** F01 structured predicates plus the accepted-document (verified quotation) predicates. */
 export type Predicate =
   | 'owns_equity'
+  | 'has_accounting_parent'
   | 'finances'
   | 'holds_role_in'
   | 'operates'
@@ -192,10 +195,10 @@ export interface DossierResponse {
 
 export const PROXY_UNAVAILABLE_REASON = 'sidecar_unreachable';
 
-export function unavailableResponse(reason: string): DossierResponse {
+export function unavailableResponse(reason: string, dossierId: string | null = DOSSIER_ID): DossierResponse {
   return {
     schema_version: SCHEMA_VERSION,
-    dossier_id: DOSSIER_ID,
+    dossier_id: dossierId,
     state: 'unavailable',
     reason,
     checked_at: new Date().toISOString(),
@@ -248,7 +251,20 @@ function isEdge(v: unknown): boolean {
   return isRecord(v) && typeof v.id === 'string' && typeof v.predicate === 'string'
     && typeof v.subject === 'string' && typeof v.object === 'string' && typeof v.evidence_category === 'string'
     && isStringArray(v.evidence) && isNullableRecord(v.value) && isNullableRecord(v.temporal)
-    && isNullableRecord(v.scope) && isNullableRecord(v.correction);
+    && isNullableRecord(v.scope) && isNullableRecord(v.correction)
+    && isEdgeValueForPredicate(v.predicate, v.value);
+}
+
+/**
+ * `has_accounting_parent` (holder → parent, same F01 ownership row as `owns_equity`): a
+ * dataset-vintage accounting-parent label carrying only an optional `parent_type` string.
+ * It is not an equity share, control assertion, route or destination, so a value that
+ * carries anything but a string/null `parent_type` is outside the contract.
+ */
+function isEdgeValueForPredicate(predicate: string, value: unknown): boolean {
+  if (predicate !== 'has_accounting_parent') return true;
+  if (!isRecord(value)) return false;
+  return Object.keys(value).every((k) => k === 'parent_type') && isNullableString(value.parent_type ?? null);
 }
 
 function isAssertion(v: unknown): boolean {
@@ -301,13 +317,15 @@ function isPublication(v: unknown): boolean {
  * present, well-formed objects whenever the body claims `available`/`stale`; for the
  * state-only states `publication` must be null and `currentness` null or well-formed.
  * Anything else is not a dossier answer and is never stored, forwarded or rendered — the
- * caller turns it into state-only `unavailable`.
+ * caller turns it into state-only `unavailable`. `expectedDossierId` (default Las Bambas) rejects
+ * any answer about a different dossier, so content is never rendered under another requested id.
  */
-export function isDossierResponse(body: unknown): body is DossierResponse {
+export function isDossierResponse(body: unknown, expectedDossierId: string = DOSSIER_ID): body is DossierResponse {
   if (!isRecord(body)) return false;
   if (body.schema_version !== SCHEMA_VERSION) return false;
   if (typeof body.state !== 'string' || !STATES.has(body.state)) return false;
-  if (body.dossier_id !== null && body.dossier_id !== DOSSIER_ID) return false;
+  if (body.dossier_id !== null && (typeof body.dossier_id !== 'string' || !DOSSIER_ID_TOKEN.test(body.dossier_id))) return false;
+  if (body.dossier_id !== null && body.dossier_id !== expectedDossierId) return false;
   if (!isNullableString(body.reason) || typeof body.checked_at !== 'string' || typeof body.origin !== 'string') return false;
   if (!isStringArray(body.evidence_origins)) return false;
   if (body.degraded !== undefined && typeof body.degraded !== 'boolean') return false;
@@ -400,7 +418,8 @@ export type BrowserFailure = 'browser_fetch_failed' | 'browser_fetch_timeout' | 
 /** Every event carries the generation of the request that produced it. */
 export type FeedEvent =
   | { type: 'response'; body: DossierResponse; at: string; generation: number }
-  | { type: 'failure'; reason: BrowserFailure; at: string; generation: number };
+  | { type: 'failure'; reason: BrowserFailure; at: string; generation: number }
+  | { type: 'reset'; generation: number };
 
 export interface ResolvedView {
   view: ViewState;
@@ -427,6 +446,7 @@ export function resolveView(state: FeedState): ResolvedView {
  * (or vice versa). A failure clears the body: nothing is served from history.
  */
 export function reduceFeed(prev: FeedState, event: FeedEvent): FeedState {
+  if (event.type === 'reset') return { ...INITIAL_FEED, generation: Math.max(prev.generation, event.generation) };
   if (event.generation <= prev.generation) return prev;
   if (event.type === 'failure') {
     return { body: null, bodyAt: null, fetchError: event.reason, fetchedAt: event.at, generation: event.generation };
@@ -467,6 +487,15 @@ export interface OwnershipRow {
   share: string;
   holderType: string;
   origin: string;
+  asOf: string;
+}
+
+/** Dataset-vintage accounting parent of an equity holder; not an ownership share or control statement. */
+export interface AccountingParentRow {
+  edge: Edge;
+  holder: string;
+  parent: string;
+  parentType: string;
   asOf: string;
 }
 
@@ -591,6 +620,7 @@ export interface ReportedEventRow {
 export interface Grouped {
   entities: Map<string, Entity>;
   ownership: OwnershipRow[];
+  accountingParents: AccountingParentRow[];
   operators: OperatorRow[];
   finance: FinanceRow[];
   roles: RoleRow[];
@@ -625,6 +655,7 @@ export function groupPublication(pub: Publication): Grouped {
   const evidenceByRef = new Map(pub.evidence_manifest.map((m) => [m.ref, m]));
   const assertionsByEdge = new Map(pub.assertions.map((a) => [a.id, a]));
   const ownership: OwnershipRow[] = [];
+  const accountingParents: AccountingParentRow[] = [];
   const operators: OperatorRow[] = [];
   const finance: FinanceRow[] = [];
   const roles: RoleRow[] = [];
@@ -646,6 +677,15 @@ export function groupPublication(pub: Publication): Grouped {
           share: formatFraction(v.equity_fraction_native),
           holderType: str(v.equity_holder_type) ?? 'unknown',
           origin: str(v.equity_holder_origin) ?? 'unknown',
+          asOf: str(t.as_of) ?? 'unknown',
+        });
+        break;
+      case 'has_accounting_parent':
+        accountingParents.push({
+          edge,
+          holder: subject,
+          parent: object,
+          parentType: str(v.parent_type) ?? 'unknown',
           asOf: str(t.as_of) ?? 'unknown',
         });
         break;
@@ -715,11 +755,13 @@ export function groupPublication(pub: Publication): Grouped {
   const byLabel = (a: { holder?: string; lender?: string; organization?: string }, b: typeof a) =>
     (a.holder ?? a.lender ?? a.organization ?? '').localeCompare(b.holder ?? b.lender ?? b.organization ?? '');
   ownership.sort(byLabel);
+  accountingParents.sort(byLabel);
   finance.sort((a, b) => byLabel(a, b) || b.year.localeCompare(a.year));
   roles.sort((a, b) => byLabel(a, b) || a.role.localeCompare(b.role));
   return {
     entities,
     ownership,
+    accountingParents,
     operators,
     finance,
     roles,

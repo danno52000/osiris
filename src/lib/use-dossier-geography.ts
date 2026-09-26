@@ -31,9 +31,10 @@ export interface DossierGeographyController {
 }
 
 /**
- * Page-owned geography state for the selected dossier. Loads while a dossier is selected,
- * resets feed/selection/fit counter on deselection so nothing stale survives, and bumps the
- * fit counter exactly once per selection (plus once per explicit Locate).
+ * Page-owned geography state for the selected dossier. Loads the requested id while a dossier is
+ * selected, resets feed/selection/fit counter on deselection or dossier change so nothing stale
+ * (or from the previous dossier, including a late answer) survives, and bumps the fit counter
+ * exactly once per selection (plus once per explicit Locate); the counter is monotonic.
  */
 export function useDossierGeography(selectedDossier: string | null): DossierGeographyController {
   const [feed, dispatch] = useReducer(reduceGeoFeed, INITIAL_GEO_FEED);
@@ -41,18 +42,18 @@ export function useDossierGeography(selectedDossier: string | null): DossierGeog
   const [fitSeq, setFitSeq] = useState(0);
   const [highlight, setHighlight] = useState<OverlayHighlight | null>(null);
   const gen = useRef(0);
-  const inFlight = useRef(false);
+  const inFlight = useRef<string | null>(null);
   const mounted = useRef(true);
 
-  const load = useCallback(async () => {
-    if (inFlight.current) return;
-    inFlight.current = true;
+  const load = useCallback(async (dossierId: string) => {
+    if (inFlight.current === dossierId) return;
+    inFlight.current = dossierId;
     gen.current += 1;
     try {
-      const ev = await fetchGeographyOnce(gen.current);
+      const ev = await fetchGeographyOnce(dossierId, gen.current);
       if (mounted.current) dispatch(ev);
     } finally {
-      inFlight.current = false;
+      if (inFlight.current === dossierId) inFlight.current = null;
     }
   }, []);
 
@@ -62,17 +63,20 @@ export function useDossierGeography(selectedDossier: string | null): DossierGeog
   }, []);
 
   useEffect(() => {
-    if (!selectedDossier) {
-      dispatch({ type: 'reset', generation: gen.current });
+    dispatch({ type: 'reset', generation: gen.current });
+    if (!selectedDossier) return;
+    const run = () => load(selectedDossier);
+    const first = setTimeout(() => {
+      setFitSeq((n) => n + 1);
+      run();
+    }, 0);
+    const iv = setInterval(run, POLL_MS);
+    return () => {
+      clearTimeout(first);
+      clearInterval(iv);
       setSelection(null);
       setHighlight(null);
-      setFitSeq(0);
-      return;
-    }
-    setFitSeq((n) => n + 1);
-    const first = setTimeout(load, 0);
-    const iv = setInterval(load, POLL_MS);
-    return () => { clearTimeout(first); clearInterval(iv); };
+    };
   }, [selectedDossier, load]);
 
   const resolved = useMemo(() => resolveGeo(feed), [feed]);
@@ -90,7 +94,7 @@ export function useDossierGeography(selectedDossier: string | null): DossierGeog
 
   const overlay = useMemo<DossierOverlay | null>(() => {
     if (!selectedDossier || !resolved.publication) return null;
-    return overlayFromPublication(resolved.publication, resolved.view === 'stale', effectiveSelection, fitSeq, highlight);
+    return overlayFromPublication(resolved.publication, resolved.view === 'stale', effectiveSelection, fitSeq, highlight, selectedDossier);
   }, [selectedDossier, resolved, effectiveSelection, fitSeq, highlight]);
 
   const locate = useCallback(() => setFitSeq((n) => n + 1), []);

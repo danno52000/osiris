@@ -7,8 +7,13 @@
  * the legacy E3/E5 views keep their own contracts. Everything rendered is read from a publication
  * that passed this guard; nothing is scored, summarised or invented in the browser.
  */
-import { DOSSIER_ID } from './dossier';
 import { MAGNITUDE_MATRIX } from './underwriting';
+import {
+  DOSSIER_ID_TOKEN,
+  DOSSIER_REGISTRY,
+  dossierRegistryEntry,
+  type DossierRegistryEntry,
+} from './dossier-registry';
 
 export const AN_SCHEMA_VERSION = 'e7-analyst/1.0';
 /** Public projection tag on `publication.contract` (the sidecar checks the stored `:AnalystPublication` tag itself). */
@@ -34,34 +39,19 @@ export const AN_CONTRACT_INVALID_REASON = 'sidecar_contract_invalid';
 // ---------------------------------------------------------------------------
 
 /** Sidecar token rule for a requested dossier id (mirrors Fusion `DOSSIER_ID_TOKEN`). */
-export const AN_DOSSIER_ID_TOKEN = /^[a-z0-9][a-z0-9-]{0,63}$/;
+export const AN_DOSSIER_ID_TOKEN = DOSSIER_ID_TOKEN;
 
-export interface AnalystDossierEntry {
-  id: string;
-  title: string;
-  /** Listed in the default roster (drawer list, report index). Only Las Bambas is listed. */
-  listed: boolean;
-  /** Reserved ids are routed to the sidecar with the requested id and never fall back to another dossier. */
-  reserved: boolean;
-}
+export type AnalystDossierEntry = DossierRegistryEntry;
 
 /**
- * The finite set of dossier ids the analyst proxy will forward at all. Reserved ids are routed
- * (the sidecar answers `dossier_not_enabled` unless allowlisted there) but never listed, never
- * researched here and never substituted by Las Bambas. Anything else is `unknown_dossier` and
- * never reaches the sidecar.
+ * The finite set of dossier ids the analyst proxy will forward at all — the shared registry in
+ * `dossier-registry.ts`. Reserved ids are routed (the sidecar answers `dossier_not_enabled`
+ * unless allowlisted there) but never listed, never researched here and never substituted by
+ * Las Bambas. Anything else is `unknown_dossier` and never reaches the sidecar.
  */
-export const ANALYST_DOSSIERS: ReadonlyArray<AnalystDossierEntry> = [
-  { id: DOSSIER_ID, title: 'Las Bambas – Pillones – Matarani', listed: true, reserved: false },
-  { id: 'toromocho', title: 'toromocho (reserved, not published)', listed: false, reserved: true },
-  { id: 'mirador', title: 'mirador (reserved, not published)', listed: false, reserved: true },
-  { id: 'cerro-de-maimon', title: 'cerro-de-maimon (reserved, not published)', listed: false, reserved: true },
-];
+export const ANALYST_DOSSIERS: ReadonlyArray<AnalystDossierEntry> = DOSSIER_REGISTRY;
 
-export function analystRegistryEntry(id: string | null | undefined): AnalystDossierEntry | null {
-  if (typeof id !== 'string' || !AN_DOSSIER_ID_TOKEN.test(id)) return null;
-  return ANALYST_DOSSIERS.find((d) => d.id === id) ?? null;
-}
+export const analystRegistryEntry = dossierRegistryEntry;
 
 export function listedAnalystDossiers(): AnalystDossierEntry[] {
   return ANALYST_DOSSIERS.filter((d) => d.listed);

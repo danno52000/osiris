@@ -3,7 +3,7 @@
  * geography state: no selection, available geography with a selected feature/link, partial
  * (missing anchor) geography, withdrawn/unavailable geography, and the vector card.
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import SupplyChainDossiersPanel, { DOSSIER_LIST } from './SupplyChainDossiersPanel';
 import { DossierGeographyView, DossierMapAttribution } from './DossierGeographyView';
@@ -26,10 +26,20 @@ function feedOf(body: GeoResponse | null, fetchError: GeoFeedState['fetchError']
 const noop = () => {};
 
 describe('SupplyChainDossiersPanel', () => {
+  it('E8 release opt-in removes the stale unlisted badge without changing default admission', () => {
+    vi.stubEnv('NEXT_PUBLIC_GIDEON_DOSSIER_ROSTER', 'las-bambas-matarani,toromocho');
+    try {
+      const html = renderToStaticMarkup(<SupplyChainDossiersPanel selected="toromocho" onSelect={noop} />);
+      expect(html).toContain('Toromocho');
+      expect(html).not.toContain('unlisted · not released');
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
   it('lists exactly the one bounded dossier with no selection by default and draws nothing', () => {
     const html = renderToStaticMarkup(<SupplyChainDossiersPanel selected={null} onSelect={noop} />);
     expect(DOSSIER_LIST).toHaveLength(1);
-    expect(DOSSIER_LIST[0]).toMatchObject({ id: 'las-bambas-matarani', href: '/dossiers/las-bambas-matarani' });
+    expect(DOSSIER_LIST[0]).toMatchObject({ id: 'las-bambas-matarani', fullDossierHref: '/dossiers/las-bambas-matarani', listed: true });
     expect(html).toContain('SUPPLY CHAIN DOSSIERS');
     expect(html).toContain('Nothing is drawn until then');
     expect((html.match(/data-dossier-id="/g) ?? []).length).toBe(1);
@@ -54,6 +64,32 @@ describe('SupplyChainDossiersPanel', () => {
     expect(html).toContain('data-link="full-dossier"');
     expect(html).toContain('data-toggle="vulnerability"');
     expect(html).toContain('aria-pressed="true"');
+    expect(html).toContain('data-section="legacy"');
+  });
+
+  it('E8 Toromocho selected (unlisted by default): per-dossier prose, analyst section, no legacy E3B/E5 controls, no full-DDD link, no Las Bambas wording', () => {
+    const feed = feedOf(null, 'browser_fetch_failed');
+    const html = renderToStaticMarkup(
+      <SupplyChainDossiersPanel
+        selected="toromocho"
+        onSelect={noop}
+        geography={{ feed, resolved: resolveGeo(feed), selection: null, onSelectElement: noop, onLocate: noop }}
+      />,
+    );
+    expect(DOSSIER_LIST.map((d) => d.id)).toEqual(['las-bambas-matarani']);
+    expect(html).toContain('data-dossier-id="toromocho"');
+    expect(html).toContain('Toromocho');
+    expect(html).toContain('data-section="analyst"');
+    expect(html).not.toContain('data-section="legacy"');
+    expect(html).not.toContain('data-toggle="vulnerability"');
+    expect(html).not.toContain('data-toggle="underwriting"');
+    expect(html).not.toContain('data-link="full-dossier"');
+    const selectedSection = html.slice(html.indexOf('data-section="selected-dossier"'));
+    expect(selectedSection).not.toContain('Pillones');
+    expect(selectedSection).not.toContain('Matarani');
+    expect(selectedSection).not.toContain('las-bambas');
+    expect(selectedSection).toContain('unlisted · not released');
+    expect(selectedSection).toContain('No route, port or corridor is inferred');
   });
 });
 
@@ -135,6 +171,46 @@ describe('DossierGeographyView', () => {
     expect(html).toContain('excerpt:x-e3a-mmg-investor-2026-05-rail-01');
     expect(html).toContain('→');
     expect(html).toContain('schematic endpoint connector');
+  });
+
+  it('two-dossier click-through: cards derive their link from the published dossier id, never a constant', () => {
+    // E8 correction 1 (geography addendum). Conformance fixture only: the Las Bambas geography
+    // body retagged as `toromocho` stands in for a real Toromocho anchor; no Toromocho geometry
+    // or judgment is asserted.
+    const feature = FULL.publication!.features[0];
+    const render = (body: GeoResponse, selection: { kind: 'feature' | 'link'; id: string }) => {
+      const feed = feedOf(body);
+      return renderToStaticMarkup(
+        <DossierGeographyView feed={feed} resolved={resolveGeo(feed)} selection={selection} onSelect={noop} onLocate={noop} vulnPublication={null} />,
+      );
+    };
+
+    const lb = render(FULL, { kind: 'feature', id: feature.feature_id });
+    expect(lb).toContain('data-link="full-dossier-section" data-link-kind="full-dossier"');
+    expect(lb).toContain('href="/dossiers/las-bambas-matarani#physical-route"');
+    expect(lb).toContain('corridor-access event');
+    expect(lb).toContain('data-field="element-vector"');
+
+    const toro = render({ ...FULL, dossier_id: 'toromocho' }, { kind: 'feature', id: feature.feature_id });
+    expect(toro).toContain(`data-card="feature" data-feature-id="${feature.feature_id}"`);
+    expect(toro).toContain('data-link="full-dossier-section" data-link-kind="analyst-report"');
+    expect(toro).toContain('href="/dossiers/toromocho/analyst"');
+    expect(toro).not.toContain('/dossiers/las-bambas-matarani');
+    expect(toro).toContain('data-field="contextual-anchor"');
+    expect(toro).not.toContain('corridor');
+    expect(toro).not.toContain('data-field="element-vector"');
+    expect(toro).not.toContain('dossier-wide vector');
+
+    const rail = FULL.publication!.links.find((l) => l.mode === 'rail')!;
+    const toroLink = render({ ...FULL, dossier_id: 'toromocho' }, { kind: 'link', id: rail.link_id });
+    expect(toroLink).toContain('href="/dossiers/toromocho/analyst"');
+    expect(toroLink).not.toContain('/dossiers/las-bambas-matarani');
+    expect(toroLink).not.toContain('only documented export path');
+
+    // Unregistered id: no click-through is invented.
+    const unknown = render({ ...FULL, dossier_id: 'not-a-registered-dossier' }, { kind: 'feature', id: feature.feature_id });
+    expect(unknown).toContain('data-card="feature"');
+    expect(unknown).not.toContain('data-link="full-dossier-section"');
   });
 
   it('partial: missing Pillones yields explicit gaps, remaining anchors, no links needing it', () => {
