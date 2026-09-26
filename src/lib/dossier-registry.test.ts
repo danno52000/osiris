@@ -15,6 +15,7 @@ import {
   geographyProxyPath,
   geographySidecarPath,
   parseRoster,
+  isDossierListed,
 } from './dossier-registry';
 import { ANALYST_DOSSIERS, analystRegistryEntry, analystProxyPath } from './analyst';
 import { DOSSIER_ID, INITIAL_FEED, isDossierResponse, reduceFeed, resolveView, type DossierResponse } from './dossier';
@@ -43,6 +44,19 @@ function retag<T extends { dossier_id: string | null }>(body: T, id: string): T 
 const json = (body: unknown, status = 200) => Promise.resolve(new Response(JSON.stringify(body), { status }));
 
 describe('finite dossier registry', () => {
+  it('release status follows exact roster opt-in and fails closed on an unknown token', () => {
+    try {
+      vi.stubEnv('NEXT_PUBLIC_GIDEON_DOSSIER_ROSTER', '');
+      expect(isDossierListed(TORO)).toBe(false);
+      vi.stubEnv('NEXT_PUBLIC_GIDEON_DOSSIER_ROSTER', 'las-bambas-matarani,toromocho');
+      expect(isDossierListed(TORO)).toBe(true);
+      expect(isDossierListed('mirador')).toBe(false);
+      vi.stubEnv('NEXT_PUBLIC_GIDEON_DOSSIER_ROSTER', 'toromocho,unknown');
+      expect(isDossierListed(TORO)).toBe(false);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
   it('is shared by the analyst registry; Las Bambas listed, Toromocho/Mirador/Cerro reserved and unlisted', () => {
     expect(ANALYST_DOSSIERS).toBe(DOSSIER_REGISTRY);
     expect(analystRegistryEntry).toBe(dossierRegistryEntry);

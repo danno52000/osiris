@@ -3,7 +3,7 @@
  * geography state: no selection, available geography with a selected feature/link, partial
  * (missing anchor) geography, withdrawn/unavailable geography, and the vector card.
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import SupplyChainDossiersPanel, { DOSSIER_LIST } from './SupplyChainDossiersPanel';
 import { DossierGeographyView, DossierMapAttribution } from './DossierGeographyView';
@@ -26,6 +26,16 @@ function feedOf(body: GeoResponse | null, fetchError: GeoFeedState['fetchError']
 const noop = () => {};
 
 describe('SupplyChainDossiersPanel', () => {
+  it('E8 release opt-in removes the stale unlisted badge without changing default admission', () => {
+    vi.stubEnv('NEXT_PUBLIC_GIDEON_DOSSIER_ROSTER', 'las-bambas-matarani,toromocho');
+    try {
+      const html = renderToStaticMarkup(<SupplyChainDossiersPanel selected="toromocho" onSelect={noop} />);
+      expect(html).toContain('Toromocho');
+      expect(html).not.toContain('unlisted · not released');
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
   it('lists exactly the one bounded dossier with no selection by default and draws nothing', () => {
     const html = renderToStaticMarkup(<SupplyChainDossiersPanel selected={null} onSelect={noop} />);
     expect(DOSSIER_LIST).toHaveLength(1);

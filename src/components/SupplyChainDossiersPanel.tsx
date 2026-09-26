@@ -4,7 +4,7 @@ import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import Link from 'next/link';
 import { INITIAL_FEED, reduceFeed, resolveView } from '@/lib/dossier';
 import { fetchDossierOnce } from '@/lib/dossier-client';
-import { dossierRegistryEntry, rosterDossiers, type DossierRegistryEntry } from '@/lib/dossier-registry';
+import { dossierRegistryEntry, isDossierListed, rosterDossiers, type DossierRegistryEntry } from '@/lib/dossier-registry';
 import { INITIAL_VULN_FEED, reduceVulnFeed, resolveVuln } from '@/lib/vulnerability';
 import { fetchVulnerabilityOnce } from '@/lib/vulnerability-client';
 import type { DossierSelection, GeoFeedState, OverlayHighlight, ResolvedGeo } from '@/lib/geography';
@@ -215,7 +215,7 @@ export default function SupplyChainDossiersPanel({ selected, onSelect, geography
         <div data-section="selected-dossier" data-dossier-id={entry.id} className="flex flex-col gap-2 border-t border-white/10 pt-2">
           <div data-field="selected-title" className="font-mono text-[9px] text-white/60">
             <span className="font-semibold text-white/80">{entry.title}</span>
-            {!entry.listed && <span className="ml-2 text-[#FFB300]/80">unlisted · not released</span>}
+            {!isDossierListed(entry.id) && <span className="ml-2 text-[#FFB300]/80">unlisted · not released</span>}
           </div>
           <div data-view-state={resolved.view} className="font-mono text-[10px] flex flex-wrap gap-x-3 gap-y-0.5">
             <span className="font-bold tracking-widest">{resolved.view.toUpperCase().replace('_', ' ')}</span>

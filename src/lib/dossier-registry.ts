@@ -105,6 +105,11 @@ export function rosterDossiers(): DossierRegistryEntry[] {
   return parseRoster(process.env.NEXT_PUBLIC_GIDEON_DOSSIER_ROSTER);
 }
 
+/** Presentation release status follows the same explicit opt-in as the visible roster. */
+export function isDossierListed(dossierId: string): boolean {
+  return rosterDossiers().some((entry) => entry.id === dossierId);
+}
+
 /** Browser → Next.js proxy paths for one requested dossier id (never a literal Las Bambas path). */
 export function dossierProxyPath(dossierId: string): string {
   return `/api/fusion/dossiers/${encodeURIComponent(dossierId)}`;
